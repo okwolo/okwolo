@@ -10,7 +10,7 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
     var future_actions = [];
 
     // flag to track whether an undo/redo action is being performed (to prevent excessive console output and watcher calls)
-    var action_in_progress = false;
+    var compoud_action = false;
 
     // make sure action_types is an array
     if (!Array.isArray(action_types)) {
@@ -25,24 +25,24 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
 
     // undo action
     function undo(target, params) {
-        action_in_progress = true;
+        compoud_action = true;
         var temp_state = Object.assign({}, initial_state);
         future_actions.push(prev_actions.pop());
         prev_actions.forEach(function(action) {
             temp_state = legacy_act(temp_state, action.type, action.params);
         });
         current_state = temp_state;
-        action_in_progress = false;
+        compoud_action = false;
         return current_state
     }
 
     // redo action
     function redo(target, params) {
-        action_in_progress = true;
+        compoud_action = true;
         var action = future_actions.pop();
         prev_actions.push(action);
         current_state = legacy_act(current_state, action.type, action.params);
-        action_in_progress = false;
+        compoud_action = false;
         return current_state
     }
 
@@ -56,7 +56,7 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
     // adding undo/redo compatible logging middleware
     middleware.unshift(function(callback, state, type, params) {
         var temp = callback(state, type, params);
-        if (!action_in_progress) {
+        if (!compoud_action) {
             console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
             console.log('%c%s', 'font-size:20px;', type + ' ' + JSON.stringify(params));
             console.log('state > %c%s', 'color:#0a0;', JSON.stringify(temp));
@@ -74,11 +74,9 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
     // wrapping watchers to prevent execution on each of undo's rebuild steps
     var legacy_watchers = watchers;
     watcher = function(state, type, params) {
-        if (!action_in_progress) {
-            legacy_watchers.forEach(function(legacy_watcher) {
-                legacy_watcher(state, type, params);
-            });
-        }
+        legacy_watchers.forEach(function(legacy_watcher) {
+            legacy_watcher(state, type, params, compoud_action);
+        });
     }
 
     // creating dict object

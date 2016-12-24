@@ -24,8 +24,10 @@
         }
     }
 
-    var test_time_machine = dict_time_machine(state, actions, undefined, function() {
-        console.log('watched');
+    var test_time_machine = dict_time_machine(state, actions, undefined, function(state, type, params, compound_action) {
+        if (!compound_action) {
+            console.log('watched');
+        }
     });
 
     window.addEventListener('keydown', function(e) {
