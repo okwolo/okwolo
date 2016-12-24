@@ -12,8 +12,26 @@ function diff(original, successor) {
     // compare two objects or arrays
     if (o_type === '[object Object]' || o_type === '[object Array]') {
         var keys = Object.keys(original);
-        // TODO check for add opeation
-        /*var new_keys = Object.keys(successor);*/
+        var new_keys = Object.keys(successor);
+        // creating union of both arrays of keys
+        if (o_type === '[object Array]') {
+            var length_difference = new_keys.length - keys.length;
+            if (length_difference > 0) {
+                for (let i = length_difference; i > 0 ; --i) {
+                    keys.push(new_keys[new_keys.length - i]);
+                }
+            }
+        } else {
+            var keys_obj = {};
+            keys.forEach(function(key) {
+                keys_obj[key] = true;
+            });
+            new_keys.forEach(function(key) {
+                if (!keys_obj[key]) {
+                    keys.push(key);
+                }
+            });
+        }
         return keys.reduce(function(accumulator, key) {
             var temp = diff(original[key], successor[key]);
             if (temp !== true) {
@@ -40,52 +58,22 @@ function diff(original, successor) {
 
 console.log(JSON.stringify(diff(
     {
-        m:[
-            1
-        ],
-        a:1,
-        b:[
-            0,
-            'a',
-            5,
-            {
-                a:3,
-                b:{
-                    c:{
-                        d:{
-                            e:1
-                        },
-                        x:0
-                    }
-                }
+        a: {
+            m: {
+                a:2,
+                b:1
             }
-        ],
-        c:'aasdfdsfs',
-        n: undefined,
-        xx: 'sdsd'
-    }, {
-        m:{
-            '0':1
         },
-        a:3,
-        b:[
-            0,
-            2,
-            5,
-            {
-                a:3,
-                b:{
-                    c:{
-                        d:{
-                            e:12
-                        },
-                        x:1
-                    }
-                }
+        c: 0,
+        z: [0, 2]
+    }, {
+        a: {
+            m: {
+                a:1,
+                c:1
             }
-        ],
-        c:'aasdfdsfs',
-        n: null,
-        pp: ['a']
+        },
+        b: 0,
+        z: [0, 2, 3]
     }
 )));
