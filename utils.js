@@ -1,3 +1,9 @@
+function deep_copy(object) {
+    // TODO : make a more elegant solution
+    return JSON.parse(JSON.stringify(object));
+}
+
+
 function diff(original, successor) {
 
     // get types
@@ -7,6 +13,11 @@ function diff(original, successor) {
     // reject when different types
     if (o_type !== s_type) {
         return false;
+    }
+
+    // functions are considered equal
+    if (o_type === '[object Function]') {
+        return true;
     }
 
     // compare two objects or arrays
