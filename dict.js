@@ -121,7 +121,8 @@ var dict = function(action_types, middleware, watchers) {
         return local_state;
     }
 
+    // returning public functions
     return {
-        act: act,
+        act: act
     }
 }
