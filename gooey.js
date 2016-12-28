@@ -8,16 +8,16 @@ var draw = function(target, create, initial_state) {
     if (!target instanceof Node) {
         throw new Error('target is not a DOM node');
     }
-    if (typeof render !== 'function') {
-        throw new Error('render attribute is not a function');
+    if (typeof create !== 'function') {
+        throw new Error('create attribute is not a function');
     }
 
     // create vdom
-    vdom = create(initial_state);
+    vdom = render(create(initial_state));
 
     // initial render to DOM
     target.innerHTML = '';
-    target.appendChild(render(vdom));
+    target.appendChild(vdom.DOM);
 
     // recursively creates DOM elements from vdom object
     /*{
@@ -27,11 +27,9 @@ var draw = function(target, create, initial_state) {
         children: []
     }*/
     function render(velem) {
-        if (typeof velem === 'string') {
-            return document.createTextNode(velem);
-        }
         if (!velem.tagName) {
-            return null;
+            velem.DOM = document.createTextNode(velem.text);
+            return velem;
         }
         var element = document.createElement(velem.tagName);
         if (velem.attributes) {
@@ -45,63 +43,72 @@ var draw = function(target, create, initial_state) {
             });
         }
         if (velem.children) {
-            velem.children.forEach(function(child) {
-                element.appendChild(render(child));
+            velem.children.forEach(function(child, index) {
+                velem.children[index] = render(child);
+                element.appendChild(velem.children[index].DOM);
             });
         }
         velem.DOM = element;
-        return element;
+        return velem;
     }
 
-    // update vdom and real dom to new state
     function update(new_state) {
-        var new_vdom = create(new_state);
-        var changes = diff(vdom, new_vdom, {
-            DOM: true
-        });
-        console.log(vdom, new_vdom, diff(vdom, new_vdom, {
-            DOM: true
-        }));
-        if (changes === true) {
-            return;
-        }
-        console.log(JSON.stringify(changes));
-        changes.forEach(function(address) {
-            var last_parent_of_DOM = null;
-            var temp = vdom;
-            address.forEach(function(key, index) {
-                if (temp.DOM !== undefined) {
-                    last_parent_of_DOM = index-1;
-                }
-                temp = temp[key];
-            });
-            var current_node = vdom;
-            var new_node = new_vdom;
-            var change_address = address.slice(0, last_parent_of_DOM+1);
-            change_address.forEach(function(key, index) {
-                if (index !== last_parent_of_DOM) {
-                    current_node = current_node[key];
-                    new_node = new_node[key];
+        var vdom2 = create(new_state);
+        make_changes(vdom, vdom2, {});
+        function make_changes(original, successor, original_parent, index_parent) {
+            if ((original === undefined && successor === undefined) || original_parent === undefined) {
+                return;
+            }
+            if (original === undefined) {
+                // add
+                original_parent.children[index_parent] = render(successor);
+                original_parent.DOM.appendChild(original_parent.children[index_parent].DOM);
+            } else if (successor === undefined) {
+                // remove
+                original_parent.DOM.removeChild(original.DOM);
+                original_parent.children.splice(original_parent.children.length-1,1);
+            } else if (original.tagName !== successor.tagName) {
+                // replace
+                var old_dom = original.DOM;
+                original_parent.children[index_parent] = render(successor);
+                original_parent.DOM.replaceChild(original_parent.children[index_parent].DOM, old_dom);
+            } else {
+                // edit
+                if (original.DOM.nodeType === 3) {
+                    if (original.text !== successor.text) {
+                        original.DOM.nodeValue = successor.text;
+                        original.text = successor.text;
+                    }
                 } else {
-                    var DOM_node = current_node[key].DOM;
-                    var parent = DOM_node.parentNode;
-                    if (current_node[key] !== undefined && new_node[key] !== undefined) {
-                        delete current_node[key];
-                        current_node[key] = new_node[key];
-                        var DOM = render(new_node[key]);
-                        current_node[key].DOM = DOM;
-                        parent.replaceChild(DOM, DOM_node);
-                    } else if (current_node[key] !== undefined) {
-                        delete current_node[key];
-                        DOM_node.remove();
-                    } else {
-                        current_node[key] = new_node[key];
-                        var DOM = render(new_node[key]);
-                        parent.appendChild(DOM);
+                    var style = diff(original.style, successor.style);
+                    var attributes = diff(original.attributes, successor.attributes);
+                    if (style.length !== undefined) {
+                        original.DOM.style.cssText = null;
+                        style.forEach(function(key) {
+                            original.style[key] = successor.style[key];
+                            original.DOM.style[key] = successor.style[key];
+                        });
+                    }
+                    if (attributes.length !== undefined) {
+                        attributes.forEach(function(key) {
+                            original.attributes[key] = successor.attributes[key];
+                            original.DOM[key] = successor.attributes[key];
+                        });
                     }
                 }
-            });
-        });
+            }
+            var len_original = (original && original.children && original.children.length) || 0;
+            var len_successor = (successor && successor.children && successor.children.length) || 0;
+            var len = Math.max(len_original, len_successor);
+            for (var i = 0; i < len; ++i) {
+                make_changes(
+                    original && original.children && original.children[i],
+                    successor && successor.children && successor.children[i],
+                    original,
+                    i
+                );
+            }
+        }
     }
 
     function diff(original, successor, ignore) {
@@ -175,24 +182,24 @@ var draw = function(target, create, initial_state) {
 function draw_my_app(args) {
     return {
         tagName: 'div',
-        children: [{
-            tagName: 'div',
-            children: args.spans.map(function(span, index) {
-                return {
-                    tagName: 'span',
-                    style: {
-                        color: span.color,
-                        display: 'block'
+        children: args.spans.map(function(span, index) {
+            return {
+                tagName: 'span',
+                style: {
+                    color: span.color,
+                    display: 'block',
+                    fontSize: span.fontSize
+                },
+                children: [
+                    {
+                        text: span.content
                     },
-                    children: [
-                        span.content,
-                        {
-                            tagName: 'br'
-                        }
-                    ]
-                }
-            })
-        }]
+                    {
+                        tagName: 'br'
+                    }
+                ]
+            }
+        })
     }
 }
 
@@ -203,19 +210,42 @@ var app = draw(document.body, draw_my_app, {
             color: 'red'
         },
         {
-            content: 'test2',
-            color: 'green'
-        },
+            content: 'test',
+            color: 'red'
+        }/*,
         {
             content: 'test3',
             color: 'blue'
-        }/*,
+        },
         {
             content: 'test4',
             color: 'red'
         }*/
     ]
 });
+
+setTimeout(function() {
+    app.update({
+        spans: [
+            {
+                content: 'test1',
+                color: 'red'
+            },
+            {
+                content: 'test',
+                fontSize: '10px'
+            },
+            {
+                content: 'test3',
+                color: 'blue'
+            },
+            {
+                content: 'test4',
+                color: 'blue'
+            }
+        ]
+    })
+}, 600);
 
 
 setTimeout(function() {
@@ -232,11 +262,34 @@ setTimeout(function() {
             {
                 content: 'test3.2',
                 color: 'green'
-            }/*,
+            },
             {
                 content: 'test4.2',
                 color: 'blue'
-            }*/
+            }
         ]
     })
-}, 1000);
+}, 1200);
+
+setTimeout(function() {
+    app.update({
+        spans: [
+            {
+                content: 'test1.2',
+                color: 'blue'
+            },
+            {
+                content: 'test2',
+                color: 'red'
+            },
+            {
+                content: 'test3.2',
+                color: 'green'
+            },
+            {
+                content: 'test4.3',
+                color: 'green'
+            }
+        ]
+    })
+}, 1800);
