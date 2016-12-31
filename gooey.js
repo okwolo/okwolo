@@ -1,4 +1,4 @@
-//
+// returns a rendering object that exposes an update function
 var draw = function(target, create, initial_state) {
 
     // storing vdom
@@ -52,9 +52,9 @@ var draw = function(target, create, initial_state) {
         return velem;
     }
 
+    // update vdom and real DOM to new state
     function update(new_state) {
-        var vdom2 = create(new_state);
-        make_changes(vdom, vdom2, {});
+        make_changes(vdom, create(new_state), {});
         function make_changes(original, successor, original_parent, index_parent) {
             if ((original === undefined && successor === undefined) || original_parent === undefined) {
                 return;
@@ -66,7 +66,7 @@ var draw = function(target, create, initial_state) {
             } else if (successor === undefined) {
                 // remove
                 original_parent.DOM.removeChild(original.DOM);
-                original_parent.children.splice(original_parent.children.length-1,1);
+                original_parent.children.splice(index_parent,1);
             } else if (original.tagName !== successor.tagName) {
                 // replace
                 var old_dom = original.DOM;
@@ -84,7 +84,7 @@ var draw = function(target, create, initial_state) {
                     var attributes = diff(original.attributes, successor.attributes);
                     if (style.length !== undefined) {
                         original.DOM.style.cssText = null;
-                        style.forEach(function(key) {
+                        Object.keys(successor.style).forEach(function(key) {
                             original.style[key] = successor.style[key];
                             original.DOM.style[key] = successor.style[key];
                         });
@@ -111,8 +111,9 @@ var draw = function(target, create, initial_state) {
         }
     }
 
+    // check differences between two objects
     function diff(original, successor, ignore) {
-        // making sure ignore is defined
+        // making sure ignore variable is defined
         ignore = ignore || {};
         // get types
         var o_type = Object.prototype.toString.call(original);
@@ -121,9 +122,9 @@ var draw = function(target, create, initial_state) {
         if (o_type !== s_type) {
             return false;
         }
-        // functions are considered equal
+        // functions are never considered equal
         if (o_type === '[object Function]') {
-            return true;
+            return false;
         }
         // compare two objects or arrays
         if (o_type === '[object Object]' || o_type === '[object Array]') {
@@ -178,118 +179,3 @@ var draw = function(target, create, initial_state) {
         update: update
     }
 }
-
-function draw_my_app(args) {
-    return {
-        tagName: 'div',
-        children: args.spans.map(function(span, index) {
-            return {
-                tagName: 'span',
-                style: {
-                    color: span.color,
-                    display: 'block',
-                    fontSize: span.fontSize
-                },
-                children: [
-                    {
-                        text: span.content
-                    },
-                    {
-                        tagName: 'br'
-                    }
-                ]
-            }
-        })
-    }
-}
-
-var app = draw(document.body, draw_my_app, {
-    spans: [
-        {
-            content: 'test1',
-            color: 'red'
-        },
-        {
-            content: 'test',
-            color: 'red'
-        }/*,
-        {
-            content: 'test3',
-            color: 'blue'
-        },
-        {
-            content: 'test4',
-            color: 'red'
-        }*/
-    ]
-});
-
-setTimeout(function() {
-    app.update({
-        spans: [
-            {
-                content: 'test1',
-                color: 'red'
-            },
-            {
-                content: 'test',
-                fontSize: '10px'
-            },
-            {
-                content: 'test3',
-                color: 'blue'
-            },
-            {
-                content: 'test4',
-                color: 'blue'
-            }
-        ]
-    })
-}, 600);
-
-
-setTimeout(function() {
-    app.update({
-        spans: [
-            {
-                content: 'test1.2',
-                color: 'blue'
-            },
-            {
-                content: 'test2',
-                color: 'green'
-            },
-            {
-                content: 'test3.2',
-                color: 'green'
-            },
-            {
-                content: 'test4.2',
-                color: 'blue'
-            }
-        ]
-    })
-}, 1200);
-
-setTimeout(function() {
-    app.update({
-        spans: [
-            {
-                content: 'test1.2',
-                color: 'blue'
-            },
-            {
-                content: 'test2',
-                color: 'red'
-            },
-            {
-                content: 'test3.2',
-                color: 'green'
-            },
-            {
-                content: 'test4.3',
-                color: 'green'
-            }
-        ]
-    })
-}, 1800);

@@ -2,8 +2,8 @@
 var dict_time_machine = function(initial_state, action_types, middleware, watchers) {
 
     // storing initial state
-    initial_state = deep_copy(initial_state);
-    var current_state = deep_copy(initial_state);
+    initial_state = JSON.parse(JSON.stringify(initial_state));
+    var current_state = JSON.parse(JSON.stringify(initial_state));
 
     // storing action history and undone action history
     var prev_actions = [];
@@ -26,7 +26,7 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
     // undo action
     function undo(target, params) {
         compoud_action = true;
-        var temp_state = deep_copy(initial_state);
+        var temp_state = JSON.parse(JSON.stringify(initial_state));
         future_actions.push(prev_actions.pop());
         prev_actions.forEach(function(action) {
             temp_state = legacy_act(temp_state, action.type, action.params);
@@ -74,9 +74,11 @@ var dict_time_machine = function(initial_state, action_types, middleware, watche
     // wrapping watchers to prevent execution on each of undo's rebuild steps
     var legacy_watchers = watchers;
     watcher = function(state, type, params) {
-        legacy_watchers.forEach(function(legacy_watcher) {
-            legacy_watcher(state, type, params, compoud_action);
-        });
+        if (!compoud_action) {
+            legacy_watchers.forEach(function(legacy_watcher) {
+                legacy_watcher(state, type, params);
+            });
+        }
     }
 
     // creating dict object

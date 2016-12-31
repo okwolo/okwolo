@@ -75,7 +75,7 @@ var dict = function(action_types, middleware, watchers) {
 
     // execute() wrapper that applies middleware and calls watchers
     function act(state, type, params) {
-        var state = deep_copy(state);
+        var state = JSON.parse(JSON.stringify(state));
         if (params === undefined) {
             params = {};
         }
@@ -85,23 +85,23 @@ var dict = function(action_types, middleware, watchers) {
                 return current_middleware(funcs[index], state, type, params);
             });
         });
-        state = deep_copy(funcs[middleware.length](state, type, params));
+        state = JSON.parse(JSON.stringify(funcs[middleware.length](state, type, params)));
         watchers.forEach(function(watcher) {
-            watcher(deep_copy(state), type, params);
+            watcher(JSON.parse(JSON.stringify(state)), type, params);
         });
         return state;
     }
 
     // exectute an action on the state
     function execute(state, type, params) {
-        var local_state = deep_copy(state);
+        var local_state = JSON.parse(JSON.stringify(state));
         action_types.forEach(function(current_action_types, i) {
             var action = current_action_types[type];
             if (!action) {
                 return;
             }
             action.forEach(function(current_action) {
-            var target = deep_copy(local_state);
+            var target = JSON.parse(JSON.stringify(local_state));
                 current_action.target.forEach(function(key, k) {
                     if (target[key] !== undefined) {
                         target = target[key];
