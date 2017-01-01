@@ -10,9 +10,6 @@
         }]
     }
 
-    // create rendering object
-    var app = draw(document.body, draw_my_app, state);
-
     // define redering of state
     function draw_my_app(args) {
         return {
@@ -22,7 +19,7 @@
                     tagName: 'span',
                     attributes: {
                         onclick: function() {
-                            test_time_machine.act('REM', index);
+                            app.act('REM', index);
                         }
                     },
                     style: {
@@ -75,25 +72,29 @@
         }
     }
 
-    // create time machine object
-    var test_time_machine = dict_time_machine(state, actions, undefined, app.update);
+    var app = goo({
+        target: document.body,
+        builder: draw_my_app,
+        state: state,
+        actions: actions
+    });
 
     // bind key events to actions
     window.addEventListener('keydown', function(e) {
         if (e.key === 'z') {
-            test_time_machine.act('UNDO');
+            app.act('UNDO');
         } else if (e.key === 'x') {
-            test_time_machine.act('REDO');
+            app.act('REDO');
         } else if (e.key === '+') {
-            test_time_machine.act('ADD', 1);
+            app.act('ADD', 1);
         } else if (e.key === '-') {
-            test_time_machine.act('SUB', 1);
+            app.act('SUB', 1);
         } else if (e.key === '*') {
-            test_time_machine.act('MUL', 2);
+            app.act('MUL', 2);
         } else if (e.key === '/') {
-            test_time_machine.act('DIV', 2);
+            app.act('DIV', 2);
         } else if (e.key === 'a') {
-            test_time_machine.act('APP', Math.random());
+            app.act('APP', Math.random());
         }
     });
 
