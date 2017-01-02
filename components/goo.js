@@ -321,57 +321,61 @@ var goo = function(arguments) {
         function update(new_state) {
             make_changes(vdom, create(new_state), {});
             function make_changes(original, successor, original_parent, index_parent) {
-                if ((original === undefined && successor === undefined) || original_parent === undefined) {
+                if (original === undefined && successor === undefined) {
                     return;
                 }
                 if (original === undefined) {
                     // add
                     original_parent.children[index_parent] = render(successor);
                     original_parent.DOM.appendChild(original_parent.children[index_parent].DOM);
+                    return 'add';
                 } else if (successor === undefined) {
                     // remove
                     original_parent.DOM.removeChild(original.DOM);
                     original_parent.children.splice(index_parent,1);
-                } else if (original.tagName !== successor.tagName) {
-                    // replace
-                    var old_dom = original.DOM;
-                    original_parent.children[index_parent] = render(successor);
-                    original_parent.DOM.replaceChild(original_parent.children[index_parent].DOM, old_dom);
+                    return 'remove';
                 } else {
-                    // edit
-                    if (original.DOM.nodeType === 3) {
-                        if (original.text !== successor.text) {
-                            original.DOM.nodeValue = successor.text;
-                            original.text = successor.text;
-                        }
+                    if (original.tagName !== successor.tagName) {
+                        // replace
+                        var old_dom = original.DOM;
+                        original_parent.children[index_parent] = render(successor);
+                        original_parent.DOM.replaceChild(original_parent.children[index_parent].DOM, old_dom);
+                        return 'replace';
                     } else {
-                        var style = diff(original.style, successor.style);
-                        var attributes = diff(original.attributes, successor.attributes);
-                        if (style.length !== undefined) {
-                            original.DOM.style.cssText = null;
-                            Object.keys(successor.style).forEach(function(key) {
-                                original.style[key] = successor.style[key];
-                                original.DOM.style[key] = successor.style[key];
-                            });
-                        }
-                        if (attributes.length !== undefined) {
-                            attributes.forEach(function(key) {
-                                original.attributes[key] = successor.attributes[key];
-                                original.DOM[key] = successor.attributes[key];
-                            });
+                        // edit
+                        if (original.DOM.nodeType === 3) {
+                            if (original.text !== successor.text) {
+                                original.DOM.nodeValue = successor.text;
+                                original.text = successor.text;
+                            }
+                        } else {
+                            var style = diff(original.style, successor.style);
+                            var attributes = diff(original.attributes, successor.attributes);
+                            if (style.length !== undefined) {
+                                original.DOM.style.cssText = null;
+                                Object.keys(successor.style).forEach(function(key) {
+                                    original.style[key] = successor.style[key];
+                                    original.DOM.style[key] = successor.style[key];
+                                });
+                            }
+                            if (attributes.length !== undefined) {
+                                attributes.forEach(function(key) {
+                                    original.attributes[key] = successor.attributes[key];
+                                    original.DOM[key] = successor.attributes[key];
+                                });
+                            }
                         }
                     }
-                }
-                var len_original = (original && original.children && original.children.length) || 0;
-                var len_successor = (successor && successor.children && successor.children.length) || 0;
-                var len = Math.max(len_original, len_successor);
-                for (var i = 0; i < len; ++i) {
-                    make_changes(
-                        original && original.children && original.children[i],
-                        successor && successor.children && successor.children[i],
-                        original,
-                        i
-                    );
+                    var original_length = original.children && original.children.length || 0;
+                    var successor_length = successor.children && successor.children.length || 0;
+                    var len = Math.max(original_length, successor_length);
+                    for (var i = 0; i < len; ++i) {
+                        var temp = make_changes(original.children[i],successor.children[i],original,i);
+                        if (temp === 'remove') {
+                            --i;
+                        }
+                    }
+                    return 'edit';
                 }
             }
         }
