@@ -1,35 +1,42 @@
-var goo = function(arguments) {
+var goo = function(arguments, options) {
 
 /*
-    target
-    builder
-    state
-    actions
-    middleware
-    watchers
+    arguments = {
+        target
+        builder
+        state
+        actions
+        middleware
+        watchers
+    }
+
+    options = {
+        history_length
+        history_buffer
+        state_log
+    }
 */
 
-    arguments.watchers = arguments.watchers || [];
+    // make sure options is defined
+    options = options || {};
 
     // make sure watchers is an array
-    if (!Array.isArray(arguments.watchers)) {
+    if (arguments.watchers === undefined) {
+        arguments.watchers = [];
+    } else if (!Array.isArray(arguments.watchers)) {
         arguments.watchers = [arguments.watchers];
     }
 
-    // make sure watchers are all functions
-    arguments.watchers.forEach(function(current_watcher, i) {
-        if (typeof current_watcher !== 'function') {
-            throw new Error(`Watcher at index ${i} is not a function`);
-        }
-    });
+    // creates the DOM controller
+    var _gooey = gooey(arguments.target, arguments.builder, arguments.state);
 
-    var app = draw(arguments.target, arguments.builder, arguments.state);
+    // add DOM controller's update function to the state watchers
+    arguments.watchers.push(_gooey.update);
 
-    arguments.watchers.push(app.update);
-
+    // creates state controller
     var state_manager = dict_time_machine(arguments.state, arguments.actions, arguments.middleware, arguments.watchers);
 
-    // returns a state wrapper which be read, and modified through actions
+    // creates an object that acts on a state
     function dict(action_types, middleware, watchers) {
 
         // default values for all arguments
@@ -152,14 +159,25 @@ var goo = function(arguments) {
             return local_state;
         }
 
-        // returning public functions
         return {
             act: act
         }
     }
 
-    // dict function wrapper that adds undo/redo actions
+    // dict wrapper that adds undo/redo actions
     function dict_time_machine(initial_state, action_types, middleware, watchers) {
+
+        // history length (large numbers can cause performance issues)
+        var history_length = options.history_length || 20;
+
+        // number of actions over history_length after which initial_state will be updated
+        var history_buffer = options.history_buffer;
+        if (history_buffer === undefined) {
+            history_buffer = 5;
+        } else if (history_buffer < 1) {
+            history_buffer = 1;
+            --history_length;
+        }
 
         // storing initial state
         initial_state = JSON.parse(JSON.stringify(initial_state));
@@ -169,7 +187,7 @@ var goo = function(arguments) {
         var prev_actions = [];
         var future_actions = [];
 
-        // flag to track whether an undo/redo action is being performed (to prevent excessive console output and watcher calls)
+        // flag to track whether an undo/redo action is being performed (to prevent watcher calls)
         var compoud_action = false;
 
         // make sure action_types is an array
@@ -206,23 +224,28 @@ var goo = function(arguments) {
             return current_state
         }
 
-        // make sure middleware is an array
-        if (middleware === undefined) {
-            middleware = [];
-        } else if (!Array.isArray(middleware)) {
-            middleware = [middleware];
-        }
+        // optional console logging of all actions
+        if (options.state_log === true) {
 
-        // adding undo/redo compatible logging middleware
-        middleware.unshift(function(callback, state, type, params) {
-            var temp = callback(state, type, params);
-            if (!compoud_action) {
-                console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
-                console.log('%c%s', 'font-size:20px;', type + ' ' + JSON.stringify(params));
-                console.log('state > %c%s', 'color:#0a0;', JSON.stringify(temp));
+            // make sure middleware is an array
+            if (middleware === undefined) {
+                middleware = [];
+            } else if (!Array.isArray(middleware)) {
+                middleware = [middleware];
             }
-            return temp;
-        });
+
+            // adding undo/redo compatible logging middleware
+            middleware.unshift(function(callback, state, type, params) {
+                var temp = callback(state, type, params);
+                if (!compoud_action) {
+                    console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
+                    console.log('%c%s', 'font-size:20px;', type + ' ' + JSON.stringify(params));
+                    console.log('state > %c%s', 'color:#0a0;', JSON.stringify(temp));
+                }
+                return temp;
+            });
+
+        }
 
         // make sure watchers is an array
         if (watchers === undefined) {
@@ -253,6 +276,14 @@ var goo = function(arguments) {
                         type: type,
                         params: params
                     });
+                    if (prev_actions.length > history_length + history_buffer) {
+                        compoud_action = true;
+                        for (let i = 0; i < history_buffer; ++i) {
+                            var action = prev_actions.shift();
+                            initial_state = legacy_act(initial_state, action.type, action.params);
+                        }
+                        compoud_action = false;
+                    }
                     future_actions = [];
                 }
                 current_state = legacy_act(current_state, type, params);
@@ -263,8 +294,8 @@ var goo = function(arguments) {
         return dict_time_machine;
     }
 
-    // returns a rendering object that exposes an update function
-    function draw(target, create, initial_state) {
+    // creates a DOM controller with update function
+    function gooey(target, create, initial_state) {
 
         // storing vdom
         var vdom = {};
@@ -319,8 +350,8 @@ var goo = function(arguments) {
 
         // update vdom and real DOM to new state
         function update(new_state) {
-            make_changes(vdom, create(new_state), {});
-            function make_changes(original, successor, original_parent, index_parent) {
+            _update(vdom, create(new_state), {});
+            function _update(original, successor, original_parent, index_parent) {
                 if (original === undefined && successor === undefined) {
                     return;
                 }
@@ -370,7 +401,7 @@ var goo = function(arguments) {
                     var successor_length = successor.children && successor.children.length || 0;
                     var len = Math.max(original_length, successor_length);
                     for (var i = 0; i < len; ++i) {
-                        var temp = make_changes(original.children[i],successor.children[i],original,i);
+                        var temp = _update(original.children[i],successor.children[i],original,i);
                         if (temp === 'remove') {
                             --i;
                         }
@@ -443,7 +474,6 @@ var goo = function(arguments) {
             return original === successor;
         }
 
-        // returning public funcitons
         return {
             update: update
         }
