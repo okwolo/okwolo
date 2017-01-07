@@ -1,7 +1,7 @@
-var goo = function(arguments, options) {
+var goo = function(args, options) {
 
 /*
-    arguments = {
+    args = {
         target
         builder
         state
@@ -17,24 +17,21 @@ var goo = function(arguments, options) {
     }
 */
 
-    // make sure options is defined
-    options = options || {};
+    // creates the DOM controller
+    var _gooey = gooey(args.target, args.builder, args.state);
 
     // make sure watchers is an array
-    if (arguments.watchers === undefined) {
-        arguments.watchers = [];
-    } else if (!Array.isArray(arguments.watchers)) {
-        arguments.watchers = [arguments.watchers];
+    if (args.watchers === undefined) {
+        args.watchers = [];
+    } else if (!Array.isArray(args.watchers)) {
+        args.watchers = [args.watchers];
     }
 
-    // creates the DOM controller
-    var _gooey = gooey(arguments.target, arguments.builder, arguments.state);
+    // add DOM controller's update function to the watchers
+    args.watchers.push(_gooey.update);
 
-    // add DOM controller's update function to the state watchers
-    arguments.watchers.push(_gooey.update);
-
-    // creates state controller
-    var state_manager = dict_time_machine(arguments.state, arguments.actions, arguments.middleware, arguments.watchers);
+    // creates state manager
+    var state_manager = dict_time_machine(args.state, args.actions, args.middleware, args.watchers, options || {});
 
     // creates an object that acts on a state
     function dict(action_types, middleware, watchers) {
@@ -165,7 +162,7 @@ var goo = function(arguments, options) {
     }
 
     // dict wrapper that adds undo/redo actions
-    function dict_time_machine(initial_state, action_types, middleware, watchers) {
+    function dict_time_machine(initial_state, action_types, middleware, watchers, options) {
 
         // history length (large numbers can cause performance issues)
         var history_length = options.history_length || 20;
@@ -317,10 +314,11 @@ var goo = function(arguments, options) {
 
         // recursively creates DOM elements from vdom object
         /*{
-            tagName: '',
-            attributes: {},
-            style: {},
-            children: []
+            tagName: ''
+            attributes: {}
+            style: {}
+            children: [] || {}
+            DOM: <Node />
         }*/
         function render(velem) {
             if (!velem.tagName) {
@@ -339,9 +337,9 @@ var goo = function(arguments, options) {
                 });
             }
             if (velem.children) {
-                velem.children.forEach(function(child, index) {
-                    velem.children[index] = render(child);
-                    element.appendChild(velem.children[index].DOM);
+                Object.keys(velem.children).forEach(function(key) {
+                    velem.children[key] = render(velem.children[key]);
+                    element.appendChild(velem.children[key].DOM);
                 });
             }
             velem.DOM = element;
@@ -359,19 +357,16 @@ var goo = function(arguments, options) {
                     // add
                     original_parent.children[index_parent] = render(successor);
                     original_parent.DOM.appendChild(original_parent.children[index_parent].DOM);
-                    return 'add';
                 } else if (successor === undefined) {
                     // remove
                     original_parent.DOM.removeChild(original.DOM);
-                    original_parent.children.splice(index_parent,1);
-                    return 'remove';
+                    original_parent.children[index_parent] = undefined;
                 } else {
                     if (original.tagName !== successor.tagName) {
                         // replace
                         var old_dom = original.DOM;
                         original_parent.children[index_parent] = render(successor);
                         original_parent.DOM.replaceChild(original_parent.children[index_parent].DOM, old_dom);
-                        return 'replace';
                     } else {
                         // edit
                         if (original.DOM.nodeType === 3) {
@@ -397,16 +392,14 @@ var goo = function(arguments, options) {
                             }
                         }
                     }
-                    var original_length = original.children && original.children.length || 0;
-                    var successor_length = successor.children && successor.children.length || 0;
-                    var len = Math.max(original_length, successor_length);
-                    for (var i = 0; i < len; ++i) {
-                        var temp = _update(original.children[i],successor.children[i],original,i);
-                        if (temp === 'remove') {
-                            --i;
+                    var keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
+                    var visited = {};
+                    keys.forEach(function(key) {
+                        if (visited[key] === undefined) {
+                            visited[key] = true;
+                            _update(original.children[key],successor.children[key],original,key);
                         }
-                    }
-                    return 'edit';
+                    });
                 }
             }
         }
