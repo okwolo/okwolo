@@ -16,7 +16,7 @@ This goo object can now be used to update an application using it's `.act` funct
 app.act(action_type, params);
 ```
 
-Calling this act function will update the state of the app and the DOM that is being rendered.
+Calling this act function will update the state of the app and goo will attempt to update the DOM with the smallest possible number of actions using virtual DOM diffing.
 
 # `args`
 
@@ -165,7 +165,7 @@ The `children` property can be either a key/value object or an array. When it is
 
 A single function or an array of functions that are given full control of an action on the state.
 
-Before an action is done on the state, it is first through each of the middleware functions. In the case of an array of functions, each middleware function is nested within the previous one to allow async operations.
+Before an action is done on the state, it is first passed through all the middleware functions. In the case of an array of functions, each middleware function is nested within the previous one to allow async operations.
 
 A middleware function takes the form:
 
@@ -178,7 +178,7 @@ function middleware(callback, state, action_type, params) {
 }
 ```
 
-This syntax gives full control to the middleware, allowing it to read, edit, cancel or perform async operations for any action.
+This syntax allowins middleware to read, edit, cancel or perform async operations for any action.
 
 ### `watchers`
 
@@ -198,9 +198,13 @@ The state argument given to the watcher functions is a deep copy of the current 
 
 Instead of storing the whole state of an application after each action, goo stores only the action itself (action_type and params). When an undo action is called, all previous actions (except the one being undone) since the last buffer reset are called on the most distant state. On an redo action, only the most recently undone action is called on the current state. This approach is useful to save on memory space since only one full state and a finite amount of actions are stored.
 
-For example, if the `history_length` is set to 20 and the `history_buffer` is set to 5. Every time the undo stack reaches 25, the five oldest actions are done on the most distant state to bring it to what it was 20 actions prior. The buffer can be disabled by setting the `history_buffer` to a value of 0 to keep history until exactly `history_length` actions ago. The actions to reset the buffer or to bring back the state to one action prior with undo operate in the same way regular actions would, except that they do not call the watcher functions. Only the entire "undo" or "redo" action will be watched, but middleware will be called for each hidden action.
+For example, if the `history_length` is set to 20 and the `history_buffer` is set to 5. Every time the undo stack reaches 25, the five oldest actions are done on the most distant state to bring it to what it was 20 actions prior to the current state.
 
-Although this approach has its benefits, it can cause issues when watchers or middleware functions that have side-effects. For this reason, a traditional state history will be added as an alternative for applications that cannot not operate properly with the standard behavior.
+The buffer can be disabled by setting the `history_buffer` to a value of 0. This will make goo keep a history until exactly `history_length` actions ago.
+
+The actions to reset the buffer or to bring back the state to one action prior with undo operate in the same way regular actions would, except that they do not call the watcher functions. Only the entire "undo" or "redo" action will be watched, but middleware will be called for each hidden action.
+
+Although this approach has its benefits, it can cause issues with watchers or middleware functions that have side-effects. For this reason, a traditional state history will be added as an alternative for applications that cannot not operate properly with the standard behavior.
 
 # `options`
 
