@@ -1,22 +1,5 @@
 var goo = function(args, options) {
 
-/*
-    args = {
-        target
-        builder
-        state
-        actions
-        middleware
-        watchers
-    }
-
-    options = {
-        history_length
-        history_buffer
-        state_log
-    }
-*/
-
     // creates the DOM controller
     var _gooey = gooey(args.target, args.builder, args.state);
 
@@ -116,7 +99,7 @@ var goo = function(args, options) {
             }
             var funcs = [execute];
             middleware.reverse().forEach(function(current_middleware, index) {
-                funcs[index+1] = (function(state, type, params) {
+                funcs[index + 1] = (function(state, type, params) {
                     return current_middleware(funcs[index], state, type, params);
                 });
             });
@@ -136,7 +119,7 @@ var goo = function(args, options) {
                     return;
                 }
                 action.forEach(function(current_action) {
-                var target = JSON.parse(JSON.stringify(local_state));
+                    var target = JSON.parse(JSON.stringify(local_state));
                     current_action.target.forEach(function(key, k) {
                         if (target[key] !== undefined) {
                             target = target[key];
@@ -145,7 +128,7 @@ var goo = function(args, options) {
                         }
                     });
                     target = current_action.do(target, params);
-                    for (var i = current_action.target.length-1; i >= 0; --i) {
+                    for (var i = current_action.target.length - 1; i >= 0; --i) {
                         var temp = {};
                         temp[current_action.target[i]] = target;
                         target = temp;
@@ -170,8 +153,9 @@ var goo = function(args, options) {
         // number of actions over history_length after which initial_state will be updated
         var history_buffer = options.history_buffer;
         if (history_buffer === undefined) {
-            history_buffer = 5;
-        } else if (history_buffer < 1) {
+            history_buffer = 0;
+        }
+        if (history_buffer < 1) {
             history_buffer = 1;
             --history_length;
         }
@@ -322,6 +306,9 @@ var goo = function(args, options) {
         }*/
         function render(velem) {
             if (!velem.tagName) {
+                if (velem.text === undefined) {
+                    throw new Error('invalid vdom output: tagName or text property missing');
+                }
                 velem.DOM = document.createTextNode(velem.text);
                 return velem;
             }
@@ -336,7 +323,7 @@ var goo = function(args, options) {
                     element.style[attribute] = velem.style[attribute];
                 });
             }
-            if (velem.children) {
+            if (velem.children && velem.tagName !== undefined) {
                 Object.keys(velem.children).forEach(function(key) {
                     velem.children[key] = render(velem.children[key]);
                     element.appendChild(velem.children[key].DOM);
@@ -397,7 +384,7 @@ var goo = function(args, options) {
                     keys.forEach(function(key) {
                         if (visited[key] === undefined) {
                             visited[key] = true;
-                            _update(original.children[key],successor.children[key],original,key);
+                            _update(original.children[key], successor.children[key], original, key);
                         }
                     });
                 }
@@ -427,7 +414,7 @@ var goo = function(args, options) {
                 if (o_type === '[object Array]') {
                     var length_difference = new_keys.length - keys.length;
                     if (length_difference > 0) {
-                        for (let i = length_difference; i > 0 ; --i) {
+                        for (let i = length_difference; i > 0; --i) {
                             keys.push(new_keys[new_keys.length - i]);
                         }
                     }
