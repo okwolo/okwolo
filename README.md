@@ -33,15 +33,15 @@ var args = {
 }
 ```
 
-## `target`
+### `target`
 
 An empty DOM node that will serve as the root of the application.
 
-## `state`
+### `state`
 
 The initial state of the app on which actions can be performed.
 
-## `actions`
+### `actions`
 
 The definition of all actions that the goo object can do on the state.
 
@@ -122,7 +122,7 @@ app.act('ADD_USER', {
 })
 ```
 
-## `builder`
+### `builder`
 
 A function that takes in state as an argument and returns a virtual DOM (vdom) representation of that state. The implementation details of how this function operates internally is not handled by the goo object and the only condition is that the output must be a valid vdom object.
 
@@ -161,7 +161,7 @@ All properties of a vdom_obj except the `tagName` or `text` are optional.
 
 The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed.
 
-## `middleware`
+### `middleware`
 
 A single function or an array of functions that are given full control of an action on the state.
 
@@ -180,7 +180,7 @@ function middleware(callback, state, action_type, params) {
 
 This syntax gives full control to the middleware, allowing it to read, edit, cancel or perform async operations for any action.
 
-## `watchers`
+### `watchers`
 
 A single function or an array of functions that are called in ascending order after an action has been done on the state.
 
