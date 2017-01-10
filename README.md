@@ -2,7 +2,7 @@
     <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="600"/>
 </p>
 
-GOO.js is a small framework made to quickly jumpstart projects by solving common challenges specific to web applications. A goo object handles state and the DOM representation of that state. By default it also adds actions to undo and redo state changes. Internally, goo has three components: a state reducer that does not mutate state, a wrapper for the state reducer to store the state and a DOM handler that uses virtual DOM.
+GOO.js is a small framework made to quickly jumpstart projects by solving common web application challenges. A goo object handles state and the DOM representation of that state. By default it also adds actions to undo and redo state changes. Internally, goo has three components: a state reducer that does not mutate state, a wrapper for the state reducer to store the state and a DOM handler that uses virtual DOM.
 
 Creating a goo object is done like this:
 
