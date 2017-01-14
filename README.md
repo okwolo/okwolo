@@ -164,7 +164,9 @@ var vdom_obj = {
 
 All properties of a vdom_obj except the `tagName` or `text` are optional.
 
-The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed.
+The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
+
+Events listeners (like `onclick`) can be added to the attributes object.
 
 ### `middleware`
 
@@ -177,13 +179,15 @@ A middleware function takes the form:
 ```javascript
 function middleware(callback, state, action_type, params) {
     // ...
-    var next_state = callback(state, type, params);
+    var next_state = callback(state, action_type, params);
     // ...
     return next_state;
 }
 ```
 
 This syntax allows middleware to read, edit, cancel or perform async operations for any action.
+
+Middleware functions in an array are nested so that index 0 encompases index 1.
 
 ### `watchers`
 
@@ -201,22 +205,14 @@ The state argument given to the watcher functions is a deep copy of the current 
 
 # `undo/redo`
 
-Instead of storing the whole state of an application after each action, goo stores only the action itself (action_type and params). When an undo action is called, all previous actions (except the one being undone) since the last buffer reset are done on the most distant state. On an redo action, only the most recently undone action is done on the current state. This approach is useful to save on memory space since only one full state and a finite amount of actions are stored.
-
-For example, if the `history_length` is set to 20 and the `history_buffer` is set to 5. Every time the undo stack reaches 25, the five oldest actions act on the most distant state to bring it to what it was 20 actions prior to the current state.
-
-The buffer can be disabled by setting the `history_buffer` to a value of 0. This will make goo keep a history until exactly `history_length` actions ago at all times.
-
-The actions to reset the buffer or to bring back the state to one action prior with undo operate in the same way regular actions would, except that they do not call the watcher functions. Only the entire "undo" or "redo" action will be watched, but middleware will be called for each hidden action.
-
-Although this approach has its benefits, it can cause issues with watchers or middleware functions that have side-effects. For this reason, a traditional state history will be added as an alternative for applications that cannot not operate properly with the standard behavior.
+Unless disabled in the options, a goo object will handle `UNDO` and `REDO` actions artificially through middleware.
 
 # `options`
 
 `history_compat`: use regular state history _(in development)_
 
-`history_length`: minimum length of the undo history
-
-`history_buffer`: number of actions past `history_length` after which the most distant state is caught up
+`history_length`: length of the undo history
 
 `state_log`: action type, params and before/after state in console for each action
+
+`disable_history`: disables history state history storage
