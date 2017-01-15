@@ -1,7 +1,16 @@
-var goo = function(args, options) {
+var goo = function(controllers, args, options) {
 
-    // creates the DOM controller
-    var _gooey = gooey(args.target, args.builder, args.state);
+    // make sure controllers is an array
+    if (controllers === undefined) {
+        controllers = [];
+    } else if (!Array.isArray(controllers)) {
+        controllers = [controllers];
+    }
+
+    // create DOM controller for each controller
+    var controller_updates = controllers.map(function(controller) {
+        return gooey(controller.target, controller.builder, args.state).update;
+    });
 
     // make sure watchers is an array
     if (args.watchers === undefined) {
@@ -10,11 +19,11 @@ var goo = function(args, options) {
         args.watchers = [args.watchers];
     }
 
-    // add DOM controller's update function to the watchers
-    args.watchers.push(_gooey.update);
+    // concat watcher array and controller update array
+    controller_updates = args.watchers.concat(controller_updates);
 
     // creates state manager
-    var state_manager = dict_time_machine(args.state, args.actions, args.middleware, args.watchers, options || {});
+    var state_manager = dict_time_machine(args.state, args.actions, args.middleware, controller_updates, options || {});
 
     // creates an object that acts on a state
     function dict(action_types, middleware, watchers, options) {

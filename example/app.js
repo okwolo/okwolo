@@ -52,9 +52,10 @@
     // creating goo object
     const app = goo({
         target: document.querySelector('.task-list'),
+        builder: build,
+    },{
         state: state,
         actions: actions,
-        builder: build,
         watchers: saveState,
     }, {
         state_log: true,

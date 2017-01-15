@@ -4,10 +4,12 @@
 
 GOO.js is a small framework made to quickly jumpstart projects by solving common web application challenges. A goo object handles state and the DOM representation of that state. By default it also adds actions to undo and redo state changes. Internally, goo has three components: a state reducer that does not mutate state, a wrapper for the state reducer to store the state and a DOM handler that uses virtual DOM.
 
+Live version of the to-do list example project [here](https://g-harel.github.io/GOO/)
+
 Creating a goo object is done like this:
 
 ```javascript
-var app = goo(args[, options]);
+var app = goo(controllers, args[, options]);
 ```
 
 This goo object can now be used to update an application using it's `.act` function:
@@ -18,24 +20,94 @@ app.act(action_type, params);
 
 Calling this act function will update the state of the app and goo will attempt to update the DOM with the smallest possible number of actions using virtual DOM diffing.
 
+# `controllers`
+
+The `controllers` argument specifies the containers for each distinct component of the app as well as the builder function associated with it. This variable can take the form of an object or can be an array of objects if there are more than one.
+
+```javascript
+// single controller
+var controllers = {
+    target: // ...
+    builder: // ...
+}
+
+// multiple controllers
+var controllers = [
+    {
+        target: // ...
+        builder: // ...
+    },
+    {
+        target: // ...
+        builder: // ...
+    }
+]
+```
+
+Using an array of controllers allows actions and state to be shared between multiple DOM components of an application without requiring the whole app to be rendered by one large builder.
+
+### `target`
+
+A DOM node that will serve as the root of the application component.
+
+### `builder`
+
+A function that takes in state as an argument and returns a virtual DOM (vdom) representation of that state. The implementation details of this function is not handled by the goo object and the only condition is that the output must be a valid vdom object.
+
+```javascript
+function builder(state) {
+    // ...
+    return {
+        // vdom object ...
+    };
+}
+```
+
+A generic vdom object takes this form:
+
+```javascript
+var vdom_obj = {
+    tagName: 'div'
+    attributes: {
+        className: 'wrapper',
+        // ...
+    }
+    style: {
+        background-color: '#333',
+        // ...
+    }
+    children: // ...
+}
+```
+
+In the case of a textNode, the `tagName` property is replaced by a `text` property.
+
+```javascript
+var vdom_obj = {
+    text: // ...
+    attributes: // ...
+    style: //...
+}
+```
+
+All properties of a vdom_obj except the `tagName` or `text` are optional.
+
+The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
+
+Events listeners (like `onclick`) can be added to the attributes object.
+
 # `args`
 
-The first argument of the goo function is `args`:
+The second argument of the goo function is `args`:
 
 ```javascript
 var args = {
-    target
     state
     actions
-    builder
     middleware
     watchers
 }
 ```
-
-### `target`
-
-An empty DOM node that will serve as the root of the application.
 
 ### `state`
 
@@ -83,7 +155,7 @@ ADD_USER: function(state, params) {
 }
 ```
 
-This function can be replaced by an object if there is a need to define the scope of that action.
+This function can be replaced by an object to allow restriction of the scope of that action.
 
 ```javascript
 ADD_USER: {
@@ -102,10 +174,12 @@ ADD_USER: [
     function(state, params) {
         // ...
         return state;
-    },
-    function(state, params) {
-        // ...
-        return state;
+    },{
+        target: ['path', 'to', 'scope'],
+        do: function(scoped_state, params) {
+            // ...
+            return scoped_state;
+        }
     }
 ]
 ```
@@ -121,52 +195,6 @@ app.act('ADD_USER', {
     country: 'Canada'
 })
 ```
-
-### `builder`
-
-A function that takes in state as an argument and returns a virtual DOM (vdom) representation of that state. The implementation details of how this function operates internally is not handled by the goo object and the only condition is that the output must be a valid vdom object.
-
-```javascript
-function builder(state) {
-    // ...
-    return {
-        // vdom object ...
-    };
-}
-```
-
-A generic vdom object takes this form:
-
-```javascript
-var vdom_obj = {
-    tagName: 'div'
-    attributes: {
-        className: 'wrapper',
-        // ...
-    }
-    style: {
-        background-color: '#333',
-        // ...
-    }
-    children: // ...
-}
-```
-
-In the case of a textNode, the `tagName` property is replaced by a `text` property.
-
-```javascript
-var vdom_obj = {
-    text: // ...
-    attributes: // ...
-    style: //...
-}
-```
-
-All properties of a vdom_obj except the `tagName` or `text` are optional.
-
-The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
-
-Events listeners (like `onclick`) can be added to the attributes object.
 
 ### `middleware`
 
