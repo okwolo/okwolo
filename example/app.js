@@ -11,9 +11,12 @@
 
     // define state actions
     const actions = {
-        ADD: (state, params) => {
-            state.tasks.push(params);
-            return state;
+        ADD: {
+            do: (tasks, params) => {
+                tasks.push(params);
+                return tasks;
+            },
+            target: ['tasks'],
         },
         REMOVE: (state, params) => {
             state.tasks.splice(params, 1);
@@ -53,7 +56,7 @@
     const app = goo({
         target: document.querySelector('.task-list'),
         builder: build,
-    },{
+    }, {
         state: state,
         actions: actions,
         watchers: saveState,

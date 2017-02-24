@@ -129,31 +129,35 @@ var goo = function(controllers, args, options) {
 
         // exectute an action on the state
         function execute(state, type, params) {
-            var local_state = JSON.parse(JSON.stringify(state));
             action_types.forEach(function(current_action_types, i) {
                 var action = current_action_types[type];
                 if (!action) {
                     return;
                 }
                 action.forEach(function(current_action) {
-                    var target = JSON.parse(JSON.stringify(local_state));
-                    current_action.target.forEach(function(key, k) {
-                        if (target[key] !== undefined) {
-                            target = target[key];
-                        } else {
-                            target = {};
-                        }
-                    });
-                    target = current_action.do(target, params);
-                    for (var i = current_action.target.length - 1; i >= 0; --i) {
-                        var temp = {};
-                        temp[current_action.target[i]] = target;
-                        target = temp;
+                    var target = JSON.parse(JSON.stringify(state));
+                    if (current_action.target.length > 0) {
+                        var reference = state;
+                        current_action.target.forEach(function(key, i, a) {
+                            console.log(reference);
+                            if (target[key] !== undefined) {
+                                if (i === a.length - 1) {
+                                    reference[key] = current_action.do(target[key], params);
+                                } else {
+                                    target = target[key];
+                                    reference = reference[key];
+                                }
+                            } else {
+                                target = {};
+                                reference = {};
+                            }
+                        });
+                    } else {
+                        state = current_action.do(target, params);
                     }
-                    local_state = Object.assign(local_state, target);
                 });
             });
-            return local_state;
+            return state;
         }
 
         return {
