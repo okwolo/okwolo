@@ -94,7 +94,9 @@ All properties of a vdom_obj except the `tagName` or `text` are optional.
 
 The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
 
-Events listeners (like `onclick`) can be added to the attributes object. It is also possible to define actions on the state using a string with a special syntax `(action_type, param)`. The param portion will be made into an object if it doesn't produce an error on `JSON.parse`, but will otherwise be a string.
+Events listeners (like `onclick`) can be added to the attributes object. It is also possible to define actions on the state using a special "string syntax": `(action_type, param)`.
+
+The param portion will be made into an object if it doesn't produce an error on `JSON.parse`, but will otherwise be a string.
 
 ````javascript
 attributes: {
