@@ -94,7 +94,37 @@ All properties of a vdom_obj except the `tagName` or `text` are optional.
 
 The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
 
-Events listeners (like `onclick`) can be added to the attributes object.
+Events listeners (like `onclick`) can be added to the attributes object. It is also possible to define actions on the state using a string with a special syntax `(action_type, param)`. The param portion will be made into an object if it doesn't produce an error on `JSON.parse`, but will otherwise be a string.
+
+````javascript
+attributes: {
+    onmouseover: `(INC, 1)`,
+    onclick: `(ADD_USER, {
+        "name": "John",
+        "age": "42",
+        "country": "Canada"
+    })`,
+}
+````
+
+is equivalent to
+
+````javascript
+attributes: {
+    onmouseover: function() {
+        app.act('INC', 1)
+    },
+    onclick: function() {
+        app.act('ADD_USER', {
+            name: 'John',
+            age: '42',
+            country: 'Canada'
+        });
+    }
+}
+````
+
+The benefits of using the string syntax are twofold. Firstly, it is slightly more succinct and allows actions to be embedded into the state. Secondly, it also makes it possible for the diffing code to operate on these "functions". Regularly, functions are always assumed to be different since it is difficult to reliably say that a function acts in the exact same way as another (especially when considering context and scope). This means that functions are always replaced on dom updates. Using the string syntax, goo can truly compare the "functions" and will only replace them if they are actually different.
 
 # `args`
 
@@ -111,7 +141,7 @@ var args = {
 
 ### `state`
 
-The initial state of the app on which actions can be performed.
+The initial state of the app on which actions can be performed. The state object needs can only contain objects and structures that are supported by the JSON format. Functions, Dates, references, etc. can therefore not be stored in the state at its creation or through actions.
 
 ### `actions`
 
@@ -215,7 +245,7 @@ function middleware(callback, state, action_type, params) {
 
 This syntax allows middleware to read, edit, cancel or perform async operations for any action.
 
-Middleware functions in an array are nested so that index 0 encompases index 1.
+Middleware functions in an array are nested so that index 0 encompasses index 1.
 
 ### `watchers`
 
@@ -237,10 +267,8 @@ Unless disabled in the options, a goo object will handle `UNDO` and `REDO` actio
 
 # `options`
 
-`history_compat`: use regular state history _(in development)_
-
-`history_length`: length of the undo history
-
 `state_log`: action type, params and before/after state in console for each action
 
-`disable_history`: disables history state history storage
+`disable_history`: disables state history
+
+`history_length`: length of the undo history

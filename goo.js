@@ -159,7 +159,6 @@ var goo = function(controllers, args, options) {
             });
             return state;
         }
-
         return {
             act: act
         }
@@ -264,7 +263,22 @@ var goo = function(controllers, args, options) {
             var element = document.createElement(velem.tagName);
             if (velem.attributes) {
                 Object.keys(velem.attributes).forEach(function(attribute) {
-                    element[attribute] = velem.attributes[attribute];
+                    var attributeValue = velem.attributes[attribute];
+                    var actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
+                    if (actionPattern === null) {
+                        element[attribute] = attributeValue;
+                    } else {
+                        var action = actionPattern[1];
+                        var param = null;
+                        try {
+                            param = JSON.parse(actionPattern[2]);
+                        } catch (e) {
+                            param = actionPattern[3] || actionPattern[2];
+                        }
+                        element[attribute] = function() {
+                            state_manager.act(action, param);
+                        }
+                    }
                 });
             }
             if (velem.style) {
@@ -282,9 +296,14 @@ var goo = function(controllers, args, options) {
             return velem;
         }
 
+        //
+        function parseAttribute(attributeVal) {
+
+        }
+
         // update vdom and real DOM to new state
         function update(new_state) {
-            _update(vdom, create(new_state), {});
+            window.requestAnimationFrame(() => _update(vdom, create(new_state), {}));
             function _update(original, successor, original_parent, index_parent) {
                 if (original === undefined && successor === undefined) {
                     return;
@@ -311,19 +330,19 @@ var goo = function(controllers, args, options) {
                                 original.text = successor.text;
                             }
                         } else {
-                            var style = diff(original.style, successor.style);
-                            var attributes = diff(original.attributes, successor.attributes);
-                            if (style.length !== undefined) {
+                            var styleDiff = diff(original.style, successor.style);
+                            var attributesDiff = diff(original.attributes, successor.attributes);
+                            if (styleDiff.length !== undefined) {
                                 original.DOM.style.cssText = null;
                                 Object.keys(successor.style).forEach(function(key) {
                                     original.style[key] = successor.style[key];
                                     original.DOM.style[key] = successor.style[key];
                                 });
                             }
-                            if (attributes.length !== undefined) {
-                                attributes.forEach(function(key) {
+                            if (attributesDiff.length !== undefined) {
+                                attributesDiff.forEach(function(key) {
                                     original.attributes[key] = successor.attributes[key];
-                                    original.DOM[key] = successor.attributes[key];
+                                    original.DOM[key] = parseAttribute(successor.attributes[key]);
                                 });
                             }
                         }

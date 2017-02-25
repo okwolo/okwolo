@@ -19,7 +19,7 @@
             target: ['tasks'],
         },
         REMOVE: (state, params) => {
-            state.tasks.splice(params, 1);
+            state.tasks.splice(+params, 1);
             return state;
         }
     }
@@ -34,10 +34,7 @@
                     tagName: 'div',
                     attributes: {
                         className: 'task',
-                        onclick: function() {
-                            app.act('REMOVE', index);
-                            focusForm();
-                        }
+                        onclick: `(REMOVE, ${index})`,
                     },
                     children: [{
                         text: task
@@ -59,7 +56,7 @@
     }, {
         state: state,
         actions: actions,
-        watchers: saveState,
+        watchers: [saveState, focusForm],
     }, {
         state_log: true,
     });
@@ -88,12 +85,11 @@
             app.act('ADD', form.value);
             form.value = '';
         }
-        focusForm(form);
     }
 
     // places cursor inside form
-    function focusForm(form) {
-        form = form || document.querySelector('.description-form');
+    function focusForm() {
+        var form = document.querySelector('.description-form');
         form.focus();
         form.select();
     }
