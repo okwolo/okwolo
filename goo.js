@@ -263,22 +263,7 @@ var goo = function(controllers, args, options) {
             var element = document.createElement(velem.tagName);
             if (velem.attributes) {
                 Object.keys(velem.attributes).forEach(function(attribute) {
-                    var attributeValue = velem.attributes[attribute];
-                    var actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
-                    if (actionPattern === null) {
-                        element[attribute] = attributeValue;
-                    } else {
-                        var action = actionPattern[1];
-                        var param = null;
-                        try {
-                            param = JSON.parse(actionPattern[2]);
-                        } catch (e) {
-                            param = actionPattern[3] || actionPattern[2];
-                        }
-                        element[attribute] = function() {
-                            state_manager.act(action, param);
-                        }
-                    }
+                    element[attribute] = parseAttribute(velem.attributes[attribute]);
                 });
             }
             if (velem.style) {
@@ -296,9 +281,23 @@ var goo = function(controllers, args, options) {
             return velem;
         }
 
-        //
-        function parseAttribute(attributeVal) {
-
+        // parses attribute's value to detect and replace string functions
+        function parseAttribute(attributeValue) {
+            var actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
+            if (actionPattern === null) {
+                return attributeValue;
+            } else {
+                var action = actionPattern[1];
+                var param = null;
+                try {
+                    param = JSON.parse(actionPattern[2]);
+                } catch (e) {
+                    param = actionPattern[3] || actionPattern[2];
+                }
+                return function() {
+                    state_manager.act(action, param);
+                }
+            }
         }
 
         // update vdom and real DOM to new state
