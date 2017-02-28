@@ -269,8 +269,8 @@ Unless disabled in the options, a goo object will handle `UNDO` and `REDO` actio
 
 # `options`
 
-`state_log`: action type, params and before/after state in console for each action
+`stateLog`: action type, params and before/after state in console for each action
 
-`disable_history`: disables state history
+`disableHistory`: disables state history
 
-`history_length`: length of the undo history
+`historyLength`: length of the undo history

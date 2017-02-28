@@ -1,148 +1,93 @@
-var goo = function(controllers, args, options) {
+window.goo = (controllers, args, options) => {
+    // input validation
+    inputValidation();
 
-    // make sure controllers is an array
-    if (controllers === undefined) {
-        controllers = [];
-    } else if (!Array.isArray(controllers)) {
-        controllers = [controllers];
-    }
-
-    // create DOM controller for each controller
-    var controller_updates = controllers.map(function(controller) {
-        return gooey(controller.target, controller.builder, args.state).update;
+    // create DOM controller for each controller and add them to the array of watchers
+    controllers.forEach((controller) => {
+        args.watchers.unshift(gooey(controller.target, controller.builder, args.state).update);
     });
 
-    // make sure watchers is an array
-    if (args.watchers === undefined) {
-        args.watchers = [];
-    } else if (!Array.isArray(args.watchers)) {
-        args.watchers = [args.watchers];
+    // creating object that handles the persistence of state
+    const statePersistenceManager = dictTimeMachine(args.state, options);
+
+    // adding undo/redo middlware
+    if (!options.disableHistory) {
+        args.middleware.push(statePersistenceManager.history);
     }
 
-    // concat watcher array and controller update array
-    controller_updates = args.watchers.concat(controller_updates);
+    // creating state manager
+    const stateManager = dict(args.actions, args.middleware, args.watchers, options);
 
-    // creates state manager
-    var state_manager = dict_time_machine(args.state, args.actions, args.middleware, controller_updates, options || {});
+    // replacing the act function to pass state to it
+    const statelessAct = stateManager.act;
+    stateManager.act = (type, params) => {
+        statePersistenceManager.updateCurrent(statelessAct, type, params);
+    };
 
-    // creates an object that acts on a state
-    function dict(action_types, middleware, watchers, options) {
-
-        // default values for all arguments
-        if (action_types === undefined) {
-            action_types = [{}];
-        }
-        if (middleware === undefined) {
-            middleware = [];
-        }
-        if (watchers === undefined) {
-            watchers = [];
-        }
-
-        // make sure action_types is an array
-        if (!Array.isArray(action_types)) {
-            action_types = [action_types];
-        }
-
-        // make sure all action types have required valid properties
-        action_types.forEach(function(current_action_types, i) {
-            Object.keys(current_action_types).forEach(function(current_action_type, j) {
-                if (typeof current_action_types[current_action_type] === 'function') {
-                    current_action_types[current_action_type] = {
-                        target: [],
-                        do: current_action_types[current_action_type]
-                    }
-                }
-                if (!Array.isArray(current_action_types[current_action_type])) {
-                    current_action_types[current_action_type] = [current_action_types[current_action_type]];
-                }
-                current_action_types[current_action_type].forEach(function(current_action, k) {
-                    if (current_action.target === undefined) {
-                        current_action.target = [];
-                    } else if (typeof current_action.target === 'string') {
-                        current_action.target = [current_action.target];
-                    } else if (!Array.isArray(current_action.target)) {
-                        throw new Error(`Target of action ${k} of type ${current_action_type} in action types ${i} is not an array`);
-                    }
-                    if (typeof current_action.do !== 'function') {
-                        throw new Error(`Property "do" of action ${k} of type ${current_action_type} in action types ${i} is not a function`);
-                    }
-                    current_action.target.forEach(function(key, l) {
-                        if (typeof key !== 'string' && typeof key !== 'number') {
-                            throw new Error(`Key at index ${l} of target of action ${k} of type ${current_action_type} in action types ${i} is not valid`);
-                        }
-                    });
-                });
-            });
-        });
-
-        // make sure middleware is an array
-        if (!Array.isArray(middleware)) {
-            middleware = [middleware];
-        }
-
-        // make sure middleware are all functions
-        middleware.forEach(function(current_middleware, i) {
-            if (typeof current_middleware !== 'function') {
-                throw new Error(`Middleware at index ${i} is not a function`);
-            }
-        });
-
-        // make sure watchers is an array
-        if (!Array.isArray(watchers)) {
-            watchers = [watchers];
-        }
-
-        // make sure watchers are all functions
-        watchers.forEach(function(current_watcher, i) {
-            if (typeof current_watcher !== 'function') {
-                throw new Error(`Watcher at index ${i} is not a function`);
-            }
-        });
-
-        // execute() wrapper that applies middleware and calls watchers
+    /**
+     * creates an object that acts on a state
+     * @param {Array} actionTypes
+     * @param {Array} middleware
+     * @param {Array} watchers
+     * @param {Object} options
+     * @return {Object}
+     */
+    function dict(actionTypes, middleware, watchers, options) {
+        /**
+         * execute() wrapper that applies middleware and calls watchers
+         * @param {Object} state
+         * @param {String} type
+         * @param {any} params
+         * @return {Object}
+         */
         function act(state, type, params) {
-            var state = JSON.parse(JSON.stringify(state));
             if (params === undefined) {
                 params = {};
             }
-            var funcs = [execute];
-            middleware.reverse().forEach(function(current_middleware, index) {
-                funcs[index + 1] = (function(state, type, params) {
-                    return current_middleware(funcs[index], state, type, params);
-                });
+            let funcs = [execute];
+            middleware.reverse().forEach((currentMiddleware, index) => {
+                funcs[index + 1] = (state, type, params) => {
+                    let m = currentMiddleware(funcs[index], JSON.parse(JSON.stringify(state)), type, params);
+                    return m;
+                };
             });
-            var new_state = JSON.parse(JSON.stringify(funcs[middleware.length](state, type, params)));
+            let newState = JSON.parse(JSON.stringify(funcs[middleware.length](state, type, params)));
 
             // optional console logging of all actions
-            if (options.state_log === true) {
+            if (options.stateLog === true) {
                 console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
-                console.log('%c%s', 'font-size:20px;', type + ' ' + JSON.stringify(params));
-                console.log('state > %c%s', 'color:#0a0;', JSON.stringify(new_state));
+                console.log('%c%s', 'font-size:20px;', `${type} ${JSON.stringify(params)}`);
+                console.log('state > %c%s', 'color:#0a0;', JSON.stringify(newState));
             }
 
-            watchers.forEach(function(watcher) {
-                watcher(JSON.parse(JSON.stringify(new_state)), type, params);
+            watchers.forEach((watcher) => {
+                watcher(JSON.parse(JSON.stringify(newState)), type, params);
             });
-            return new_state;
+
+            return newState;
         }
 
-        // exectute an action on the state
+        /**
+         * exectute an action on the state
+         * @param {any} state
+         * @param {any} type
+         * @param {any} params
+         * @return {Object}
+         */
         function execute(state, type, params) {
-            action_types.forEach(function(current_action_types, i) {
-                var action = current_action_types[type];
+            actionTypes.forEach((currentActionTypes, i) => {
+                let action = currentActionTypes[type];
                 if (!action) {
                     return;
                 }
-                action.forEach(function(current_action) {
-                    var target = JSON.parse(JSON.stringify(state));
-                    if (current_action.target.length > 0) {
-                        var reference = state;
-                        current_action.target.forEach(function(key, i, a) {
-                            console.log(reference);
+                action.forEach((currentAction) => {
+                    let target = JSON.parse(JSON.stringify(state));
+                    if (currentAction.target.length > 0) {
+                        let reference = state;
+                        currentAction.target.forEach((key, i, a) => {
                             if (target[key] !== undefined) {
                                 if (i === a.length - 1) {
-                                    reference[key] = current_action.do(target[key], params);
+                                    reference[key] = currentAction.do(target[key], params);
                                 } else {
                                     target = target[key];
                                     reference = reference[key];
@@ -153,126 +98,132 @@ var goo = function(controllers, args, options) {
                             }
                         });
                     } else {
-                        state = current_action.do(target, params);
+                        state = currentAction.do(target, params);
                     }
                 });
             });
             return state;
         }
+
         return {
-            act: act
-        }
+            act: act,
+        };
     }
 
-    // dict wrapper that adds undo/redo actions
-    function dict_time_machine(initial_state, action_types, middleware, watchers, options) {
+    /**
+     * state manager functions that adds undo/redo actions
+     * @param {Object} initialState
+     * @param {Object} options
+     * @return {Function}
+     */
+    function dictTimeMachine(initialState, options) {
+        // past, current and future states
+        let past = [];
+        let current = JSON.parse(JSON.stringify(initialState));
+        let future = [];
 
-        // history length (large numbers can cause performance issues)
-        var history_length = options.history_length || 20;
-
-        // current, past and future states
-        var past = [];
-        var current = JSON.parse(JSON.stringify(initial_state));
-        var future = [];
-
-        // make sure middleware is an array
-        if (middleware === undefined) {
-            middleware = [];
-        } else if (!Array.isArray(middleware)) {
-            middleware = [middleware];
-        }
-
-        // middleware that artificially adds undo/redo actions
-        if (options.disable_history !== true) {
-            middleware.unshift(function(callback, state, type, params) {
-                if (type === 'UNDO') {
-                    if (past.length > 0) {
-                        future.push(current);
-                        current = past.pop();
-                    }
-                    return current;
-                } else if (type === 'REDO') {
-                    if (future.length > 0) {
-                        past.push(current);
-                        current = future.pop();
-                    }
-                    return current;
+        /**
+         * middleware that artificially adds undo/redo actions
+         * @param {Function} callback
+         * @param {Object} state
+         * @param {String} type
+         * @param {Object} params
+         * @return {Object}
+         */
+        function history(callback, state, type, params) {
+            if (type === 'UNDO') {
+                if (past.length > 0) {
+                    future.push(current);
+                    return past.pop();
                 } else {
-                    future = [];
-                    past.push(current);
-                    if (past.length > history_length) {
-                        past.shift();
-                    }
-                    current = callback(state, type, params);
                     return current;
                 }
-            });
-        }
+            } else if (type === 'REDO') {
+                if (future.length > 0) {
+                    past.push(current);
+                    return future.pop();
+                } else {
+                    return current;
+                }
+            } else {
+                future = [];
+                past.push(current);
+                if (past.length > options.historyLength) {
+                    past.shift();
+                }
+                return callback(state, type, params);
+            }
+        };
 
-        // creating dict object
-        var dict_time_machine = dict(action_types, middleware, watchers, options);
-
-        // overriding act to add persistent state
-        var legacy_act = dict_time_machine.act;
-        dict_time_machine.act = function(type, params) {
-            current = legacy_act(current, type, params);
+        /**
+         * updates saved state on change
+         * @param {Function} callback
+         * @param {String} type
+         * @param {Object} params
+         * @return {Object}
+         */
+        function updateCurrent(callback, type, params) {
+            current = callback(current, type, params);
             return current;
         }
 
-        // return wrapper object
-        return dict_time_machine;
+        return {
+            updateCurrent: updateCurrent,
+            history: history,
+        };
     }
 
-    // creates a DOM controller with update function
-    function gooey(target, create, initial_state) {
-
+    /**
+     * creates a DOM controller with update function
+     * @param {Node} target
+     * @param {Function} build
+     * @param {Object} initialState
+     * @return {Object}
+     */
+    function gooey(target, build, initialState) {
         // storing vdom
-        var vdom = {};
-
-        // type checking
-        if (!target instanceof Node) {
-            throw new Error('target is not a DOM node');
-        }
-        if (typeof create !== 'function') {
-            throw new Error('create attribute is not a function');
-        }
+        let vdom = {};
 
         // create vdom
-        vdom = render(create(initial_state));
+        vdom = render(build(initialState));
 
         // initial render to DOM
         target.innerHTML = '';
         target.appendChild(vdom.DOM);
 
-        // recursively creates DOM elements from vdom object
-        /*{
-            tagName: ''
-            attributes: {}
-            style: {}
-            children: [] || {}
-            DOM: <Node />
-        }*/
+        /**
+         * recursively creates DOM elements from vdom object
+         * {
+         *   tagName: ''
+         *   attributes: {}
+         *   style: {}
+         *   children: [] || {}
+         *   DOM: <Node />
+         * }
+         * @param {Obbject} velem
+         * @return {Object}
+         */
         function render(velem) {
             if (!velem.tagName) {
                 if (velem.text === undefined) {
-                    throw new Error('invalid vdom output: tagName or text property missing');
+                    err('invalid vdom output: tagName or text property missing');
                 }
                 velem.DOM = document.createTextNode(velem.text);
                 return velem;
             }
-            var element = document.createElement(velem.tagName);
+            let element = document.createElement(velem.tagName);
             if (velem.attributes) {
-                Object.keys(velem.attributes).forEach(function(attribute) {
+                Object.keys(velem.attributes).forEach((attribute) => {
                     element[attribute] = parseAttribute(velem.attributes[attribute]);
                 });
             }
             if (velem.style) {
-                Object.keys(velem.style).forEach(function(attribute) {
+                Object.keys(velem.style).forEach((attribute) => {
                     element.style[attribute] = velem.style[attribute];
                 });
             }
             if (velem.children && velem.tagName !== undefined) {
-                Object.keys(velem.children).forEach(function(key) {
+                Object.keys(velem.children).forEach((key) => {
                     velem.children[key] = render(velem.children[key]);
                     element.appendChild(velem.children[key].DOM);
                 });
@@ -281,46 +232,61 @@ var goo = function(controllers, args, options) {
             return velem;
         }
 
-        // parses attribute's value to detect and replace string functions
+        /**
+         * parses attribute's value to detect and replace string functions
+         * @param {String} attributeValue
+         * @return {Function|String}
+         */
         function parseAttribute(attributeValue) {
-            var actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
+            let actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
             if (actionPattern === null) {
                 return attributeValue;
             } else {
-                var action = actionPattern[1];
-                var param = null;
+                let action = actionPattern[1];
+                let param = null;
                 try {
                     param = JSON.parse(actionPattern[2]);
                 } catch (e) {
                     param = actionPattern[3] || actionPattern[2];
                 }
                 return function() {
-                    state_manager.act(action, param);
-                }
+                    stateManager.act(action, param);
+                };
             }
         }
 
-        // update vdom and real DOM to new state
-        function update(new_state) {
-            window.requestAnimationFrame(() => _update(vdom, create(new_state), {}));
-            function _update(original, successor, original_parent, index_parent) {
+        /**
+         * update vdom and real DOM to new state
+         * @param {Object} newState
+         */
+        function update(newState) {
+            window.requestAnimationFrame(() => _update(vdom, build(newState), {}));
+            /**
+             * recursive function to update an element according to new state
+             * @param {Object} original
+             * @param {Object} successor
+             * @param {Object} originalParent
+             * @param {String} parentIndex
+             */
+            function _update(original, successor, originalParent, parentIndex) {
+                // TODO ~ check if first condition can be removed
                 if (original === undefined && successor === undefined) {
                     return;
                 }
                 if (original === undefined) {
                     // add
-                    original_parent.children[index_parent] = render(successor);
-                    original_parent.DOM.appendChild(original_parent.children[index_parent].DOM);
+                    originalParent.children[parentIndex] = render(successor);
+                    originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
                 } else if (successor === undefined) {
                     // remove
-                    original_parent.DOM.removeChild(original.DOM);
-                    original_parent.children[index_parent] = undefined;
+                    originalParent.DOM.removeChild(original.DOM);
+                    originalParent.children[parentIndex] = undefined;
                 } else {
                     if (original.tagName !== successor.tagName) {
                         // replace
-                        var old_dom = original.DOM;
-                        original_parent.children[index_parent] = render(successor);
-                        original_parent.DOM.replaceChild(original_parent.children[index_parent].DOM, old_dom);
+                        let oldDOM = original.DOM;
+                        originalParent.children[parentIndex] = render(successor);
+                        originalParent.DOM.replaceChild(originalParent.children[parentIndex].DOM, oldDOM);
                     } else {
                         // edit
                         if (original.DOM.nodeType === 3) {
@@ -329,26 +295,26 @@ var goo = function(controllers, args, options) {
                                 original.text = successor.text;
                             }
                         } else {
-                            var styleDiff = diff(original.style, successor.style);
-                            var attributesDiff = diff(original.attributes, successor.attributes);
+                            let styleDiff = diff(original.style, successor.style);
+                            let attributesDiff = diff(original.attributes, successor.attributes);
                             if (styleDiff.length !== undefined) {
                                 original.DOM.style.cssText = null;
-                                Object.keys(successor.style).forEach(function(key) {
+                                Object.keys(successor.style).forEach((key) => {
                                     original.style[key] = successor.style[key];
                                     original.DOM.style[key] = successor.style[key];
                                 });
                             }
                             if (attributesDiff.length !== undefined) {
-                                attributesDiff.forEach(function(key) {
+                                attributesDiff.forEach((key) => {
                                     original.attributes[key] = successor.attributes[key];
                                     original.DOM[key] = parseAttribute(successor.attributes[key]);
                                 });
                             }
                         }
                     }
-                    var keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
-                    var visited = {};
-                    keys.forEach(function(key) {
+                    let keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
+                    let visited = {};
+                    keys.forEach((key) => {
                         if (visited[key] === undefined) {
                             visited[key] = true;
                             _update(original.children[key], successor.children[key], original, key);
@@ -358,49 +324,50 @@ var goo = function(controllers, args, options) {
             }
         }
 
-        // check differences between two objects
-        function diff(original, successor, ignore) {
-            // making sure ignore variable is defined
-            ignore = ignore || {};
+        /**
+         * returns boolean for simple types or array of addressesof all the differences between two objects
+         * @param {Object} original
+         * @param {Object} successor
+         * @param {String} ignore
+         * @return {Boolean|Array}
+         */
+        function diff(original, successor) {
             // get types
-            var o_type = Object.prototype.toString.call(original);
-            var s_type = Object.prototype.toString.call(successor);
+            let originalType = Object.prototype.toString.call(original);
+            let successorType = Object.prototype.toString.call(successor);
             // reject when different types
-            if (o_type !== s_type) {
+            if (originalType !== successorType) {
                 return false;
             }
             // functions are never considered equal
-            if (o_type === '[object Function]') {
+            if (originalType === '[object Function]') {
                 return false;
             }
             // compare two objects or arrays
-            if (o_type === '[object Object]' || o_type === '[object Array]') {
-                var keys = Object.keys(original);
-                var new_keys = Object.keys(successor);
+            if (originalType === '[object Object]' || originalType === '[object Array]') {
+                let keys = Object.keys(original);
+                let newKeys = Object.keys(successor);
                 // creating union of both arrays of keys
-                if (o_type === '[object Array]') {
-                    var length_difference = new_keys.length - keys.length;
-                    if (length_difference > 0) {
-                        for (let i = length_difference; i > 0; --i) {
-                            keys.push(new_keys[new_keys.length - i]);
+                if (originalType === '[object Array]') {
+                    let lengthDifference = newKeys.length - keys.length;
+                    if (lengthDifference > 0) {
+                        for (let i = lengthDifference; i > 0; --i) {
+                            keys.push(newKeys[newKeys.length - i]);
                         }
                     }
                 } else {
-                    var keys_obj = {};
-                    keys.forEach(function(key) {
-                        keys_obj[key] = true;
+                    let keysObj = {};
+                    keys.forEach((key) => {
+                        keysObj[key] = true;
                     });
-                    new_keys.forEach(function(key) {
-                        if (!keys_obj[key]) {
+                    newKeys.forEach((key) => {
+                        if (!keysObj[key]) {
                             keys.push(key);
                         }
                     });
                 }
-                return keys.reduce(function(accumulator, key) {
-                    if (ignore[key] !== undefined) {
-                        return accumulator;
-                    }
-                    var temp = diff(original[key], successor[key], ignore);
+                return keys.reduce((accumulator, key) => {
+                    let temp = diff(original[key], successor[key]);
                     if (temp !== true) {
                         if (typeof accumulator === 'boolean') {
                             accumulator = [];
@@ -408,7 +375,7 @@ var goo = function(controllers, args, options) {
                         if (temp === false) {
                             accumulator.push([key]);
                         } else {
-                            temp.forEach(function(current) {
+                            temp.forEach((current) => {
                                 current.unshift(key);
                                 accumulator.push(current);
                             });
@@ -422,12 +389,103 @@ var goo = function(controllers, args, options) {
         }
 
         return {
-            update: update
+            update: update,
+        };
+    }
+
+    /**
+     * standardises input types or produces error when impossible
+     */
+    function inputValidation() {
+        // make sure controllers is an array of objects with valid properties
+        if (controllers === undefined) {
+            err('controllers argument is empty');
+        } else if (!Array.isArray(controllers)) {
+            controllers = [controllers];
         }
+        controllers.forEach((controller) => {
+            if (!controller.target instanceof Node) {
+                err('target is not a DOM node');
+            }
+            if (typeof controller.builder !== 'function') {
+                err('builder attribute is not a function');
+            }
+        });
+
+        // make sure watchers is an array of functions
+        if (args.watchers === undefined) {
+            args.watchers = [];
+        } else if (!Array.isArray(args.watchers)) {
+            args.watchers = [args.watchers];
+        }
+        if (!args.watchers.reduce((a, w) => a && typeof w === 'function', true)) {
+            err('one or more watchers is not a function');
+        }
+
+        // make sure middleware is an array of functions
+        if (args.middleware === undefined) {
+            args.middleware = [];
+        } else if (!Array.isArray(args.middleware)) {
+            args.middleware = [args.middleware];
+        }
+        if (!args.middleware.reduce((a, w) => a && typeof w === 'function', true)) {
+            err('one or more middleware is not a function');
+        }
+
+        // make sure actions is an array of objects with valid properties
+        if (args.actions === undefined) {
+            args.actions = [];
+        } else if (!Array.isArray(args.actions)) {
+            args.actions = [args.actions];
+        }
+        args.actions.forEach((currentActionTypes, i) => {
+            Object.keys(currentActionTypes).forEach((currentActionType, j) => {
+                if (typeof currentActionTypes[currentActionType] === 'function') {
+                    currentActionTypes[currentActionType] = {
+                        target: [],
+                        do: currentActionTypes[currentActionType],
+                    };
+                }
+                if (!Array.isArray(currentActionTypes[currentActionType])) {
+                    currentActionTypes[currentActionType] = [currentActionTypes[currentActionType]];
+                }
+                currentActionTypes[currentActionType].forEach((currentAction, k) => {
+                    if (currentAction.target === undefined) {
+                        currentAction.target = [];
+                    } else if (typeof currentAction.target === 'string') {
+                        currentAction.target = [currentAction.target];
+                    } else if (!Array.isArray(currentAction.target)) {
+                        err(`Target of action ${k} of type ${currentActionType} in action types ${i} is not an array`);
+                    }
+                    if (typeof currentAction.do !== 'function') {
+                        err(`Property "do" of action ${k} of type ${currentActionType} in action types ${i} is not a function`);
+                    }
+                    currentAction.target.forEach((key, l) => {
+                        if (typeof key !== 'string' && typeof key !== 'number') {
+                            err(`Key at index ${l} of target of action ${k} of type ${currentActionType} in action types ${i} is not valid`);
+                        }
+                    });
+                });
+            });
+        });
+
+        // make sure options is defined
+        options = options || {};
+
+        // make sure history length is defined
+        options.historyLength = options.historyLength || 20;
     }
 
+    /**
+     * displays error message
+     * @param {String} message
+     */
+    function err(message) {
+        throw(new Error(`** ${message}`));
+    }
+
+    // public interface
     return {
-        act: state_manager.act
-    }
-
-}
+        act: stateManager.act,
+    };
+};
