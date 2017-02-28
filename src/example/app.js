@@ -1,13 +1,17 @@
 (function() {
-
     // focus on the form
     focusForm();
 
     // localStorage key
     const storageKey = 'GOO demo';
 
-    // read from storage or use empty
-    const state = JSON.parse(localStorage.getItem(storageKey)) || {tasks:[]};
+    // define default state
+    const defaultState = {
+        tasks: [],
+    };
+
+    // read from storage or use default empty state
+    const state = JSON.parse(localStorage.getItem(storageKey)) || defaultState;
 
     // define state actions
     const actions = {
@@ -21,14 +25,14 @@
         REMOVE: (state, params) => {
             state.tasks.splice(+params, 1);
             return state;
-        }
-    }
+        },
+    };
 
     // define builder function
     const build = (state) => {
         return {
             tagName: 'div',
-            attributes: { className: 'task-wrapper' },
+            attributes: {className: 'task-wrapper'},
             children: state.tasks.map((task, index) => {
                 return {
                     tagName: 'div',
@@ -37,17 +41,17 @@
                         onclick: `(REMOVE, ${index})`,
                     },
                     children: [{
-                        text: task
-                    }]
-                }
+                        text: task,
+                    }],
+                };
             }),
-        }
-    }
+        };
+    };
 
     // saves state after every change
     const saveState = (state) => {
-        localStorage.setItem(storageKey, JSON.stringify(state));
-    }
+        // localStorage.setItem(storageKey, JSON.stringify(state));
+    };
 
     // creating goo object
     const app = goo({
@@ -58,7 +62,7 @@
         actions: actions,
         watchers: [saveState, focusForm],
     }, {
-        state_log: true,
+        stateLog: true,
     });
 
     // add listeners to submit form
@@ -78,7 +82,9 @@
         }
     });
 
-    // reads form input and acts on state
+    /**
+     * reads form input and acts on state
+     */
     function submitForm() {
         const form = document.querySelector('.description-form');
         if (form.value.trim()) {
@@ -87,11 +93,12 @@
         }
     }
 
-    // places cursor inside form
+    /**
+     * places cursor inside form
+     */
     function focusForm() {
-        var form = document.querySelector('.description-form');
+        let form = document.querySelector('.description-form');
         form.focus();
         form.select();
     }
-
-}())
+}());

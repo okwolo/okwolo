@@ -47,11 +47,11 @@ window.goo = (controllers, args, options) => {
             let funcs = [execute];
             middleware.reverse().forEach((currentMiddleware, index) => {
                 funcs[index + 1] = (state, type, params) => {
-                    let m = currentMiddleware(funcs[index], JSON.parse(JSON.stringify(state)), type, params);
+                    let m = currentMiddleware(funcs[index], deepCopy(state), type, params);
                     return m;
                 };
             });
-            let newState = JSON.parse(JSON.stringify(funcs[middleware.length](state, type, params)));
+            let newState = deepCopy(funcs[middleware.length](state, type, params));
 
             // optional console logging of all actions
             if (options.stateLog === true) {
@@ -61,7 +61,7 @@ window.goo = (controllers, args, options) => {
             }
 
             watchers.forEach((watcher) => {
-                watcher(JSON.parse(JSON.stringify(newState)), type, params);
+                watcher(deepCopy(newState), type, params);
             });
 
             return newState;
@@ -81,7 +81,7 @@ window.goo = (controllers, args, options) => {
                     return;
                 }
                 action.forEach((currentAction) => {
-                    let target = JSON.parse(JSON.stringify(state));
+                    let target = deepCopy(state);
                     if (currentAction.target.length > 0) {
                         let reference = state;
                         currentAction.target.forEach((key, i, a) => {
@@ -119,7 +119,7 @@ window.goo = (controllers, args, options) => {
     function dictTimeMachine(initialState, options) {
         // past, current and future states
         let past = [];
-        let current = JSON.parse(JSON.stringify(initialState));
+        let current = deepCopy(initialState);
         let future = [];
 
         /**
@@ -391,6 +391,15 @@ window.goo = (controllers, args, options) => {
         return {
             update: update,
         };
+    }
+
+    /**
+     * creates a deep copy of an object
+     * @param {Object} obj
+     * @return {Object}
+     */
+    function deepCopy(obj) {
+        return JSON.parse(JSON.stringify(obj));
     }
 
     /**
