@@ -50,7 +50,7 @@
 
     // saves state after every change
     const saveState = (state) => {
-        // localStorage.setItem(storageKey, JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
     };
 
     // creating goo object

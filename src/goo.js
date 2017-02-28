@@ -1,4 +1,4 @@
-window.goo = (controllers, args, options) => {
+window.goo = (controllers, args, options = {}) => {
     // input validation
     inputValidation();
 
@@ -40,15 +40,12 @@ window.goo = (controllers, args, options) => {
          * @param {any} params
          * @return {Object}
          */
-        function act(state, type, params) {
-            if (params === undefined) {
-                params = {};
-            }
+        function act(state, type, params = {}) {
+            // nest middleware
             let funcs = [execute];
             middleware.reverse().forEach((currentMiddleware, index) => {
                 funcs[index + 1] = (state, type, params) => {
-                    let m = currentMiddleware(funcs[index], deepCopy(state), type, params);
-                    return m;
+                    return currentMiddleware(funcs[index], deepCopy(state), type, params);
                 };
             });
             let newState = deepCopy(funcs[middleware.length](state, type, params));
@@ -75,7 +72,7 @@ window.goo = (controllers, args, options) => {
          * @return {Object}
          */
         function execute(state, type, params) {
-            actionTypes.forEach((currentActionTypes, i) => {
+            actionTypes.forEach((currentActionTypes) => {
                 let action = currentActionTypes[type];
                 if (!action) {
                     return;
@@ -93,8 +90,7 @@ window.goo = (controllers, args, options) => {
                                     reference = reference[key];
                                 }
                             } else {
-                                target = {};
-                                reference = {};
+                                err(`target address of action ${type} is invalid: @state.${currentAction.target.join('.')}`);
                             }
                         });
                     } else {
@@ -188,18 +184,13 @@ window.goo = (controllers, args, options) => {
         vdom = render(build(initialState));
 
         // initial render to DOM
-        target.innerHTML = '';
-        target.appendChild(vdom.DOM);
+        window.requestAnimationFrame(() => {
+            target.innerHTML = '';
+            target.appendChild(vdom.DOM);
+        });
 
         /**
          * recursively creates DOM elements from vdom object
-         * {
-         *   tagName: ''
-         *   attributes: {}
-         *   style: {}
-         *   children: [] || {}
-         *   DOM: <Node />
-         * }
          * @param {Obbject} velem
          * @return {Object}
          */
@@ -269,7 +260,6 @@ window.goo = (controllers, args, options) => {
              * @param {String} parentIndex
              */
             function _update(original, successor, originalParent, parentIndex) {
-                // TODO ~ check if first condition can be removed
                 if (original === undefined && successor === undefined) {
                     return;
                 }
@@ -325,7 +315,7 @@ window.goo = (controllers, args, options) => {
         }
 
         /**
-         * returns boolean for simple types or array of addressesof all the differences between two objects
+         * returns boolean for simple types or an array of addresses of all the differences between two objects
          * @param {Object} original
          * @param {Object} successor
          * @param {String} ignore
@@ -477,9 +467,6 @@ window.goo = (controllers, args, options) => {
                 });
             });
         });
-
-        // make sure options is defined
-        options = options || {};
 
         // make sure history length is defined
         options.historyLength = options.historyLength || 20;
