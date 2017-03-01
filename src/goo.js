@@ -163,9 +163,18 @@ window.goo = (controllers, args, options = {}) => {
             return current;
         }
 
+        /**
+         * fetches current state
+         * @return {Object}
+         */
+        function getCurrent() {
+            return deepCopy(current);
+        }
+
         return {
             updateCurrent: updateCurrent,
             history: history,
+            get: getCurrent,
         };
     }
 
@@ -483,5 +492,6 @@ window.goo = (controllers, args, options = {}) => {
     // public interface
     return {
         act: stateManager.act,
+        getState: statePersistenceManager.get,
     };
 };
