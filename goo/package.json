@@ -1,6 +1,6 @@
 {
   "name": "goo-js",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "",
   "main": "goo.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "www.github.com/g-harel/goo"
+    "url": "http://www.github.com/g-harel/goo"
   },
   "author": "g-harel",
   "license": "MIT"
