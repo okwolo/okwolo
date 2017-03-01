@@ -1,8 +1,8 @@
 module.exports = {
-    entry: './src/goo.js',
+    entry: './example/app.js',
     output: {
-        path: __dirname + '/src',
-        filename: 'goo.min.js',
+        path: __dirname + '/example/dist',
+        filename: 'bundle.js',
     },
     module: {
         rules: [

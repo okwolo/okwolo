@@ -1,4 +1,4 @@
-window.goo = (controllers, args, options = {}) => {
+module.exports = (controllers, args, options = {}) => {
     // input validation
     inputValidation();
 

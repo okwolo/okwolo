@@ -1,0 +1,15 @@
+{
+  "name": "goo-js",
+  "version": "1.0.1",
+  "description": "",
+  "main": "goo.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "www.github.com/g-harel/goo"
+  },
+  "author": "g-harel",
+  "license": "MIT"
+}
