@@ -1,14 +1,13 @@
 module.exports = {
-    entry: './example/app.js',
+    entry: './app.js',
     output: {
-        path: __dirname + '/example/dist',
+        path: __dirname + '/dist',
         filename: 'bundle.js',
     },
     module: {
         rules: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
                 use: {
                     loader: 'babel-loader',
                     options: {
