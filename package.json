@@ -8,7 +8,7 @@
     "start": "webpack --watch -p"
   },
   "dependencies": {
-    "goo-js": "^1.0.5"
+    "goo-js": "^1.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
