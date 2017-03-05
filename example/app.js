@@ -1,5 +1,6 @@
 // dependencies
-const goo = require('goo-js');
+const goo = require('../goo-js/goo');
+// const goo = require('goo-js');
 
 // focus on the form
 focusForm();
@@ -32,22 +33,18 @@ const actions = {
 
 // define builder function
 const build = (state) => {
-    return {
-        tagName: 'div',
-        attributes: {className: 'task-wrapper'},
-        children: state.tasks.map((task, index) => {
-            return {
-                tagName: 'div',
-                attributes: {
-                    className: 'task',
+    return [
+        'div.task-wrapper',,,
+        state.tasks.map((task, index) => {
+            return [
+                'div.task', {
                     onclick: `(REMOVE, ${index})`,
-                },
-                children: [{
-                    text: task,
-                }],
-            };
+                },, [
+                    `${task}`,
+                ],
+            ];
         }),
-    };
+    ];
 };
 
 // saves state after every change

@@ -1,6 +1,7 @@
 Small framework made to quickly jumpstart projects by solving common web application challenges.
-
-![logo](https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png)
+<p align="center">
+    <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="600"/>
+</p>
 
 GOO.js is a small framework made to quickly jumpstart projects by solving common web application challenges. A goo object handles state and the DOM representation of that state. By default it also adds actions to undo and redo state changes. Internally, goo has three components: a state reducer that does not mutate state, a wrapper for the state reducer to store the state and a DOM handler that uses virtual DOM.
 
@@ -85,16 +86,33 @@ In the case of a textNode, the `tagName` property is replaced by a `text` proper
 ```javascript
 var vdom_obj = {
     text: // ...
-    attributes: // ...
-    style: //...
 }
 ```
+
+Both types of vdom objects have a simplified version. For a generic object, properties can be written in array form instead of the usual object form. The order of properties of this array are: tagName, attributes, style, children. The tagName (in full or simplified form) can also specify the id and class by appending zero or one ids first, followed by any number of classes.
+
+Here is an example of a generic vdom object with a simplified syntax:
+
+````javascript
+var vdom_obj = [
+    'div#wrapper.yellow.leftpad',,,
+    children: //...
+]
+````
+
+The simplified syntax for a textNode is a simple string:
+
+````javascript
+var vdom_obj = `Hello World`;
+````
 
 All properties of a vdom_obj except the `tagName` or `text` are optional.
 
 The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
 
-Events listeners (like `onclick`) can be added to the attributes object. It is also possible to define actions on the state using a special "string syntax": `(action_type, param)`.
+Events listeners (like `onclick`) can be added to the attributes object. Actions defined in this way can be written using a special "string syntax":
+
+`(action_type, param)`.
 
 The param portion will be made into an object if it doesn't produce an error on `JSON.parse`, but will otherwise be a string.
 

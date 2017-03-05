@@ -192,7 +192,7 @@
             let vdom = {};
 
             // create vdom
-            vdom = render(build(initialState));
+            vdom = render(reconcileSyntax(build(initialState)));
 
             // initial render to DOM
             window.requestAnimationFrame(() => {
@@ -258,11 +258,58 @@
             }
 
             /**
+             * properly formats a vdom object written in abriged form
+             * @param {Object} vdom
+             * @return {Object}
+             */
+            function reconcileSyntax(vdom) {
+                // textNode treatment
+                if (typeof vdom === 'string') {
+                    vdom = {
+                        text: vdom,
+                    };
+                }
+                if (vdom.text) {
+                    return vdom;
+                }
+                // array to object
+                if (Array.isArray(vdom)) {
+                    vdom = {
+                        tagName: vdom[0],
+                        attributes: vdom[1],
+                        style: vdom[2],
+                        children: vdom[3],
+                    };
+                }
+                // id and class from tagName
+                let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
+                if (selectors === null) {
+                    err(`tagName ${vdom.tagName} is misformatted`);
+                } else {
+                    vdom.tagName = selectors[1];
+                    if (selectors[2] || selectors[3]) {
+                        vdom.attributes = vdom.attributes || {};
+                        if (selectors[2]) {
+                            vdom.attributes.id = selectors[2].replace('#', '');
+                        }
+                        if (selectors[3]) {
+                            vdom.attributes.className = selectors[3].replace('.', ' ').trim();
+                        }
+                    }
+                }
+                // recurse over children
+                Object.keys(vdom.children || {}).forEach((key) => {
+                    vdom.children[key] = reconcileSyntax(vdom.children[key]);
+                });
+                return vdom;
+            }
+
+            /**
              * update vdom and real DOM to new state
              * @param {Object} newState
              */
             function update(newState) {
-                window.requestAnimationFrame(() => _update(vdom, build(newState), {}));
+                window.requestAnimationFrame(() => _update(vdom, reconcileSyntax(build(newState)), {}));
                 /**
                  * recursive function to update an element according to new state
                  * @param {Object} original
