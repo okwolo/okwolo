@@ -190,7 +190,7 @@
             return {
                 updateCurrentAndCall: updateCurrentAndCall,
                 history: history,
-                get: getCurrent,
+                getState: getCurrent,
             };
         }
 
@@ -555,7 +555,7 @@
         // public interface
         return {
             act: act,
-            getState: statePersistenceManager.get,
+            getState: statePersistenceManager.getState,
         };
     };
 
