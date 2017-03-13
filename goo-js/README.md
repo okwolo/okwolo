@@ -30,6 +30,7 @@ The `controllers` argument specifies the containers for each distinct component 
 var controllers = {
     target: // ...
     builder: // ...
+    parsers: // ...
 }
 
 // multiple controllers
@@ -37,10 +38,12 @@ var controllers = [
     {
         target: // ...
         builder: // ...
+        parsers: // ...
     },
     {
         target: // ...
         builder: // ...
+        parsers: // ...
     }
 ]
 ```
@@ -145,6 +148,12 @@ attributes: {
 ````
 
 The benefits of using the string syntax are twofold. Firstly, it is slightly more succinct and allows actions to be embedded into the state. Secondly, it also makes it possible for the diffing code to operate on these "functions". Regularly, functions are always assumed to be different since it is difficult to reliably say that a function acts in the exact same way as another (especially when considering context and scope). This means that functions are always replaced on dom updates. Using the string syntax, goo can truly compare the "functions" and will only replace them if they are actually different.
+
+### `parsers`
+
+If the default goo syntax for vdom objects is not suitable for a certain application, it is possible to add parsers to act as "translators". The `parsers` variable can be undefined, a function or an array of functions. Each parser function has a vdom tree as input and a translated vdom tree as output (recursing over children needs to be handled by the parsers). They will be called from index 0 to n in the case of an array.
+
+An example use case for parsers is the simplified syntax feature which is implemented with a parser and can be disabled in the options.
 
 # `args`
 
@@ -294,3 +303,5 @@ Unless disabled in the options, a goo object will handle `UNDO` and `REDO` actio
 `disableHistory`: disables state history
 
 `historyLength`: length of the undo history
+
+`disableShorthand`: disables shorthand notation in builder's output
