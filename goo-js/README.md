@@ -16,7 +16,7 @@ var app = goo(controllers, args[, options]);
 This goo object can now be used to update an application using it's `.act` function:
 
 ```javascript
-app.act(action_type, params);
+app.act(actionType, params);
 ```
 
 Calling this act function will update the state of the app and goo will attempt to update the DOM with the smallest possible number of actions using virtual DOM diffing.
@@ -67,7 +67,7 @@ function builder(state) {
 A generic vdom object takes this form:
 
 ```javascript
-var vdom_obj = {
+var vdomObj = {
     tagName: 'div'
     attributes: {
         className: 'wrapper',
@@ -84,7 +84,7 @@ var vdom_obj = {
 In the case of a textNode, the `tagName` property is replaced by a `text` property.
 
 ```javascript
-var vdom_obj = {
+var vdomObj = {
     text: // ...
 }
 ```
@@ -94,7 +94,7 @@ Both types of vdom objects have a simplified version. For a generic object, prop
 Here is an example of a generic vdom object with a simplified syntax:
 
 ````javascript
-var vdom_obj = [
+var vdomObj = [
     'div#wrapper.yellow.leftpad',,,
     children: //...
 ]
@@ -103,10 +103,10 @@ var vdom_obj = [
 The simplified syntax for a textNode is a simple string:
 
 ````javascript
-var vdom_obj = `Hello World`;
+var vdomObj = `Hello World`;
 ````
 
-All properties of a vdom_obj except the `tagName` or `text` are optional.
+All properties of a vdomObj except the `tagName` or `text` are optional.
 
 The `children` property can be either a key/value object or an array. When it is defined as an object, goo's vdom diffing will be able to compare children to their actual ancestor in the previous state instead of the one at the same array index. This can potentially have serious performance implications since, for example, it will prevent unnecessary re-renders of all the elements in a list if the first item is removed. However, because of the un-ordered nature of an object's keys, this feature should only be used when their order is not important.
 
@@ -210,9 +210,9 @@ This function can be replaced by an object to allow restriction of the scope of 
 ```javascript
 ADD_USER: {
     target: ['path', 'to', 'scope'],
-    do: function(scoped_state, params) {
+    do: function(scopedState, params) {
         // ...
-        return scoped_state;
+        return scopedState;
     }
 }
 ```
@@ -226,9 +226,9 @@ ADD_USER: [
         return state;
     },{
         target: ['path', 'to', 'scope'],
-        do: function(scoped_state, params) {
+        do: function(scopedState, params) {
             // ...
-            return scoped_state;
+            return scopedState;
         }
     }
 ]
@@ -255,11 +255,11 @@ In the case of an array of functions, each middleware function is nested within 
 A middleware function takes the form:
 
 ```javascript
-function middleware(callback, state, action_type, params, options) {
+function middleware(callback, state, actionType, params, options) {
     // ...
-    var next_state = callback(state[, action_type[, params]]);
+    var nextState = callback(state[, actionType[, params]]);
     // ...
-    return next_state;
+    return nextState;
 }
 ```
 
@@ -267,7 +267,7 @@ This syntax allows middleware to read, edit, cancel or perform async operations 
 
 Middleware functions in an array are nested so that index 0 encompasses index 1.
 
-When calling the callback, action_type, params can be omitted. In this case, their most recent value will be used.
+When calling the callback, actionType, params can be omitted. In this case, their most recent value will be used.
 
 ### `watchers`
 
@@ -276,7 +276,7 @@ A single function or an array of functions that are called in ascending order af
 A watcher function takes the form:
 
 ```javascript
-function watcher(state, action_type, params) {
+function watcher(state, actionType, params) {
     // ...
 }
 ```
