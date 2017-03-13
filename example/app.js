@@ -59,7 +59,7 @@ const app = goo({
 }, {
     state: state,
     actions: actions,
-    watchers: [saveState, focusForm],
+    watchers: [saveState, focusForm, () => {if(Math.random()<0.3)app.act('ADD', 'tomato')}],
 }, {
     stateLog: true,
 });

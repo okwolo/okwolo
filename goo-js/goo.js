@@ -26,20 +26,24 @@
          * @param {Object} params
          */
         function act(type, params) {
-            statePersistenceManager.updateCurrentAndCall(stateManager.act, type, params);
+            let newState = statePersistenceManager.updateCurrent(stateManager.act(statePersistenceManager.getState(), type, params));
+
+            // calling all watchers
+            args.watchers.forEach((watcher) => {
+                watcher(deepCopy(newState), type, params);
+            });
         }
 
         /**
          * creates an object that acts on a state
          * @param {Array} actionTypes
          * @param {Array} middleware
-         * @param {Array} watchers
          * @param {Object} options
          * @return {Object}
          */
-        function dict(actionTypes, middleware, watchers, options) {
+        function dict(actionTypes, middleware, options) {
             /**
-             * execute() wrapper that applies middleware and calls watchers
+             * execute() wrapper that applies middleware
              * @param {Object} state
              * @param {String} type
              * @param {any} params
@@ -67,11 +71,6 @@
                     console.log('%c%s', 'font-size:20px;', `${type} ${JSON.stringify(params)}`);
                     console.log('state > %c%s', 'color:#0a0;', JSON.stringify(newState));
                 }
-
-                // calling all watchers
-                watchers.forEach((watcher) => {
-                    watcher(deepCopy(newState), type, params);
-                });
 
                 return newState;
             }
@@ -115,6 +114,7 @@
                         }
                     });
                 });
+
                 return state;
             }
 
@@ -169,14 +169,12 @@
 
             /**
              * updates saved state on change
-             * @param {Function} callback
-             * @param {String} type
-             * @param {Object} params
-             * @return {Object}
+             * @param {Object} state
+             * @return {Object} state
              */
-            function updateCurrentAndCall(callback, type, params) {
-                current = callback(current, type, params);
-                return current;
+            function updateCurrent(state) {
+                current = state;
+                return state;
             }
 
             /**
@@ -188,7 +186,7 @@
             }
 
             return {
-                updateCurrentAndCall: updateCurrentAndCall,
+                updateCurrent: updateCurrent,
                 history: history,
                 getState: getCurrent,
             };
