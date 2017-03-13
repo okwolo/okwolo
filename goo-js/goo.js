@@ -6,7 +6,7 @@
 
         // create DOM controller for each controller and add them to the array of watchers
         controllers.forEach((controller) => {
-            args.watchers.push(gooey(controller.target, controller.builder, args.state).update);
+            args.watchers.push(gooey(controller.target, controller.builder, controller.parsers, args.state, options).update);
         });
 
         // creating object that handles the persistence of state
@@ -196,21 +196,83 @@
          * creates a DOM controller with update function
          * @param {Node} target
          * @param {Function} build
+         * @param {Array} parsers
          * @param {Object} initialState
+         * @param {Object} options
          * @return {Object}
          */
-        function gooey(target, build, initialState) {
-            // storing vdom
-            let vdom = {};
+        function gooey(target, build, parsers, initialState, options) {
+            // adding parsers
+            if (!options.disableShorthand) {
+                parsers.push(shorthandParser);
+            }
 
-            // create vdom
-            vdom = render(reconcileSyntax(build(initialState)));
+            /**
+             * properly formats a vdom object written in shorthand form
+             * @param {Object} vdom
+             * @return {Object}
+             */
+            function shorthandParser(vdom) {
+                // textNode treatment
+                if (typeof vdom === 'string') {
+                    vdom = {
+                        text: vdom,
+                    };
+                }
+                if (vdom.text) {
+                    return vdom;
+                }
+                // array to object
+                if (Array.isArray(vdom)) {
+                    vdom = {
+                        tagName: vdom[0],
+                        attributes: vdom[1],
+                        style: vdom[2],
+                        children: vdom[3],
+                    };
+                }
+                // id and class from tagName
+                let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
+                if (selectors === null) {
+                    err(`tagName ${vdom.tagName} is misformatted`);
+                } else {
+                    vdom.tagName = selectors[1];
+                    if (selectors[2] || selectors[3]) {
+                        vdom.attributes = vdom.attributes || {};
+                        if (selectors[2]) {
+                            vdom.attributes.id = selectors[2].replace('#', '');
+                        }
+                        if (selectors[3]) {
+                            vdom.attributes.className = selectors[3].replace(/\./g, ' ').trim();
+                        }
+                    }
+                }
+                // recurse over children
+                Object.keys(vdom.children || {}).forEach((key) => {
+                    vdom.children[key] = shorthandParser(vdom.children[key]);
+                });
+                return vdom;
+            }
 
-            // initial render to DOM
+            // storing initial vdom
+            let vdom = render(buildAndParse(initialState));
+
+            // first render to DOM
             window.requestAnimationFrame(() => {
                 target.innerHTML = '';
                 target.appendChild(vdom.DOM);
             });
+
+            /**
+             * passes new state through builder and parsers
+             * @param {Object} state
+             * @return {Object}
+             */
+            function buildAndParse(state) {
+                return parsers.reduce((intermediateVdom, parser) => {
+                    return parser(intermediateVdom);
+                }, build(state));
+            }
 
             /**
              * recursively creates DOM elements from vdom object
@@ -263,57 +325,10 @@
                     } catch (e) {
                         param = actionPattern[3] || actionPattern[2];
                     }
-                    return function() {
+                    return () => {
                         act(action, param);
                     };
                 }
-            }
-
-            /**
-             * properly formats a vdom object written in abriged form
-             * @param {Object} vdom
-             * @return {Object}
-             */
-            function reconcileSyntax(vdom) {
-                // textNode treatment
-                if (typeof vdom === 'string') {
-                    vdom = {
-                        text: vdom,
-                    };
-                }
-                if (vdom.text) {
-                    return vdom;
-                }
-                // array to object
-                if (Array.isArray(vdom)) {
-                    vdom = {
-                        tagName: vdom[0],
-                        attributes: vdom[1],
-                        style: vdom[2],
-                        children: vdom[3],
-                    };
-                }
-                // id and class from tagName
-                let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
-                if (selectors === null) {
-                    err(`tagName ${vdom.tagName} is misformatted`);
-                } else {
-                    vdom.tagName = selectors[1];
-                    if (selectors[2] || selectors[3]) {
-                        vdom.attributes = vdom.attributes || {};
-                        if (selectors[2]) {
-                            vdom.attributes.id = selectors[2].replace('#', '');
-                        }
-                        if (selectors[3]) {
-                            vdom.attributes.className = selectors[3].replace('.', ' ').trim();
-                        }
-                    }
-                }
-                // recurse over children
-                Object.keys(vdom.children || {}).forEach((key) => {
-                    vdom.children[key] = reconcileSyntax(vdom.children[key]);
-                });
-                return vdom;
             }
 
             /**
@@ -321,7 +336,7 @@
              * @param {Object} newState
              */
             function update(newState) {
-                window.requestAnimationFrame(() => _update(vdom, reconcileSyntax(build(newState)), {}));
+                window.requestAnimationFrame(() => _update(vdom, buildAndParse(newState), {}));
                 /**
                  * recursive function to update an element according to new state
                  * @param {Object} original
@@ -478,6 +493,11 @@
                 }
                 if (typeof controller.builder !== 'function') {
                     err('builder attribute is not a function');
+                }
+                if (controller.parsers === undefined) {
+                    controller.parsers = [];
+                } else if (!Array.isArray(controller.parsers)) {
+                    controller.parsers = [controller.parsers];
                 }
             });
 
