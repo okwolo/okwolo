@@ -6,7 +6,7 @@
 
         // create DOM controller for each controller and add them to the array of watchers
         controllers.forEach((controller) => {
-            args.watchers.unshift(gooey(controller.target, controller.builder, args.state).update);
+            args.watchers.push(gooey(controller.target, controller.builder, args.state).update);
         });
 
         // creating object that handles the persistence of state
@@ -20,11 +20,14 @@
         // creating state manager
         const stateManager = dict(args.actions, args.middleware, args.watchers, options);
 
-        // replacing the act function to pass state to it
-        const statelessAct = stateManager.act;
-        stateManager.act = (type, params) => {
-            statePersistenceManager.updateCurrent(statelessAct, type, params);
-        };
+        /**
+         * execute an action
+         * @param {String} type
+         * @param {Object} params
+         */
+        function act(type, params) {
+            statePersistenceManager.updateCurrentAndCall(stateManager.act, type, params);
+        }
 
         /**
          * creates an object that acts on a state
@@ -65,6 +68,7 @@
                     console.log('state > %c%s', 'color:#0a0;', JSON.stringify(newState));
                 }
 
+                // calling all watchers
                 watchers.forEach((watcher) => {
                     watcher(deepCopy(newState), type, params);
                 });
@@ -170,7 +174,7 @@
              * @param {Object} params
              * @return {Object}
              */
-            function updateCurrent(callback, type, params) {
+            function updateCurrentAndCall(callback, type, params) {
                 current = callback(current, type, params);
                 return current;
             }
@@ -184,7 +188,7 @@
             }
 
             return {
-                updateCurrent: updateCurrent,
+                updateCurrentAndCall: updateCurrentAndCall,
                 history: history,
                 get: getCurrent,
             };
@@ -262,7 +266,7 @@
                         param = actionPattern[3] || actionPattern[2];
                     }
                     return function() {
-                        stateManager.act(action, param);
+                        act(action, param);
                     };
                 }
             }
@@ -550,7 +554,7 @@
 
         // public interface
         return {
-            act: stateManager.act,
+            act: act,
             getState: statePersistenceManager.get,
         };
     };
