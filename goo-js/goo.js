@@ -372,14 +372,14 @@
                             } else {
                                 let styleDiff = diff(original.style, successor.style);
                                 let attributesDiff = diff(original.attributes, successor.attributes);
-                                if (styleDiff.length !== undefined) {
+                                if (styleDiff.length !== 0) {
                                     original.DOM.style.cssText = null;
                                     Object.keys(successor.style).forEach((key) => {
                                         original.style[key] = successor.style[key];
                                         original.DOM.style[key] = successor.style[key];
                                     });
                                 }
-                                if (attributesDiff.length !== undefined) {
+                                if (attributesDiff.length !== 0) {
                                     attributesDiff.forEach((key) => {
                                         original.attributes[key] = successor.attributes[key];
                                         original.DOM[key] = parseAttribute(successor.attributes[key]);
@@ -400,67 +400,32 @@
             }
 
             /**
-             * returns boolean for simple types or an array of addresses of all the differences between two objects
+             * shallow diff of two objects which returns an array of the modified keys
              * @param {Object} original
              * @param {Object} successor
-             * @param {String} ignore
              * @return {Boolean|Array}
              */
             function diff(original, successor) {
-                // get types
-                let originalType = Object.prototype.toString.call(original);
-                let successorType = Object.prototype.toString.call(successor);
-                // reject when different types
-                if (originalType !== successorType) {
-                    return false;
+                const typeOriginal = typeof original;
+                const typeSuccessor = typeof successor;
+                if (typeOriginal !== 'object' && typeSuccessor !== 'object') {
+                    return [];
                 }
-                // functions are never considered equal
-                if (originalType === '[object Function]') {
-                    return false;
+                const keysOriginal = Object.keys(original);
+                const keysSuccessor = Object.keys(successor);
+                if (typeof successor !== 'object') {
+                    return keysOriginal;
                 }
-                // compare two objects or arrays
-                if (originalType === '[object Object]' || originalType === '[object Array]') {
-                    let keys = Object.keys(original);
-                    let newKeys = Object.keys(successor);
-                    // creating union of both arrays of keys
-                    if (originalType === '[object Array]') {
-                        let lengthDifference = newKeys.length - keys.length;
-                        if (lengthDifference > 0) {
-                            for (let i = lengthDifference; i > 0; --i) {
-                                keys.push(newKeys[newKeys.length - i]);
-                            }
-                        }
-                    } else {
-                        let keysObj = {};
-                        keys.forEach((key) => {
-                            keysObj[key] = true;
-                        });
-                        newKeys.forEach((key) => {
-                            if (!keysObj[key]) {
-                                keys.push(key);
-                            }
-                        });
-                    }
-                    return keys.reduce((accumulator, key) => {
-                        let temp = diff(original[key], successor[key]);
-                        if (temp !== true) {
-                            if (typeof accumulator === 'boolean') {
-                                accumulator = [];
-                            }
-                            if (temp === false) {
-                                accumulator.push([key]);
-                            } else {
-                                temp.forEach((current) => {
-                                    current.unshift(key);
-                                    accumulator.push(current);
-                                });
-                            }
-                        }
-                        return accumulator;
-                    }, true);
+                if (typeof original !== 'object') {
+                    return keysSuccessor;
                 }
-                // compare primitive types
-                return original === successor;
+                return Object.keys(Object.assign(Object.assign({}, original), successor)).filter((key) => {
+                    let valueOriginal = original[key];
+                    let valueSuccessor = successor[key];
+                    return !((valueOriginal !== Object(valueOriginal)) &&
+                            (valueSuccessor !== Object(valueSuccessor)) &&
+                            (valueOriginal === valueSuccessor));
+                });
             }
 
             return {
