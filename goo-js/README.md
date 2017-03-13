@@ -255,9 +255,9 @@ In the case of an array of functions, each middleware function is nested within 
 A middleware function takes the form:
 
 ```javascript
-function middleware(callback, state, action_type, params) {
+function middleware(callback, state, action_type, params, options) {
     // ...
-    var next_state = callback(state, action_type, params);
+    var next_state = callback(state[, action_type[, params]]);
     // ...
     return next_state;
 }
@@ -266,6 +266,8 @@ function middleware(callback, state, action_type, params) {
 This syntax allows middleware to read, edit, cancel or perform async operations for any action.
 
 Middleware functions in an array are nested so that index 0 encompasses index 1.
+
+When calling the callback, action_type, params can be omitted. In this case, their most recent value will be used.
 
 ### `watchers`
 

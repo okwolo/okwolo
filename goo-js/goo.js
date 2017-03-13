@@ -44,13 +44,19 @@
              */
             function act(state, type, params = {}) {
                 // nest middleware
-                let funcs = [execute];
+                let funcs = [(_state, _type = type, _params = params) => {
+                    type = _type;
+                    params = _params;
+                    return execute(_state, _type, _params);
+                }];
                 middleware.reverse().forEach((currentMiddleware, index) => {
-                    funcs[index + 1] = (state, type, params) => {
-                        return currentMiddleware(funcs[index], deepCopy(state), type, params);
+                    funcs[index + 1] = (_state, _type = type, _params = params) => {
+                        type = _type;
+                        params = _params;
+                        return currentMiddleware(funcs[index], deepCopy(_state), _type, _params, options);
                     };
                 });
-                let newState = deepCopy(funcs[middleware.length](state, type, params));
+                let newState = deepCopy(funcs[middleware.length](deepCopy(state), type, params));
 
                 // optional console logging of all actions
                 if (options.stateLog === true) {
@@ -74,9 +80,14 @@
              * @return {Object}
              */
             function execute(state, type, params) {
+                let actionTypeNotFound = actionTypes.length;
                 actionTypes.forEach((currentActionTypes) => {
                     let action = currentActionTypes[type];
                     if (!action) {
+                        --actionTypeNotFound;
+                        if (actionTypeNotFound === 0) {
+                            err(`action type '${type}' was not found`);
+                        }
                         return;
                     }
                     action.forEach((currentAction) => {
@@ -125,10 +136,9 @@
              * @param {Function} callback
              * @param {Object} state
              * @param {String} type
-             * @param {Object} params
              * @return {Object}
              */
-            function history(callback, state, type, params) {
+            function history(callback, state, type) {
                 if (type === 'UNDO') {
                     if (past.length > 0) {
                         future.push(current);
@@ -149,7 +159,7 @@
                     if (past.length > options.historyLength) {
                         past.shift();
                     }
-                    return callback(state, type, params);
+                    return callback(state);
                 }
             };
 
