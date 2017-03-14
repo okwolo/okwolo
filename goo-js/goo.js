@@ -6,7 +6,7 @@
 
         // create DOM controller for each controller and add them to the array of watchers
         controllers.forEach((controller) => {
-            args.watchers.push(gooey(controller.target, controller.builder, controller.parsers, args.state, options).update);
+            args.watchers.unshift(gooey(controller.target, controller.builder, controller.parsers, args.state, options).update);
         });
 
         // past, current and future states
@@ -54,17 +54,17 @@
             current = state;
         });
 
-        // call all watchers
+        // function to call all watchers
         let executeWatchers = (state, type, params) => {
             args.watchers.forEach((watcher) => {
                 watcher(deepCopy(state), type, params);
             });
         };
 
-        // creating the state machine
+        // creating the state manager
         let stateManager = stateMachine(args.actions, args.middleware, options, executeWatchers);
 
-        // acts on the current state
+        // function to act on the current state
         let act = (type, params) => {
             stateManager.act(current, type, params);
         };

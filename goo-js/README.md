@@ -170,7 +170,7 @@ var args = {
 
 ### `state`
 
-The initial state of the app on which actions can be performed. The state object needs can only contain objects and structures that are supported by the JSON format. Functions, Dates, references, etc. can therefore not be stored in the state at its creation or through actions.
+The initial state of the app on which actions can be performed. The state object can only contain objects and structures that are supported by the JSON format. Functions, Dates, references, etc. can therefore not be stored in the state at its creation or through actions.
 
 ### `actions`
 
@@ -233,7 +233,8 @@ ADD_USER: [
     function(state, params) {
         // ...
         return state;
-    },{
+    },
+    {
         target: ['path', 'to', 'scope'],
         do: function(scopedState, params) {
             // ...
@@ -270,11 +271,11 @@ function middleware(callback, state, actionType, params, options) {
 }
 ```
 
-This syntax allows middleware to read, edit, cancel or perform async operations for any action.
+This syntax also allows middleware to read, edit or cancel any action.
 
 Middleware functions in an array are nested so that index 0 encompasses index 1.
 
-When calling the callback, actionType, params can be omitted. In this case, their most recent value will be used.
+When calling the callback, actionType and params can be omitted. In this case, their most recent value will be used.
 
 ### `watchers`
 
