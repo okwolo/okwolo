@@ -14,7 +14,7 @@
         let current = deepCopy(args.state);
         let future = [];
 
-        // undo/redo actions
+        // add undo/redo actions
         if (!options.disableHistory) {
             args.actions.push({
                 UNDO: [{
@@ -54,19 +54,38 @@
             current = state;
         });
 
-        // function to call all watchers
-        let executeWatchers = (state, type, params) => {
+        // store pending actions
+        let actionQueue = [];
+
+        // act on current state with oldest action
+        let runQueue = () => {
+            let oldestAction = actionQueue[0];
+            if (oldestAction) {
+                stateManager.act(current, oldestAction.type, oldestAction.params);
+            }
+        };
+
+        // runs watchers and next actions after an action is performed
+        let actionCallback = (state, type, params) => {
             args.watchers.forEach((watcher) => {
                 watcher(deepCopy(state), type, params);
             });
+            actionQueue.shift();
+            runQueue();
         };
 
         // creating the state manager
-        let stateManager = stateMachine(args.actions, args.middleware, options, executeWatchers);
+        let stateManager = stateMachine(args.actions, args.middleware, options, actionCallback);
 
-        // function to act on the current state
+        // adds an action to the queue
         let act = (type, params) => {
-            stateManager.act(current, type, params);
+            actionQueue.push({
+                type: type,
+                params: params,
+            });
+            if (actionQueue.length === 1) {
+                runQueue();
+            }
         };
 
         /**
@@ -399,15 +418,6 @@
         }
 
         /**
-         * creates a deep copy of an object
-         * @param {Object} obj
-         * @return {Object}
-         */
-        function deepCopy(obj) {
-            return JSON.parse(JSON.stringify(obj));
-        }
-
-        /**
          * standardises input types or produces error when impossible
          */
         function inputValidation() {
@@ -490,6 +500,15 @@
 
             // make sure history length is defined
             options.historyLength = options.historyLength || 20;
+        }
+
+        /**
+         * creates a deep copy of an object
+         * @param {Object} obj
+         * @return {Object}
+         */
+        function deepCopy(obj) {
+            return JSON.parse(JSON.stringify(obj));
         }
 
         /**
