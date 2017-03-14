@@ -9,70 +9,96 @@
             args.watchers.push(gooey(controller.target, controller.builder, controller.parsers, args.state, options).update);
         });
 
-        // creating object that handles the persistence of state
-        const statePersistenceManager = dictTimeMachine(args.state, options);
+        // past, current and future states
+        let past = [];
+        let current = deepCopy(args.state);
+        let future = [];
 
-        // adding undo/redo middlware
+        // undo/redo actions
         if (!options.disableHistory) {
-            args.middleware.push(statePersistenceManager.history);
-        }
-
-        // creating state manager
-        const stateManager = dict(args.actions, args.middleware, args.watchers, options);
-
-        /**
-         * execute an action
-         * @param {String} type
-         * @param {Object} params
-         */
-        function act(type, params) {
-            let newState = statePersistenceManager.updateCurrent(stateManager.act(statePersistenceManager.getState(), type, params));
-
-            // calling all watchers
-            args.watchers.forEach((watcher) => {
-                watcher(deepCopy(newState), type, params);
+            args.actions.push({
+                UNDO: [{
+                    target: [],
+                    do: (state) => {
+                        if (past.length > 0) {
+                            future.push(current);
+                            return past.pop();
+                        } else {
+                            return current;
+                        }
+                    },
+                }],
+                REDO: [{
+                    target: [],
+                    do: (state) => {
+                        if (future.length > 0) {
+                            past.push(current);
+                            return future.pop();
+                        } else {
+                            return current;
+                        }
+                    },
+                }],
             });
         }
+
+        // update state on each action
+        args.watchers.unshift((state, type) => {
+            if (type !== 'UNDO' && type !== 'REDO') {
+                future = [];
+                past.push(current);
+                if (past.length > options.historyLength) {
+                    past.shift();
+                }
+            }
+            current = state;
+        });
+
+        // call all watchers
+        let executeWatchers = (state, type, params) => {
+            args.watchers.forEach((watcher) => {
+                watcher(deepCopy(state), type, params);
+            });
+        };
+
+        // creating the state machine
+        let stateManager = stateMachine(args.actions, args.middleware, options, executeWatchers);
+
+        // acts on the current state
+        let act = (type, params) => {
+            stateManager.act(current, type, params);
+        };
 
         /**
          * creates an object that acts on a state
          * @param {Array} actionTypes
          * @param {Array} middleware
          * @param {Object} options
+         * @param {Function} callback
          * @return {Object}
          */
-        function dict(actionTypes, middleware, options) {
+        function stateMachine(actionTypes, middleware, options, callback) {
             /**
              * execute() wrapper that applies middleware
              * @param {Object} state
              * @param {String} type
              * @param {any} params
-             * @return {Object}
              */
             function act(state, type, params = {}) {
                 // nest middleware
                 let funcs = [(_state, _type = type, _params = params) => {
                     type = _type;
                     params = _params;
-                    return execute(_state, _type, _params);
+                    execute(_state, _type, _params);
                 }];
                 middleware.reverse().forEach((currentMiddleware, index) => {
                     funcs[index + 1] = (_state, _type = type, _params = params) => {
                         type = _type;
                         params = _params;
-                        return currentMiddleware(funcs[index], deepCopy(_state), _type, _params, options);
+                        currentMiddleware(funcs[index], deepCopy(_state), _type, _params, options);
                     };
                 });
-                let newState = deepCopy(funcs[middleware.length](deepCopy(state), type, params));
-
-                // optional console logging of all actions
-                if (options.stateLog === true) {
-                    console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
-                    console.log('%c%s', 'font-size:20px;', `${type} ${JSON.stringify(params)}`);
-                    console.log('state > %c%s', 'color:#0a0;', JSON.stringify(newState));
-                }
-
-                return newState;
+                funcs[middleware.length](deepCopy(state), type, params);
             }
 
             /**
@@ -80,9 +106,9 @@
              * @param {any} state
              * @param {any} type
              * @param {any} params
-             * @return {Object}
              */
             function execute(state, type, params) {
+                let newState = deepCopy(state);
                 let actionTypeNotFound = actionTypes.length;
                 actionTypes.forEach((currentActionTypes) => {
                     let action = currentActionTypes[type];
@@ -94,9 +120,9 @@
                         return;
                     }
                     action.forEach((currentAction) => {
-                        let target = deepCopy(state);
+                        let target = deepCopy(newState);
                         if (currentAction.target.length > 0) {
-                            let reference = state;
+                            let reference = newState;
                             currentAction.target.forEach((key, i, a) => {
                                 if (target[key] !== undefined) {
                                     if (i === a.length - 1) {
@@ -110,85 +136,24 @@
                                 }
                             });
                         } else {
-                            state = currentAction.do(target, params);
+                            newState = currentAction.do(target, params);
                         }
                     });
                 });
 
-                return state;
+                // optional console logging of all actions
+                if (options.stateLog === true) {
+                    console.log('state > %c%s', 'color:#a00;', JSON.stringify(state));
+                    console.log('%c%s', 'font-size:20px;', `${type} ${JSON.stringify(params)}`);
+                    console.log('state > %c%s', 'color:#0a0;', JSON.stringify(newState));
+                    console.log('');
+                }
+
+                callback(deepCopy(newState), type, params);
             }
 
             return {
                 act: act,
-            };
-        }
-
-        /**
-         * state manager functions that adds undo/redo actions
-         * @param {Object} initialState
-         * @param {Object} options
-         * @return {Function}
-         */
-        function dictTimeMachine(initialState, options) {
-            // past, current and future states
-            let past = [];
-            let current = deepCopy(initialState);
-            let future = [];
-
-            /**
-             * middleware that artificially adds undo/redo actions
-             * @param {Function} callback
-             * @param {Object} state
-             * @param {String} type
-             * @return {Object}
-             */
-            function history(callback, state, type) {
-                if (type === 'UNDO') {
-                    if (past.length > 0) {
-                        future.push(current);
-                        return past.pop();
-                    } else {
-                        return current;
-                    }
-                } else if (type === 'REDO') {
-                    if (future.length > 0) {
-                        past.push(current);
-                        return future.pop();
-                    } else {
-                        return current;
-                    }
-                } else {
-                    future = [];
-                    past.push(current);
-                    if (past.length > options.historyLength) {
-                        past.shift();
-                    }
-                    return callback(state);
-                }
-            };
-
-            /**
-             * updates saved state on change
-             * @param {Object} state
-             * @return {Object} state
-             */
-            function updateCurrent(state) {
-                current = state;
-                return state;
-            }
-
-            /**
-             * fetches current state
-             * @return {Object}
-             */
-            function getCurrent() {
-                return deepCopy(current);
-            }
-
-            return {
-                updateCurrent: updateCurrent,
-                history: history,
-                getState: getCurrent,
             };
         }
 
@@ -538,7 +503,6 @@
         // public interface
         return {
             act: act,
-            getState: statePersistenceManager.getState,
         };
     };
 

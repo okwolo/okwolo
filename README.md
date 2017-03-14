@@ -265,9 +265,7 @@ A middleware function takes the form:
 ```javascript
 function middleware(callback, state, actionType, params, options) {
     // ...
-    var nextState = callback(state[, actionType[, params]]);
-    // ...
-    return nextState;
+    callback(state[, actionType[, params]]);
 }
 ```
 
