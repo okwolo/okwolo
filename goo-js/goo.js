@@ -177,7 +177,7 @@
         }
 
         /**
-         * creates a DOM controller with update function
+         * creates a DOM controller
          * @param {Node} target
          * @param {Function} build
          * @param {Array} parsers

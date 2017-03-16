@@ -3,7 +3,7 @@ const goo = require('../goo-js/goo');
 // const goo = require('goo-js');
 
 // focus on the form
-focusForm();
+setTimeout(focusForm, 0);
 
 // localStorage key
 const storageKey = 'GOO demo';
@@ -32,20 +32,31 @@ const actions = {
 };
 
 // define builder function
-const build = (state) => {
-    return [
-        'div.task-wrapper',,,
-        state.tasks.map((task, index) => {
-            return [
-                'div.task', {
-                    onclick: `(REMOVE, ${index})`,
-                },, [
-                    `${task}`,
-                ],
-            ];
-        }),
-    ];
-};
+const build = (state) => [
+    'div.wrapper',,, [
+        ['img.logo', {src: 'https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png'}],
+        ['div.form-wrapper',,, [
+            ['input.description-form', {type: 'text'}],
+            ['div.add', {onclick: submitForm},, [
+                '+',
+            ]],
+        ]],
+        ['div.hint',,, [
+            'Use up and down arrow keys to redo/undo respectively',
+        ]],
+        ['div.task-list',,, [
+            ['div.task-wrapper',,,
+                state.tasks.map((task, index) => [
+                    'div.task', {
+                        onclick: `(REMOVE, ${index})`,
+                    },, [
+                        task,
+                    ],
+                ]),
+            ],
+        ]],
+    ],
+];
 
 // saves state after every change
 const saveState = (state) => {
@@ -54,7 +65,7 @@ const saveState = (state) => {
 
 // creating goo object
 const app = goo({
-    target: document.querySelector('.task-list'),
+    target: document.querySelector('.goo'),
     builder: build,
 }, {
     state: state,
@@ -64,8 +75,7 @@ const app = goo({
     stateLog: true,
 });
 
-// add listeners to submit form
-document.querySelector('.add').addEventListener('click', submitForm);
+// add listeners for enter key
 window.addEventListener('keydown', (e) => {
     if (e.keyCode === 13) {
         submitForm();

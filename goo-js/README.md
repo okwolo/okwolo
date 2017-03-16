@@ -71,15 +71,15 @@ A generic vdom object takes this form:
 
 ```javascript
 var vdomObj = {
-    tagName: 'div'
+    tagName: 'div',
     attributes: {
         className: 'wrapper',
         // ...
-    }
+    },
     style: {
         background-color: '#333',
         // ...
-    }
+    },
     children: // ...
 }
 ```
