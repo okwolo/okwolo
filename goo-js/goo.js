@@ -1,4 +1,14 @@
 (() => {
+    // creates a deep copy of an object
+    let deepCopy = (obj) => {
+        return JSON.parse(JSON.stringify(obj));
+    };
+
+    // displays error message
+    let err = (message) => {
+        throw(new Error(`** ${message}`));
+    };
+
     // goo function
     let goo = (controllers, args, options = {}) => {
         // input validation
@@ -189,53 +199,6 @@
             // adding parsers
             if (!options.disableShorthand) {
                 parsers.push(shorthandParser);
-            }
-
-            /**
-             * properly formats a vdom object written in shorthand form
-             * @param {Object} vdom
-             * @return {Object}
-             */
-            function shorthandParser(vdom) {
-                // textNode treatment
-                if (typeof vdom === 'string') {
-                    vdom = {
-                        text: vdom,
-                    };
-                }
-                if (vdom.text) {
-                    return vdom;
-                }
-                // array to object
-                if (Array.isArray(vdom)) {
-                    vdom = {
-                        tagName: vdom[0],
-                        attributes: vdom[1],
-                        style: vdom[2],
-                        children: vdom[3],
-                    };
-                }
-                // id and class from tagName
-                let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
-                if (selectors === null) {
-                    err(`tagName ${vdom.tagName} is misformatted`);
-                } else {
-                    vdom.tagName = selectors[1];
-                    if (selectors[2] || selectors[3]) {
-                        vdom.attributes = vdom.attributes || {};
-                        if (selectors[2]) {
-                            vdom.attributes.id = selectors[2].replace('#', '');
-                        }
-                        if (selectors[3]) {
-                            vdom.attributes.className = selectors[3].replace(/\./g, ' ').trim();
-                        }
-                    }
-                }
-                // recurse over children
-                Object.keys(vdom.children || {}).forEach((key) => {
-                    vdom.children[key] = shorthandParser(vdom.children[key]);
-                });
-                return vdom;
             }
 
             // storing initial vdom
@@ -502,28 +465,58 @@
             options.historyLength = options.historyLength || 20;
         }
 
-        /**
-         * creates a deep copy of an object
-         * @param {Object} obj
-         * @return {Object}
-         */
-        function deepCopy(obj) {
-            return JSON.parse(JSON.stringify(obj));
-        }
-
-        /**
-         * displays error message
-         * @param {String} message
-         */
-        function err(message) {
-            throw(new Error(`** ${message}`));
-        }
-
         // public interface
         return {
             act: act,
         };
     };
+
+    /**
+     * properly formats a vdom object written in shorthand form
+     * @param {Object} vdom
+     * @return {Object}
+     */
+    function shorthandParser(vdom) {
+        // textNode treatment
+        if (typeof vdom === 'string') {
+            vdom = {
+                text: vdom,
+            };
+        }
+        if (vdom.text) {
+            return vdom;
+        }
+        // array to object
+        if (Array.isArray(vdom)) {
+            vdom = {
+                tagName: vdom[0],
+                attributes: vdom[1],
+                style: vdom[2],
+                children: vdom[3],
+            };
+        }
+        // id and class from tagName
+        let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
+        if (selectors === null) {
+            err(`tagName ${vdom.tagName} is misformatted`);
+        } else {
+            vdom.tagName = selectors[1];
+            if (selectors[2] || selectors[3]) {
+                vdom.attributes = vdom.attributes || {};
+                if (selectors[2]) {
+                    vdom.attributes.id = selectors[2].replace('#', '');
+                }
+                if (selectors[3]) {
+                    vdom.attributes.className = selectors[3].replace(/\./g, ' ').trim();
+                }
+            }
+        }
+        // recurse over children
+        Object.keys(vdom.children || {}).forEach((key) => {
+            vdom.children[key] = shorthandParser(vdom.children[key]);
+        });
+        return vdom;
+    }
 
     // making goo function available as an import or in the global window object
     if (typeof module !== 'undefined' && module.exports) {
