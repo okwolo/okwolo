@@ -261,7 +261,7 @@
              * @return {Function|String}
              */
             function parseAttribute(attributeValue) {
-                let actionPattern = String(attributeValue).match(/^\(\s*([^\n]+)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
+                let actionPattern = String(attributeValue).match(/^\(\s*([^\n]+?)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
                 if (actionPattern === null) {
                     return attributeValue;
                 } else {
