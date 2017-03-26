@@ -496,9 +496,12 @@
             };
         }
         // id and class from tagName
-        let selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
+        let selectors = null;
+        try {
+            selectors = vdom.tagName.match(/^(\w+)(#[^\n#.]+)?((?:\.[^\n#.]+)*)$/);
+        } catch (e) {}
         if (selectors === null) {
-            err(`tagName ${vdom.tagName} is misformatted`);
+            err('tagName is misformatted:\n' + JSON.stringify(vdom.tagName));
         } else {
             vdom.tagName = selectors[1];
             if (selectors[2] || selectors[3]) {
