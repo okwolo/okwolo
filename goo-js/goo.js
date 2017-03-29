@@ -261,7 +261,7 @@
              * @return {Function|String}
              */
             function parseAttribute(attributeValue) {
-                let actionPattern = String(attributeValue).match(/^\(\s*([^\n]+?)\s*,\s*(?:(\{[^]*\})|([^\s]+))\s*\)$/);
+                let actionPattern = String(attributeValue).match(/^\(\s*([^\n,\s]+?)\s*(?:,\s*([^\s]+)\s*)?\)$/);
                 if (actionPattern === null) {
                     return attributeValue;
                 } else {
@@ -270,7 +270,7 @@
                     try {
                         param = JSON.parse(actionPattern[2]);
                     } catch (e) {
-                        param = actionPattern[3] || actionPattern[2];
+                        param = actionPattern[2] || {};
                     }
                     return () => {
                         act(action, param);
