@@ -5,7 +5,8 @@
   "repository": "https://github.com/g-harel/ECMS.git",
   "license": "MIT",
   "scripts": {
-    "start": "webpack --watch -p"
+    "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-shorthand & del npm-debug.log",
+    "start:example": "cd example & start index.html & webpack --watch"
   },
   "dependencies": {
     "goo-js": "^1.1.0"
