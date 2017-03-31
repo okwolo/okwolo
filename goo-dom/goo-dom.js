@@ -1,44 +1,38 @@
 const utils = require('goo-utils');
 
-/**
- * creates a DOM controller
- * @param {Node} target
- * @param {Function} build
- * @param {Array} parsers
- * @param {Object} initialState
- * @param {Object} options
- * @return {Object}
- */
-module.exports = (target, build, parsers, initialState, options) => {
-    // storing initial vdom
-    let vdom = render(buildAndParse(initialState));
-
-    // first render to DOM
-    window.requestAnimationFrame(() => {
-        target.innerHTML = '';
-        target.appendChild(vdom.DOM);
-    });
-
-    /**
-     * passes new state through builder and parsers
-     * @param {Object} state
-     * @return {Object}
-     */
-    function buildAndParse(state) {
+// creates a DOM controller
+let dom = (target, build, parsers, initialState, options) => {
+    // passes new state through builder and parsers
+    let buildAndParse = (state) => {
         return parsers.reduce((intermediateVdom, parser) => {
             return parser(intermediateVdom);
         }, build(state));
-    }
+    };
 
-    /**
-     * recursively creates DOM elements from vdom object
-     * @param {Obbject} velem
-     * @return {Object}
-     */
-    function render(velem) {
+    // parses attribute's value to detect and replace string functions
+    let parseAttribute = (attributeValue) => {
+        let actionPattern = String(attributeValue).match(/^\(\s*([^\n,\s]+?)\s*(?:,\s*([^\s]+)\s*)?\)$/);
+        if (actionPattern === null) {
+            return attributeValue;
+        } else {
+            let action = actionPattern[1];
+            let param = null;
+            try {
+                param = JSON.parse(actionPattern[2]);
+            } catch (e) {
+                param = actionPattern[2] || {};
+            }
+            return () => {
+                act(action, param);
+            };
+        }
+    };
+
+    // recursively creates DOM elements from vdom object
+    let render = (velem) => {
         if (!velem.tagName) {
             if (velem.text === undefined) {
-                err('invalid vdom output: tagName or text property missing');
+                utils.err('invalid vdom output: tagName or text property missing');
             }
             velem.DOM = document.createTextNode(velem.text);
             return velem;
@@ -62,45 +56,43 @@ module.exports = (target, build, parsers, initialState, options) => {
         }
         velem.DOM = element;
         return velem;
-    }
+    };
 
-    /**
-     * parses attribute's value to detect and replace string functions
-     * @param {String} attributeValue
-     * @return {Function|String}
-     */
-    function parseAttribute(attributeValue) {
-        let actionPattern = String(attributeValue).match(/^\(\s*([^\n,\s]+?)\s*(?:,\s*([^\s]+)\s*)?\)$/);
-        if (actionPattern === null) {
-            return attributeValue;
-        } else {
-            let action = actionPattern[1];
-            let param = null;
-            try {
-                param = JSON.parse(actionPattern[2]);
-            } catch (e) {
-                param = actionPattern[2] || {};
-            }
-            return () => {
-                act(action, param);
-            };
+    // shallow diff of two objects which returns an array of the modified keys
+    let diff = (original, successor) => {
+        const typeOriginal = typeof original;
+        const typeSuccessor = typeof successor;
+        if (typeOriginal !== 'object' && typeSuccessor !== 'object') {
+            return [];
         }
-    }
+        const keysOriginal = Object.keys(original);
+        const keysSuccessor = Object.keys(successor);
+        if (typeof successor !== 'object') {
+            return keysOriginal;
+        }
+        if (typeof original !== 'object') {
+            return keysSuccessor;
+        }
+        return Object.keys(Object.assign(Object.assign({}, original), successor)).filter((key) => {
+            let valueOriginal = original[key];
+            let valueSuccessor = successor[key];
+            return !((valueOriginal !== Object(valueOriginal)) &&
+                    (valueSuccessor !== Object(valueSuccessor)) &&
+                    (valueOriginal === valueSuccessor));
+        });
+    };
 
-    /**
-     * update vdom and real DOM to new state
-     * @param {Object} newState
-     */
-    function update(newState) {
+    // update vdom and real DOM to new state
+    let update = (newState) => {
         window.requestAnimationFrame(() => _update(vdom, buildAndParse(newState), {}));
-        /**
-         * recursive function to update an element according to new state
-         * @param {Object} original
-         * @param {Object} successor
-         * @param {Object} originalParent
-         * @param {String} parentIndex
-         */
-        function _update(original, successor, originalParent, parentIndex) {
+        // recursive function to update an element according to new state
+        let _update = (original, successor, originalParent, parentIndex) => {
+            if (original === null) {
+                original = undefined;
+            }
+            if (successor === null) {
+                successor = undefined;
+            }
             if (original === undefined && successor === undefined) {
                 return;
             }
@@ -152,39 +144,21 @@ module.exports = (target, build, parsers, initialState, options) => {
                     }
                 });
             }
-        }
-    }
+        };
+    };
 
-    /**
-     * shallow diff of two objects which returns an array of the modified keys
-     * @param {Object} original
-     * @param {Object} successor
-     * @return {Boolean|Array}
-     */
-    function diff(original, successor) {
-        const typeOriginal = typeof original;
-        const typeSuccessor = typeof successor;
-        if (typeOriginal !== 'object' && typeSuccessor !== 'object') {
-            return [];
-        }
-        const keysOriginal = Object.keys(original);
-        const keysSuccessor = Object.keys(successor);
-        if (typeof successor !== 'object') {
-            return keysOriginal;
-        }
-        if (typeof original !== 'object') {
-            return keysSuccessor;
-        }
-        return Object.keys(Object.assign(Object.assign({}, original), successor)).filter((key) => {
-            let valueOriginal = original[key];
-            let valueSuccessor = successor[key];
-            return !((valueOriginal !== Object(valueOriginal)) &&
-                    (valueSuccessor !== Object(valueSuccessor)) &&
-                    (valueOriginal === valueSuccessor));
-        });
-    }
+    // storing initial vdom
+    let vdom = render(buildAndParse(initialState));
+
+    // first render to DOM
+    window.requestAnimationFrame(() => {
+        target.innerHTML = '';
+        target.appendChild(vdom.DOM);
+    });
 
     return {
         update: update,
     };
 };
+
+module.exports = dom;

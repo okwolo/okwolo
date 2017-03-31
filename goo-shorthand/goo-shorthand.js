@@ -1,9 +1,4 @@
-/**
- * properly formats a vdom object written in shorthand form
- * @param {Object} vdom
- * @return {Object}
- */
-module.exports = (vdom) => {
+let shorthand = (vdom) => {
     // textNode treatment
     if (typeof vdom === 'string') {
         vdom = {
@@ -43,7 +38,9 @@ module.exports = (vdom) => {
     }
     // recurse over children
     Object.keys(vdom.children || {}).forEach((key) => {
-        vdom.children[key] = shorthandParser(vdom.children[key]);
+        vdom.children[key] = shorthand(vdom.children[key]);
     });
     return vdom;
 };
+
+module.exports = shorthand;

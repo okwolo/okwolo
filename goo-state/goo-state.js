@@ -1,44 +1,9 @@
 const utils = require('goo-utils');
 
-/**
- * creates an object that acts on a state
- * @param {Array} actionTypes
- * @param {Array} middleware
- * @param {Object} options
- * @param {Function} callback
- * @return {Object}
- */
-module.exports = (actionTypes, middleware, options, callback) => {
-    /**
-     * execute() wrapper that applies middleware
-     * @param {Object} state
-     * @param {String} type
-     * @param {any} params
-     */
-    function act(state, type, params = {}) {
-        // nest middleware
-        let funcs = [(_state, _type = type, _params = params) => {
-            type = _type;
-            params = _params;
-            execute(_state, _type, _params);
-        }];
-        middleware.reverse().forEach((currentMiddleware, index) => {
-            funcs[index + 1] = (_state, _type = type, _params = params) => {
-                type = _type;
-                params = _params;
-                currentMiddleware(funcs[index], utils.deepCopy(_state), _type, _params, options);
-            };
-        });
-        funcs[middleware.length](utils.deepCopy(state), type, params);
-    }
-
-    /**
-     * exectute an action on the state
-     * @param {any} state
-     * @param {any} type
-     * @param {any} params
-     */
-    function execute(state, type, params) {
+// creates an object that acts on a state
+let state = (actionTypes, middleware, options, callback) => {
+    // exectute an action on the state
+    let execute = (state, type, params) => {
         let newState = utils.deepCopy(state);
         let actionTypeNotFound = actionTypes.length;
         actionTypes.forEach((currentActionTypes) => {
@@ -81,9 +46,29 @@ module.exports = (actionTypes, middleware, options, callback) => {
         }
 
         callback(utils.deepCopy(newState), type, params);
-    }
+    };
+
+    // execute() wrapper that applies middleware
+    let act = (state, type, params = {}) => {
+        // nest middleware
+        let funcs = [(_state, _type = type, _params = params) => {
+            type = _type;
+            params = _params;
+            execute(_state, _type, _params);
+        }];
+        middleware.reverse().forEach((currentMiddleware, index) => {
+            funcs[index + 1] = (_state, _type = type, _params = params) => {
+                type = _type;
+                params = _params;
+                currentMiddleware(funcs[index], utils.deepCopy(_state), _type, _params, options);
+            };
+        });
+        funcs[middleware.length](utils.deepCopy(state), type, params);
+    };
 
     return {
         act: act,
     };
 };
+
+module.exports = state;
