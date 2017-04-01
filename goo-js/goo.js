@@ -6,14 +6,6 @@
 
     // goo function
     let goo = (controllers, args, options = {}) => {
-        // input validation
-        inputValidation();
-
-        // create DOM controller for each controller and add them to the array of watchers
-        controllers.forEach((controller) => {
-            args.watchers.unshift(gooey(controller.target, controller.builder, controller.parsers, args.state, options).update);
-        });
-
         // past, current and future states
         let past = [];
         let current = utils.deepCopy(args.state);
@@ -58,45 +50,6 @@
             }
             current = state;
         });
-
-        // store pending actions
-        let actionQueue = [];
-
-        // act on current state with oldest action
-        let runQueue = () => {
-            let oldestAction = actionQueue[0];
-            if (oldestAction) {
-                stateManager.act(current, oldestAction.type, oldestAction.params);
-            }
-        };
-
-        // runs watchers and next actions after an action is performed
-        let actionCallback = (state, type, params) => {
-            args.watchers.forEach((watcher) => {
-                watcher(utils.deepCopy(state), type, params);
-            });
-            actionQueue.shift();
-            runQueue();
-        };
-
-        // creating the state manager
-        let stateManager = stateMachine(args.actions, args.middleware, options, actionCallback);
-
-        // adds an action to the queue
-        let act = (type, params) => {
-            actionQueue.push({
-                type: type,
-                params: params,
-            });
-            if (actionQueue.length === 1) {
-                runQueue();
-            }
-        };
-
-        // public interface
-        return {
-            act: act,
-        };
     };
 
     // making goo function available as an import or in the global window object

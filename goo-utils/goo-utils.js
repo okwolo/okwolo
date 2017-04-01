@@ -23,19 +23,19 @@ let utils = () => {
     };
 
     // type checks
-    let isDefined = () => value !== undefined;
-    let isArray = () => Array.isArray(value);
-    let isFunction = () => typeof value === 'function';
-    let isString =() => typeof myVar === 'string';
-    let isNode = () => value instanceof Node;
+    let isDefined = (value) => value !== undefined;
+    let isArray = (value) => Array.isArray(value);
+    let isFunction = (value) => typeof value === 'function';
+    let isString =(value) => typeof value === 'string';
+    let isNode = (value) => value instanceof Node;
 
-    // helper to make sure blobs don't change during critical sections (ex. async actions)
+    // wait queue (ex. async actions during blob changes)
     let makeQueue = () => {
         let queue = [];
 
         let run = () => {
             let func = queue[0];
-            if (isDefined[func]) {
+            if (isDefined(func)) {
                 func();
             }
         };

@@ -1,62 +1,37 @@
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('goo-utils');
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo-utils.js');
 
 // creates an object that acts on a state
 let state = () => {
     let actions = {};
-    let formatters = [];
     let middleware = [];
     let watchers = [];
 
     let queue = makeQueue();
 
-    let addAction = (action) => {
-        let formattedAction = formatters.reduce((acc, formatter) => {
-            return formatter(acc);
-        }, action);
-        assert(isString(formattedAction.type), `action type ${formattedAction.type} is not a string`);
-        assert(isFunction(formattedAction.handler), `handler for action ${formattedAction.type} is not a function`);
-        assert(isArray(formattedAction.target), `target of action ${formattedAction.type} is not an array`);
-        formattedAction.target.forEach((address) => {
-            assert(isString(address), `target of action type ${formattedAction.type} is not an array of strings ${formattedAction.target}`);
+    let addAction = (action, group = false) => {
+        assert(isString(action.type), `action type ${action.type} is not a string`);
+        assert(isFunction(action.handler), `handler for action ${action.type} is not a function`);
+        assert(isArray(action.target), `target of action ${action.type} is not an array`);
+        action.target.forEach((address) => {
+            assert(isString(address), `target of action type ${action.type} is not an array of strings ${action.target}`);
         });
-        if (actions[formattedAction.type] === undefined) {
-            action[formattedAction.type] = [formattedAction];
+        if (actions[action.type] === undefined) {
+            actions[action.type] = [action];
         } else {
-            action[type].push(formattedAction);
+            actions[type].push(action);
         }
         queue.done();
     };
 
-    let addActionFormatter = (formatter) => {
-        let {handler, position} = formatter;
-        assert(isFunction(handler), `action formatter is not a function\n${handler}`);
-        if (position !== false) {
-            formatters.push(handler);
-        } else {
-            formatters.unshift(handler);
-        }
-        queue.done();
-    };
-
-    let addMiddleware = (middleware) => {
-        let {handler, position} = middleware;
+    let addMiddleware = (handler) => {
         assert(isFunction(handler), `middleware is not a function\n${handler}`);
-        if (position !== false) {
-            middleware.push(handler);
-        } else {
-            middleware.unshift(handler);
-        }
+        middleware.push(handler);
         queue.done();
     };
 
-    let addWatcher = (watcher) => {
-        let {handler, position} = watcher;
+    let addWatcher = (handler) => {
         assert(isFunction(handler), `watcher is not a function\n${handler}`);
-        if (position !== false) {
-            watcher.push(handler);
-        } else {
-            watcher.unshift(handler);
-        }
+        watchers.push(handler);
         queue.done();
     };
 
@@ -64,7 +39,6 @@ let state = () => {
     let use = (blob) => {
         let blobs = {
             action: addAction,
-            formatter: addActionFormatter,
             middleware: addMiddleware,
             watcher: addWatcher,
         };
@@ -85,7 +59,7 @@ let state = () => {
             if (currentAction.target.length > 0) {
                 let reference = newState;
                 currentAction.target.forEach((key, i, a) => {
-                    assert(isDefined(target[key]), `target address of action ${type} is invalid: @state.${currentAction.target.join('.')}`);
+                    assert(isDefined(target[key]), `target address of action ${type} is does not exist: @state.${currentAction.target.join('.')}`);
                     if (i === a.length - 1) {
                         reference[key] = currentAction.handler(target[key], params);
                     } else {
