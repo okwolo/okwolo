@@ -8,7 +8,7 @@ let state = () => {
 
     let queue = makeQueue();
 
-    let addAction = (action, group = false) => {
+    let addAction = (action) => {
         assert(isString(action.type), `action type ${action.type} is not a string`);
         assert(isFunction(action.handler), `handler for action ${action.type} is not a function`);
         assert(isArray(action.target), `target of action ${action.type} is not an array`);
