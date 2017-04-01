@@ -156,9 +156,7 @@ let dom = (target, build, parsers, initialState, options) => {
         target.appendChild(vdom.DOM);
     });
 
-    return {
-        update: update,
-    };
+    return {} = {update};
 };
 
 module.exports = dom;

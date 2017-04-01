@@ -1,4 +1,4 @@
-const {assert, deepCopy, isDefined, isArray, isFunction, isString} = require('goo-utils');
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('goo-utils');
 
 // creates an object that acts on a state
 let state = () => {
@@ -6,6 +6,8 @@ let state = () => {
     let formatters = [];
     let middleware = [];
     let watchers = [];
+
+    let queue = makeQueue();
 
     let addAction = (action) => {
         let formattedAction = formatters.reduce((acc, formatter) => {
@@ -22,6 +24,7 @@ let state = () => {
         } else {
             action[type].push(formattedAction);
         }
+        queue.done();
     };
 
     let addActionFormatter = (formatter) => {
@@ -32,6 +35,7 @@ let state = () => {
         } else {
             formatters.unshift(handler);
         }
+        queue.done();
     };
 
     let addMiddleware = (middleware) => {
@@ -42,6 +46,7 @@ let state = () => {
         } else {
             middleware.unshift(handler);
         }
+        queue.done();
     };
 
     let addWatcher = (watcher) => {
@@ -52,17 +57,23 @@ let state = () => {
         } else {
             watcher.unshift(handler);
         }
+        queue.done();
     };
 
     // supported blobs and their execution
     let use = (blob) => {
         let blobs = {
-            action: addAction(blob.action),
-            formatter: addActionFormatter(blob.formatter),
-            middleware: addMiddleware(blob.middleware),
-            watcher: addWatcher(blob.watcher),
+            action: addAction,
+            formatter: addActionFormatter,
+            middleware: addMiddleware,
+            watcher: addWatcher,
         };
-        (blobs[Object.keys(blob)[0]] || (() => {}))();
+        let blobType = Object.keys(blob)[0];
+        if (isDefined(blobs[blobType])) {
+            queue.add(() => {
+                blobs[blobType](blob[blobType]);
+            });
+        }
     };
 
     // exectute an action on the state
@@ -90,10 +101,12 @@ let state = () => {
         watchers.forEach((watcher) => {
             watcher(deepCopy(newState), type, params);
         });
+
+        queue.done();
     };
 
     // execute wrapper that applies middleware
-    let act = (state, type, params = {}) => {
+    let apply = (state, type, params) => {
         let funcs = [(_state, _type = type, _params = params) => {
             type = _type;
             params = _params;
@@ -109,10 +122,14 @@ let state = () => {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    return {
-        act: act,
-        use: use,
+    // apply wrapper that uses the wait queue
+    let act = (state, type, params = {}) => {
+        queue.add(() => {
+            apply(state, type, params);
+        });
     };
+
+    return {} = {act, use};
 };
 
 module.exports = state;
