@@ -2,6 +2,7 @@
     // dependencies
     const gooey = require('goo-dom');
     const stateMachine = require('goo-state');
+    const utils = require('goo-utils');
 
     // goo function
     let goo = (controllers, args, options = {}) => {
@@ -15,7 +16,7 @@
 
         // past, current and future states
         let past = [];
-        let current = deepCopy(args.state);
+        let current = utils.deepCopy(args.state);
         let future = [];
 
         // add undo/redo actions
@@ -72,7 +73,7 @@
         // runs watchers and next actions after an action is performed
         let actionCallback = (state, type, params) => {
             args.watchers.forEach((watcher) => {
-                watcher(deepCopy(state), type, params);
+                watcher(utils.deepCopy(state), type, params);
             });
             actionQueue.shift();
             runQueue();
@@ -91,91 +92,6 @@
                 runQueue();
             }
         };
-
-        /**
-         * standardises input types or produces error when impossible
-         */
-        function inputValidation() {
-            // make sure controllers is an array of objects with valid properties
-            if (controllers === undefined) {
-                err('controllers argument is empty');
-            } else if (!Array.isArray(controllers)) {
-                controllers = [controllers];
-            }
-            controllers.forEach((controller) => {
-                if (!controller.target instanceof Node) {
-                    err('target is not a DOM node');
-                }
-                if (typeof controller.builder !== 'function') {
-                    err('builder attribute is not a function');
-                }
-                if (controller.parsers === undefined) {
-                    controller.parsers = [];
-                } else if (!Array.isArray(controller.parsers)) {
-                    controller.parsers = [controller.parsers];
-                }
-            });
-
-            // make sure watchers is an array of functions
-            if (args.watchers === undefined) {
-                args.watchers = [];
-            } else if (!Array.isArray(args.watchers)) {
-                args.watchers = [args.watchers];
-            }
-            if (!args.watchers.reduce((a, w) => a && typeof w === 'function', true)) {
-                err('one or more watchers is not a function');
-            }
-
-            // make sure middleware is an array of functions
-            if (args.middleware === undefined) {
-                args.middleware = [];
-            } else if (!Array.isArray(args.middleware)) {
-                args.middleware = [args.middleware];
-            }
-            if (!args.middleware.reduce((a, w) => a && typeof w === 'function', true)) {
-                err('one or more middleware is not a function');
-            }
-
-            // make sure actions is an array of objects with valid properties
-            if (args.actions === undefined) {
-                args.actions = [];
-            } else if (!Array.isArray(args.actions)) {
-                args.actions = [args.actions];
-            }
-            args.actions.forEach((currentActionTypes, i) => {
-                Object.keys(currentActionTypes).forEach((currentActionType, j) => {
-                    if (typeof currentActionTypes[currentActionType] === 'function') {
-                        currentActionTypes[currentActionType] = {
-                            target: [],
-                            do: currentActionTypes[currentActionType],
-                        };
-                    }
-                    if (!Array.isArray(currentActionTypes[currentActionType])) {
-                        currentActionTypes[currentActionType] = [currentActionTypes[currentActionType]];
-                    }
-                    currentActionTypes[currentActionType].forEach((currentAction, k) => {
-                        if (currentAction.target === undefined) {
-                            currentAction.target = [];
-                        } else if (typeof currentAction.target === 'string') {
-                            currentAction.target = [currentAction.target];
-                        } else if (!Array.isArray(currentAction.target)) {
-                            err(`Target of action ${k} of type ${currentActionType} in action types ${i} is not an array`);
-                        }
-                        if (typeof currentAction.do !== 'function') {
-                            err(`Property "do" of action ${k} of type ${currentActionType} in action types ${i} is not a function`);
-                        }
-                        currentAction.target.forEach((key, l) => {
-                            if (typeof key !== 'string' && typeof key !== 'number') {
-                                err(`Key at index ${l} of target of action ${k} of type ${currentActionType} in action types ${i} is not valid`);
-                            }
-                        });
-                    });
-                });
-            });
-
-            // make sure history length is defined
-            options.historyLength = options.historyLength || 20;
-        }
 
         // public interface
         return {

@@ -15,11 +15,29 @@ let utils = () => {
         throw(new Error(`** ${message}`));
     };
 
+    let checkThat = (value) => {
+        let isDefined = () => value !== undefined;
+
+        let isArray = () => Array.isArray(value);
+
+        let isFunction = () => typeof value === 'function';
+
+        let isNode = () => value instanceof Node;
+
+        return {
+            isDefined: isDefined,
+            isArray: isArray,
+            isFunction: isFunction,
+            isNode: isNode,
+        };
+    };
+
     // public interface
     return {
         jsonCopy: jsonCopy,
         deepCopy: deepCopy,
         err: err,
+        checkThat: checkThat,
     };
 };
 
