@@ -1,14 +1,14 @@
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo-utils.js');
+const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo-utils.js');
 
 // creates an object that acts on a state
-let state = () => {
-    let actions = {};
-    let middleware = [];
-    let watchers = [];
+const state = () => {
+    const actions = {};
+    const middleware = [];
+    const watchers = [];
 
-    let queue = makeQueue();
+    const queue = makeQueue();
 
-    let addAction = (action) => {
+    const addAction = (action) => {
         assert(isString(action.type), `action type ${action.type} is not a string`);
         assert(isFunction(action.handler), `handler for action ${action.type} is not a function`);
         assert(isArray(action.target), `target of action ${action.type} is not an array`);
@@ -23,35 +23,29 @@ let state = () => {
         queue.done();
     };
 
-    let addMiddleware = (handler) => {
+    const addMiddleware = (handler) => {
         assert(isFunction(handler), `middleware is not a function\n${handler}`);
         middleware.push(handler);
         queue.done();
     };
 
-    let addWatcher = (handler) => {
+    const addWatcher = (handler) => {
         assert(isFunction(handler), `watcher is not a function\n${handler}`);
         watchers.push(handler);
         queue.done();
     };
 
     // supported blobs and their execution
-    let use = (blob) => {
-        let blobs = {
+    const use = (blob) => {
+        blobHandler({
             action: addAction,
             middleware: addMiddleware,
             watcher: addWatcher,
-        };
-        let blobType = Object.keys(blob)[0];
-        if (isDefined(blobs[blobType])) {
-            queue.add(() => {
-                blobs[blobType](blob[blobType]);
-            });
-        }
+        }, blob);
     };
 
     // exectute an action on the state
-    let execute = (state, type, params) => {
+    const execute = (state, type, params) => {
         let newState = deepCopy(state);
         assert(isDefined(actions[type]), `action type '${type}' was not found`);
         actions[type].forEach((currentAction) => {
@@ -80,8 +74,9 @@ let state = () => {
     };
 
     // execute wrapper that applies middleware
-    let apply = (state, type, params) => {
-        let funcs = [(_state, _type = type, _params = params) => {
+    const apply = (state, type, params) => {
+        // TODO implement in two passes (map)
+        const funcs = [(_state, _type = type, _params = params) => {
             type = _type;
             params = _params;
             execute(_state, _type, _params);
@@ -97,7 +92,7 @@ let state = () => {
     };
 
     // apply wrapper that uses the wait queue
-    let act = (state, type, params = {}) => {
+    const act = (state, type, params = {}) => {
         queue.add(() => {
             apply(state, type, params);
         });
