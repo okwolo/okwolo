@@ -20,19 +20,16 @@ const state = () => {
         } else {
             actions[type].push(action);
         }
-        queue.done();
     };
 
     const addMiddleware = (handler) => {
         assert(isFunction(handler), `middleware is not a function\n${handler}`);
         middleware.push(handler);
-        queue.done();
     };
 
     const addWatcher = (handler) => {
         assert(isFunction(handler), `watcher is not a function\n${handler}`);
         watchers.push(handler);
-        queue.done();
     };
 
     // supported blobs and their execution
@@ -41,7 +38,7 @@ const state = () => {
             action: addAction,
             middleware: addMiddleware,
             watcher: addWatcher,
-        }, blob);
+        }, blob, queue);
     };
 
     // exectute an action on the state
