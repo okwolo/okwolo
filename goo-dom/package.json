@@ -2,7 +2,7 @@
   "name": "goo-dom",
   "version": "1.0.0",
   "description": "",
-  "main": "goo-dom.js",
+  "main": "goo.dom.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
