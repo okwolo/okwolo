@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-shorthand & del npm-debug.log",
-    "start:example": "cd example & start index.html & webpack --watch"
+    "start:example": "cd example & start index.html & webpack --watch",
+    "test": "mocha \"*/*.test.js\""
   },
   "dependencies": {
     "goo-js": "^1.1.0"
@@ -15,8 +16,10 @@
     "babel-core": "^6.22.1",
     "babel-loader": "^6.2.10",
     "babel-preset-es2015": "^6.22.0",
+    "chai": "^3.5.0",
     "eslint": "^3.15.0",
     "eslint-config-google": "^0.7.1",
+    "mocha": "^3.2.0",
     "webpack": "^2.2.1"
   }
 }

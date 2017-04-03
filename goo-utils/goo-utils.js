@@ -1,7 +1,18 @@
 const utils = () => {
+    // type checks
+    const isDefined = (value) => value !== undefined;
+    const isArray = (value) => Array.isArray(value);
+    const isFunction = (value) => typeof value === 'function';
+    const isString =(value) => typeof value === 'string';
+    const isNode = (value) => value instanceof Node;
+
     // creates a deep copy of a json object
     const jsonCopy = (obj) => {
-        return JSON.parse(JSON.stringify(obj));
+        obj = JSON.stringify(obj);
+        if (!isDefined(obj)) {
+            return {};
+        }
+        return JSON.parse(obj);
     };
 
     // creates a deep copy of an object
@@ -21,13 +32,6 @@ const utils = () => {
             err(message || 'assertion has failed');
         }
     };
-
-    // type checks
-    const isDefined = (value) => value !== undefined;
-    const isArray = (value) => Array.isArray(value);
-    const isFunction = (value) => typeof value === 'function';
-    const isString =(value) => typeof value === 'string';
-    const isNode = (value) => value instanceof Node;
 
     // wait queue (ex. async middlware during blob changes)
     const makeQueue = () => {
