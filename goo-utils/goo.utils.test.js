@@ -228,14 +228,10 @@ describe('makeQueue', function() {
             });
         }
         queue.add(function() {
-            try {
-                for (let i = 0; i < numTests; ++i) {
-                    callOrder[i].should.equal(i);
-                }
-                done();
-            } catch (e) {
-                done(e);
+            for (let i = 0; i < numTests; ++i) {
+                callOrder[i].should.equal(i);
             }
+            done();
         });
     });
 });
@@ -261,7 +257,7 @@ describe('blobHandler', function() {
         }, {test: {a: 'test123'}});
     });
 
-    it('should call the blob handler function for each object', function() {
+    it('should call the blob handler function multiple times for an array', function() {
         let test = 0;
         blobHandler({
             test: function(num) {
@@ -315,12 +311,8 @@ describe('blobHandler', function() {
             },
         }, {test: null}, queue);
         queue.add(function() {
-            try {
-                test.should.equal(true);
-                done();
-            } catch(e) {
-                done(e);
-            }
+            test.should.equal(true);
+            done();
         });
         test.should.equal(false);
     });

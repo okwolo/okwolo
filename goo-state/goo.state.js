@@ -1,4 +1,4 @@
-const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo-utils.js');
+const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo.utils.js');
 
 // creates an object that acts on a state
 const state = () => {
@@ -18,7 +18,7 @@ const state = () => {
         if (actions[action.type] === undefined) {
             actions[action.type] = [action];
         } else {
-            actions[type].push(action);
+            actions[action.type].push(action);
         }
     };
 
@@ -72,14 +72,12 @@ const state = () => {
 
     // execute wrapper that applies middleware
     const apply = (state, type, params) => {
-        // TODO implement in two passes (map)
-        const funcs = [(_state, _type = type, _params = params) => {
-            type = _type;
-            params = _params;
+        const funcs = [(_state = state, _type = type, _params = params) => {
             execute(_state, _type, _params);
         }];
         middleware.reverse().forEach((currentMiddleware, index) => {
-            funcs[index + 1] = (_state, _type = type, _params = params) => {
+            funcs[index + 1] = (_state = state, _type = type, _params = params) => {
+                state = _state;
                 type = _type;
                 params = _params;
                 currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
@@ -90,6 +88,8 @@ const state = () => {
 
     // apply wrapper that uses the wait queue
     const act = (state, type, params = {}) => {
+        assert(isDefined(state), 'cannot call act with undefined state');
+        assert(isDefined(type), 'cannot call act with undefined type');
         queue.add(() => {
             apply(state, type, params);
         });
