@@ -50,9 +50,11 @@ const state = () => {
             if (currentAction.target.length > 0) {
                 let reference = newState;
                 currentAction.target.forEach((key, i, a) => {
-                    assert(isDefined(target[key]), `target address of action ${type} is does not exist: @state.${currentAction.target.join('.')}`);
+                    assert(isDefined(target[key]), `target of action ${type} does not exist: @state.${currentAction.target.slice(0, i+1).join('.')}`);
                     if (i === a.length - 1) {
-                        reference[key] = currentAction.handler(target[key], params);
+                        let newValue = currentAction.handler(target[key], params);
+                        assert(isDefined(newValue), `result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
+                        reference[key] = newValue;
                     } else {
                         target = target[key];
                         reference = reference[key];
@@ -60,6 +62,7 @@ const state = () => {
                 });
             } else {
                 newState = currentAction.handler(target, params);
+                assert(isDefined(newState), `result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
             }
         });
 
