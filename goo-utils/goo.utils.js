@@ -6,19 +6,22 @@ const utils = () => {
     const isString =(value) => typeof value === 'string';
     const isNode = (value) => value instanceof Node;
 
-    // creates a deep copy of a json object
-    const jsonCopy = (obj) => {
-        obj = JSON.stringify(obj);
-        if (!isDefined(obj)) {
-            return {};
+    // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
+    const deepCopy = function(obj) {
+        if (isArray(obj)) {
+            return obj.map(function(element) {
+                return deepCopy(element);
+            });
         }
-        return JSON.parse(obj);
-    };
-
-    // creates a deep copy of an object
-    const deepCopy = (obj) => {
-        // temporary solution
-        return jsonCopy(obj);
+        if (typeof obj === 'object') {
+            const keys = Object.keys(obj);
+            const temp = {};
+            keys.forEach(function(key) {
+                temp[key] = deepCopy(obj[key]);
+            });
+            return temp;
+        }
+        return obj;
     };
 
     // displays error message
@@ -79,7 +82,7 @@ const utils = () => {
     };
 
     // public interface
-    return {} = {jsonCopy, deepCopy, err, assert, isDefined, isArray, isFunction, isString, isNode, makeQueue, blobHandler};
+    return {} = {deepCopy, err, assert, isDefined, isArray, isFunction, isString, isNode, makeQueue, blobHandler};
 };
 
 module.exports = utils();
