@@ -1,9 +1,11 @@
 const utils = () => {
     // type checks
     const isDefined = (value) => value !== undefined;
+    const isNull = (value) => value === null;
     const isArray = (value) => Array.isArray(value);
     const isFunction = (value) => typeof value === 'function';
-    const isString =(value) => typeof value === 'string';
+    const isString = (value) => typeof value === 'string';
+    const isObject = (value) => (!!value) && (value.constructor === Object);
     const isNode = (value) => value instanceof Node;
 
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
@@ -82,7 +84,7 @@ const utils = () => {
     };
 
     // public interface
-    return {} = {deepCopy, err, assert, isDefined, isArray, isFunction, isString, isNode, makeQueue, blobHandler};
+    return {} = {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, blobHandler};
 };
 
 module.exports = utils();
