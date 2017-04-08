@@ -1,81 +1,76 @@
-const utils = require('goo-utils');
+const {assert, isDefined, isNull, isArray, isString, blobHandler} = require('../goo-utils/goo.utils');
 
 // creates a DOM controller
-let dom = (target, build, parsers, initialState, options) => {
-    // passes new state through builder and parsers
-    let buildAndParse = (state) => {
-        return parsers.reduce((intermediateVdom, parser) => {
-            return parser(intermediateVdom);
-        }, build(state));
-    };
-
-    // parses attribute's value to detect and replace string functions
-    let parseAttribute = (attributeValue) => {
-        let actionPattern = String(attributeValue).match(/^\(\s*([^\n,\s]+?)\s*(?:,\s*([^\s]+)\s*)?\)$/);
-        if (actionPattern === null) {
-            return attributeValue;
-        } else {
-            let action = actionPattern[1];
-            let param = null;
-            try {
-                param = JSON.parse(actionPattern[2]);
-            } catch (e) {
-                param = actionPattern[2] || {};
+const createController = (target, builder, initialState) => {
+    // build vdom from state
+    const build = (state) => {
+        const parse = (element) => {
+            if (isNull(element)) {
+                return undefined;
             }
-            return () => {
-                act(action, param);
+            if (isString(element)) {
+                return {text: element};
+            }
+            assert(isArray(element), `vdom object is not an array or string\n${element}`);
+            assert(isString(element[0]), `tag property is not a string\n${element}`);
+            // [match, tagName, id, className, style]
+            const match = /^ *(\w+) *(?:#([^#\s.]+))? *((?:\.[^#\s.]+)*) *(?:\| *([^\n]+))? *$/.exec(element[0]);
+            assert(isArray(match), `tag property cannot be parsed\n${element}`);
+            if (!isObject(element[1])) {
+                element[1] = {};
+            }
+            if (isDefined(match[2]) && !isDefined(element[1].id)) {
+                element[1].id = match[2].trim();
+            }
+            if (isDefined(match[3])) {
+                if (!isDefined(element[1].className)) {
+                    element[1].className = '';
+                }
+                element[1].className += ' ' + match[3].replace(/\./g, ' ');
+            }
+            if (isDefined(match[4])) {
+                if (!isDefined(element[1].style)) {
+                    element[1].style = '';
+                }
+                element[1].style += ' ' + match[4].replace(/\./g, ' ');
+            }
+            if (isDefined(element[2])) {
+                assert(isArray(element[2]), `children of vdom object is not an array\n${element}`);
+            } else {
+                element[2] = [];
+            }
+            return {
+                tagName: match[1],
+                attributes: element[1],
+                children: element[2].map((c) => parse(c)),
             };
-        }
+        };
+        return parse(builder(state));
     };
 
     // recursively creates DOM elements from vdom object
-    let render = (velem) => {
-        if (!velem.tagName) {
-            if (velem.text === undefined) {
-                utils.err('invalid vdom output: tagName or text property missing');
-            }
+    const render = (velem) => {
+        if (isDefined(velem.text)) {
             velem.DOM = document.createTextNode(velem.text);
             return velem;
         }
-        let element = document.createElement(velem.tagName);
-        if (velem.attributes) {
-            Object.keys(velem.attributes).forEach((attribute) => {
-                element[attribute] = parseAttribute(velem.attributes[attribute]);
-            });
-        }
-        if (velem.style) {
-            Object.keys(velem.style).forEach((attribute) => {
-                element.style[attribute] = velem.style[attribute];
-            });
-        }
-        if (velem.children && velem.tagName !== undefined) {
-            Object.keys(velem.children).forEach((key) => {
-                velem.children[key] = render(velem.children[key]);
-                element.appendChild(velem.children[key].DOM);
-            });
-        }
+        const element = document.createElement(velem.tagName);
+        Object.keys(velem.attributes).forEach((attribute) => {
+            element[attribute] = velem.attributes[attribute];
+        });
+        Object.keys(velem.children).forEach((key) => {
+            velem.children[key] = render(velem.children[key]);
+            element.appendChild(velem.children[key].DOM);
+        });
         velem.DOM = element;
         return velem;
     };
 
-    // shallow diff of two objects which returns an array of the modified keys
-    let diff = (original, successor) => {
-        const typeOriginal = typeof original;
-        const typeSuccessor = typeof successor;
-        if (typeOriginal !== 'object' && typeSuccessor !== 'object') {
-            return [];
-        }
-        const keysOriginal = Object.keys(original);
-        const keysSuccessor = Object.keys(successor);
-        if (typeof successor !== 'object') {
-            return keysOriginal;
-        }
-        if (typeof original !== 'object') {
-            return keysSuccessor;
-        }
-        return Object.keys(Object.assign(Object.assign({}, original), successor)).filter((key) => {
-            let valueOriginal = original[key];
-            let valueSuccessor = successor[key];
+    // shallow diff of two objects which returns an array of the modified keys (functions always different)
+    const diff = (original, successor) => {
+        return Object.keys(Object.assign({}, original, successor)).filter((key) => {
+            const valueOriginal = original[key];
+            const valueSuccessor = successor[key];
             return !((valueOriginal !== Object(valueOriginal)) &&
                     (valueSuccessor !== Object(valueSuccessor)) &&
                     (valueOriginal === valueSuccessor));
@@ -83,31 +78,25 @@ let dom = (target, build, parsers, initialState, options) => {
     };
 
     // update vdom and real DOM to new state
-    let update = (newState) => {
-        window.requestAnimationFrame(() => _update(vdom, buildAndParse(newState), {}));
+    const update = (newState) => {
+        window.requestAnimationFrame(() => _update(vdom, build(newState), {}));
         // recursive function to update an element according to new state
-        let _update = (original, successor, originalParent, parentIndex) => {
-            if (original === null) {
-                original = undefined;
-            }
-            if (successor === null) {
-                successor = undefined;
-            }
-            if (original === undefined && successor === undefined) {
+        const _update = (original, successor, originalParent, parentIndex) => {
+            if (!isDefined(original) && !isDefined(successor)) {
                 return;
             }
-            if (original === undefined) {
+            if (!isDefined(original)) {
                 // add
                 originalParent.children[parentIndex] = render(successor);
                 originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
-            } else if (successor === undefined) {
+            } else if (!isDefined(successor)) {
                 // remove
                 originalParent.DOM.removeChild(original.DOM);
                 originalParent.children[parentIndex] = undefined;
             } else {
                 if (original.tagName !== successor.tagName) {
                     // replace
-                    let oldDOM = original.DOM;
+                    const oldDOM = original.DOM;
                     originalParent.children[parentIndex] = render(successor);
                     originalParent.DOM.replaceChild(originalParent.children[parentIndex].DOM, oldDOM);
                 } else {
@@ -118,15 +107,7 @@ let dom = (target, build, parsers, initialState, options) => {
                             original.text = successor.text;
                         }
                     } else {
-                        let styleDiff = diff(original.style, successor.style);
-                        let attributesDiff = diff(original.attributes, successor.attributes);
-                        if (styleDiff.length !== 0) {
-                            original.DOM.style.cssText = null;
-                            Object.keys(successor.style).forEach((key) => {
-                                original.style[key] = successor.style[key];
-                                original.DOM.style[key] = successor.style[key];
-                            });
-                        }
+                        const attributesDiff = diff(original.attributes, successor.attributes);
                         if (attributesDiff.length !== 0) {
                             attributesDiff.forEach((key) => {
                                 original.attributes[key] = successor.attributes[key];
@@ -135,8 +116,8 @@ let dom = (target, build, parsers, initialState, options) => {
                         }
                     }
                 }
-                let keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
-                let visited = {};
+                const keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
+                const visited = {};
                 keys.forEach((key) => {
                     if (visited[key] === undefined) {
                         visited[key] = true;
@@ -148,7 +129,7 @@ let dom = (target, build, parsers, initialState, options) => {
     };
 
     // storing initial vdom
-    let vdom = render(buildAndParse(initialState));
+    const vdom = render(build(initialState));
 
     // first render to DOM
     window.requestAnimationFrame(() => {
@@ -157,6 +138,21 @@ let dom = (target, build, parsers, initialState, options) => {
     });
 
     return {} = {update};
+};
+
+const dom = () => {
+    const controllerBlobHandler = (controller) => {
+        const {update} = createController(controller.target, controller.builder, controller.initialState);
+        controller.update = update;
+    };
+
+    const use = (blob) => {
+        blobHandler({
+            controller: controllerBlobHandler,
+        }, blob);
+    };
+
+    return {} = {use};
 };
 
 module.exports = dom;
