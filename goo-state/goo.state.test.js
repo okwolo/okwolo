@@ -380,4 +380,30 @@ describe('act -> execute', () => {
         });
         stateManager.act(1, 2, 3);
     });
+
+    it('should execute the action on the state', () => {
+        const stateManager = state();
+        stateManager.use(testAction(() => {
+            return 0;
+        }));
+        stateManager.use({
+            watcher: (state) => {
+                state.should.equal(0);
+            },
+        });
+        stateManager.act({}, 'TEST', 1);
+    });
+
+    it('should replace the action\'s target state, not the whole state', () => {
+        const stateManager = state();
+        stateManager.use(testAction(() => {
+            return 0;
+        }, ['subdirectory']));
+        stateManager.use({
+            watcher: (state) => {
+                state.subdirectory.should.equal(0);
+            },
+        });
+        stateManager.act({subdirectory: 1}, 'TEST', 1);
+    });
 });
