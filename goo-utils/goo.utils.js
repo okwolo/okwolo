@@ -6,7 +6,7 @@ const utils = () => {
     const isFunction = (value) => typeof value === 'function';
     const isString = (value) => typeof value === 'string';
     const isObject = (value) => (!!value) && (value.constructor === Object);
-    const isNode = (value) => value instanceof Node;
+    const isNode = (value) => value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute;;
 
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
     const deepCopy = function(obj) {

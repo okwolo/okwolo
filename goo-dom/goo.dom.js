@@ -1,7 +1,7 @@
-const {assert, isDefined, isNull, isArray, isString, blobHandler} = require('../goo-utils/goo.utils');
+const {assert, isDefined, isNull, isArray, isString, isNode, isFunction, blobHandler} = require('../goo-utils/goo.utils');
 
 // creates a DOM controller
-const createController = (target, builder, initialState) => {
+const createController = (window, target, builder, initialState) => {
     // build vdom from state
     const build = (state) => {
         const parse = (element) => {
@@ -51,10 +51,10 @@ const createController = (target, builder, initialState) => {
     // recursively creates DOM elements from vdom object
     const render = (velem) => {
         if (isDefined(velem.text)) {
-            velem.DOM = document.createTextNode(velem.text);
+            velem.DOM = window.document.createTextNode(velem.text);
             return velem;
         }
-        const element = document.createElement(velem.tagName);
+        const element = window.document.createElement(velem.tagName);
         Object.keys(velem.attributes).forEach((attribute) => {
             element[attribute] = velem.attributes[attribute];
         });
@@ -142,8 +142,11 @@ const createController = (target, builder, initialState) => {
 
 const dom = () => {
     const controllerBlobHandler = (controller) => {
-        const {update} = createController(controller.target, controller.builder, controller.initialState);
-        controller.update = update;
+        assert(isNode(controller.target), `target is not a dom node\n${controller.target}`);
+        assert(isFunction(controller.builder), `builder is not a function\n${controller.builder}`);
+        assert(isDefined(controller.initialState), `initialState is not defined\n${controller.initialState}`);
+        const {update} = createController(controller.window || window, controller.target, controller.builder, controller.initialState);
+        controller.update(update);
     };
 
     const use = (blob) => {
