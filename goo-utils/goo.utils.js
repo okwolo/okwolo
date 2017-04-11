@@ -6,19 +6,19 @@ const utils = () => {
     const isFunction = (value) => typeof value === 'function';
     const isString = (value) => typeof value === 'string';
     const isObject = (value) => (!!value) && (value.constructor === Object);
-    const isNode = (value) => value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute;;
+    const isNode = (value) => value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute;
 
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
-    const deepCopy = function(obj) {
+    const deepCopy = (obj) => {
         if (isArray(obj)) {
-            return obj.map(function(element) {
+            return obj.map((element) => {
                 return deepCopy(element);
             });
         }
         if (typeof obj === 'object') {
             const keys = Object.keys(obj);
             const temp = {};
-            keys.forEach(function(key) {
+            keys.forEach((key) => {
                 temp[key] = deepCopy(obj[key]);
             });
             return temp;

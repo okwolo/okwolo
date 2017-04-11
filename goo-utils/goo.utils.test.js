@@ -2,35 +2,35 @@ const should = require('chai').should();
 
 const utils = require('./goo.utils');
 
-describe('deepCopy', function() {
+describe('deepCopy', () => {
     const deepCopy = utils.deepCopy;
 
-    it('should copy an object', function() {
+    it('should copy an object', () => {
         let obj = {};
         deepCopy(obj).should.not.equal(obj);
     });
 
-    it('should not mutate inputs', function() {
+    it('should not mutate inputs', () => {
         let obj = {a: 1};
         let wrapper = {b: obj};
         deepCopy(wrapper);
         wrapper.b.should.equal(obj);
     });
 
-    it('should deep copy an object', function() {
+    it('should deep copy an object', () => {
         let obj = {a: 1};
         deepCopy({b: obj}).b.should.not.equal(obj);
     });
 
-    it('should copy strings', function() {
+    it('should copy strings', () => {
         deepCopy('a').should.equal('a');
     });
 
-    it('should copy numbers', function() {
+    it('should copy numbers', () => {
         deepCopy(1).should.equal(1);
     });
 
-    it('should copy arrays', function() {
+    it('should copy arrays', () => {
         let arr = [1, 2, 3];
         deepCopy(arr).should.be.an('array');
         deepCopy({a: arr}).a.should.not.equal(arr);
@@ -42,14 +42,14 @@ describe('deepCopy', function() {
     });
 });
 
-describe('isDefined', function() {
+describe('isDefined', () => {
     const isDefined = utils.isDefined;
 
-    it('should return false when undefined', function() {
+    it('should return false when undefined', () => {
         isDefined(undefined).should.equal(false);
     });
 
-    it('should return true for all other values', function() {
+    it('should return true for all other values', () => {
         isDefined(null).should.equal(true);
         isDefined(0).should.equal(true);
         isDefined('a').should.equal(true);
@@ -59,14 +59,14 @@ describe('isDefined', function() {
     });
 });
 
-describe('isArray', function() {
+describe('isArray', () => {
     const isArray = utils.isArray;
 
-    it('should return true when array', function() {
+    it('should return true when array', () => {
         isArray([]).should.equal(true);
     });
 
-    it('should return false for all other values', function() {
+    it('should return false for all other values', () => {
         isArray(undefined).should.equal(false);
         isArray(null).should.equal(false);
         isArray(0).should.equal(false);
@@ -76,14 +76,14 @@ describe('isArray', function() {
     });
 });
 
-describe('isString', function() {
+describe('isString', () => {
     const isString = utils.isString;
 
-    it('should return true when string', function() {
+    it('should return true when string', () => {
         isString('a').should.equal(true);
     });
 
-    it('should return false for all other values', function() {
+    it('should return false for all other values', () => {
         isString(undefined).should.equal(false);
         isString(null).should.equal(false);
         isString(0).should.equal(false);
@@ -93,14 +93,14 @@ describe('isString', function() {
     });
 });
 
-describe('isFunction', function() {
+describe('isFunction', () => {
     const isFunction = utils.isFunction;
 
-    it('should return true when function', function() {
+    it('should return true when function', () => {
         isFunction(() => {}).should.equal(true);
     });
 
-    it('should return false for all other values', function() {
+    it('should return false for all other values', () => {
         isFunction(undefined).should.equal(false);
         isFunction(null).should.equal(false);
         isFunction(0).should.equal(false);
@@ -110,15 +110,28 @@ describe('isFunction', function() {
     });
 });
 
-describe('isNode', function() {
-    /* TODO fake DOM
-    const isNode = utils.isNode;
+describe('isObject', () => {
+    const isFunction = utils.isFunction;
 
-    it('should return true when function', function() {
-        isNode(document.createElement('html'));
+    it('should return true when object', () => {
+        isFunction({}).should.equal(true);
+        isFunction([]).should.equal(true);
     });
 
-    it('should return false for all other values', function() {
+    it('should return false for all other values', () => {
+        isFunction(undefined).should.equal(false);
+        isFunction(null).should.equal(false);
+        isFunction(0).should.equal(false);
+        isFunction('a').should.equal(false);
+        isFunction(() => {}).should.equal(false);
+        isFunction(new Date()).should.equal(false);
+    });
+});
+
+describe('isNode', () => {
+    const isNode = utils.isNode;
+
+    it('should return false for all other values', () => {
         isNode(undefined).should.equal(false);
         isNode(null).should.equal(false);
         isNode(0).should.equal(false);
@@ -127,94 +140,93 @@ describe('isNode', function() {
         isNode({}).should.equal(false);
         isNode(() => {}).should.equal(true);
     });
-    */
 });
 
-describe('err', function() {
+describe('err', () => {
     const err = utils.err;
 
-    it('should throw an error', function() {
+    it('should throw an error', () => {
         err.should.throw(Error);
     });
 
-    it('should throw an error that blames goo', function() {
+    it('should throw an error that blames goo', () => {
         err.should.throw(Error, /goo/);
     });
 
-    it('should throw an error that includes the custom message', function() {
+    it('should throw an error that includes the custom message', () => {
         let message = 'test123';
-        (function() {
+        (() => {
             err(message);
         }).should.throw(Error, new RegExp(message));
     });
 });
 
-describe('assert', function() {
+describe('assert', () => {
     const assert = utils.assert;
 
-    it('should throw an error when false', function() {
-        (function() {
+    it('should throw an error when false', () => {
+        (() => {
             assert(false);
         }).should.throw(Error);
     });
 
-    it('should not throw an error when true', function() {
-        (function() {
+    it('should not throw an error when true', () => {
+        (() => {
             assert(true);
         }).should.not.throw(Error);
     });
 
-    it('should throw an error that blames goo', function() {
-        (function() {
+    it('should throw an error that blames goo', () => {
+        (() => {
             assert(false);
         }).should.throw(Error, /goo/);
     });
 
-    it('should throw an error that includes the custom message', function() {
+    it('should throw an error that includes the custom message', () => {
         let message = 'test123';
-        (function() {
+        (() => {
             assert(false, message);
         }).should.throw(Error, new RegExp(message));
     });
 });
 
-describe('makeQueue', function() {
+describe('makeQueue', () => {
     const makeQueue = utils.makeQueue;
 
-    it('should immediately call new functions when empty', function() {
+    it('should immediately call new functions when empty', () => {
         const queue = makeQueue();
         let test = false;
-        queue.add(function() {
+        queue.add(() => {
             test = true;
         });
         test.should.equal(true);
     });
 
-    it('should not proceed until the first function calls done', function() {
+    it('should not proceed until the first function calls done', () => {
         const queue = makeQueue();
         let test = false;
-        queue.add(function() {
+        queue.add(() => {
             test = true;
         });
-        queue.add(function() {
+        queue.add(() => {
             test = false;
         });
         test.should.equal(true);
     });
 
-    it('should call functions in the order they were added', function(done) {
+    it('should call functions in the order they were added', (done) => {
         const queue = makeQueue();
         let callOrder = [];
         let numTests = 2 + Math.floor(Math.random()*8);
         for(let i = 0; i < numTests; ++i) {
-            queue.add(function() {
-                setTimeout(function() {
+            queue.add(() => {
+                setTimeout(() => {
                     callOrder.push(i);
                     queue.done();
                 }, Math.random()*numTests*2);
             });
         }
-        queue.add(function() {
+        queue.add(() => {
             for (let i = 0; i < numTests; ++i) {
                 callOrder[i].should.equal(i);
             }
@@ -223,31 +235,31 @@ describe('makeQueue', function() {
     });
 });
 
-describe('blobHandler', function() {
+describe('blobHandler', () => {
     const blobHandler = utils.blobHandler;
 
-    it('should call the function described in the blob', function() {
+    it('should call the function described in the blob', () => {
         let test = false;
         blobHandler({
-            test: function() {
+            test: () => {
                 test = true;
             },
         }, {test: null});
         test.should.equal(true);
     });
 
-    it('should pass the object to the blob handler function', function() {
+    it('should pass the object to the blob handler function', () => {
         blobHandler({
-            test: function(obj) {
+            test: (obj) => {
                 obj.a.should.equal('test123');
             },
         }, {test: {a: 'test123'}});
     });
 
-    it('should call the blob handler function multiple times for an array', function() {
+    it('should call the blob handler function multiple times for an array', () => {
         let test = 0;
         blobHandler({
-            test: function(num) {
+            test: (num) => {
                 test += num;
             },
         }, {
@@ -256,13 +268,13 @@ describe('blobHandler', function() {
         test.should.equal(3);
     });
 
-    it('should call the blob handler for each key in the blob object', function() {
+    it('should call the blob handler for each key in the blob object', () => {
         let test = 0;
         blobHandler({
-            a: function(num) {
+            a: (num) => {
                 test += num;
             },
-            b: function(num) {
+            b: (num) => {
                 test -= num;
             },
         }, {
@@ -272,11 +284,11 @@ describe('blobHandler', function() {
         test.should.equal(-1);
     });
 
-    it('should do nothing if there are no blob handler function for a key in the blob object', function() {
+    it('should do nothing if there are no blob handler function for a key in the blob object', () => {
         let test = false;
-        (function() {
+        (() => {
             blobHandler({
-                test: function() {
+                test: () => {
                     test = true;
                 },
             }, {differentTest: null});
@@ -284,20 +296,20 @@ describe('blobHandler', function() {
         test.should.equal(false);
     });
 
-    it('should use a queue if provided', function(done) {
+    it('should use a queue if provided', (done) => {
         let queue = utils.makeQueue();
         let test = false;
-        queue.add(function() {
-            setTimeout(function() {
+        queue.add(() => {
+            setTimeout(() => {
                 queue.done();
             }, 30);
         });
         blobHandler({
-            test: function(num) {
+            test: (num) => {
                 test = true;
             },
         }, {test: null}, queue);
-        queue.add(function() {
+        queue.add(() => {
             test.should.equal(true);
             done();
         });

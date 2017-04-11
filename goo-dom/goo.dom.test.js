@@ -31,7 +31,9 @@ const newWindow = (builder, initialState, callback) => {
     );
 };
 
-newWindow((s) => s, 'test', (wrapper, update) => {
+newWindow((s) => (
+    ['span.test | font-weight:bold;', {}, [s]]
+), 'test', (wrapper, update) => {
     console.log(wrapper.outerHTML);
     update('test2', () => {
         console.log(wrapper.outerHTML);
