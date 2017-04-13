@@ -14,8 +14,8 @@ const createController = (window, target, builder, initialState) => {
             assert(isArray(element), `vdom object is not an array or string\n${element}`);
             assert(isString(element[0]), `tag property is not a string\n${element}`);
             // [match, tagName, id, className, style]
-            const match = /^ *(\w+) *(?:#([^#\s.]+))? *((?:\.[^#\s.]+)*) *(?:\| *([^\n]+))? *$/.exec(element[0]);
-            assert(isArray(match), `tag property cannot be parsed\n${element}`);
+            const match = /^ *(\w+) *(?:#([^#\s.]+))? *((?:\.[^#\s.]+)*)? *(?:\|\s*([^\s]{1}[^\n]*?))? *$/.exec(element[0]);
+            assert(isArray(match), `tag property cannot be parsed\n"${element[0]}"`);
             if (!isObject(element[1])) {
                 element[1] = {};
             }
@@ -26,13 +26,15 @@ const createController = (window, target, builder, initialState) => {
                 if (!isDefined(element[1].className)) {
                     element[1].className = '';
                 }
-                element[1].className += ' ' + match[3].replace(/\./g, ' ');
+                element[1].className += match[3].replace(/\./g, ' ');
+                element[1].className = element[1].className.trim();
             }
             if (isDefined(match[4])) {
                 if (!isDefined(element[1].style)) {
                     element[1].style = '';
                 }
-                element[1].style += ' ' + match[4].replace(/\./g, ' ');
+                element[1].style += ';' + match[4];
+                element[1].style = element[1].style.replace(/^;/g, '');
             }
             if (isDefined(element[2])) {
                 assert(isArray(element[2]), `children of vdom object is not an array\n${element}`);

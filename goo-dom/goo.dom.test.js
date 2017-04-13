@@ -32,7 +32,7 @@ const newWindow = (builder, initialState, callback) => {
 };
 
 newWindow((s) => (
-    ['span.test | font-weight:bold;', {}, [s]]
+    ['span  .test  |  height: 20px;', {}, [s]]
 ), 'test', (wrapper, update) => {
     console.log(wrapper.outerHTML);
     update('test2', () => {
