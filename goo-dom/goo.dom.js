@@ -147,6 +147,7 @@ const dom = () => {
         assert(isNode(controller.target), `target is not a dom node\n${controller.target}`);
         assert(isFunction(controller.builder), `builder is not a function\n${controller.builder}`);
         assert(isDefined(controller.initialState), `initialState is not defined\n${controller.initialState}`);
+        assert(isFunction(controller.update), `update is not a function\n${controller.update}`);
         const {update} = createController(controller.window || window, controller.target, controller.builder, controller.initialState);
         controller.update(update);
     };

@@ -6,7 +6,7 @@ const utils = () => {
     const isFunction = (value) => typeof value === 'function';
     const isString = (value) => typeof value === 'string';
     const isObject = (value) => (!!value) && (value.constructor === Object);
-    const isNode = (value) => value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute;
+    const isNode = (value) => !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
 
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
     const deepCopy = (obj) => {
@@ -33,7 +33,7 @@ const utils = () => {
 
     // throw errors when assertion fails
     const assert = (result, message) => {
-        if (result === false) {
+        if (!result) {
             err(message || 'assertion has failed');
         }
     };

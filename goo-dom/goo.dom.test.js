@@ -1,4 +1,10 @@
+const should = require('chai').should();
+
+const dom = require('./goo.dom');
+
 const jsdom = require('jsdom');
+
+let pseudom = {tagName: true, nodeName: true, ownerDocument: true, removeAttribute: true};
 
 const newWindow = (builder, initialState, callback) => {
     jsdom.env(
@@ -9,10 +15,10 @@ const newWindow = (builder, initialState, callback) => {
                 console.error(err);
             }
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
-            const dom = require('./goo.dom')();
+            const controller = dom();
             let update = null;
             const wrapper = window.document.querySelector('.wrapper');
-            dom.use({
+            controller.use({
                 controller: {
                     window: window,
                     target: wrapper,
@@ -31,11 +37,89 @@ const newWindow = (builder, initialState, callback) => {
     );
 };
 
-newWindow((s) => (
+describe('goo-dom', () => {
+    it('should return a function', () => {
+        dom.should.be.a('function');
+    });
+
+    it('should have a use function', () => {
+        const test = dom();
+        test.use.should.be.a('function');
+    });
+});
+
+describe('use -> controller', () => {
+    it('should reject malformed targets', () => {
+        const test = dom();
+        (() => {
+            test.use({
+                controller: {
+                    target: '',
+                    builder: () => {},
+                    initialState: {},
+                    update: () => {},
+                },
+            });
+        }).should.throw(Error, /target/g);
+    });
+
+    it('should reject malformed builders', () => {
+        const test = dom();
+        (() => {
+            test.use({
+                controller: {
+                    target: pseudom,
+                    builder: {},
+                    initialState: {},
+                    update: () => {},
+                },
+            });
+        }).should.throw(Error, /builder/g);
+    });
+
+    it('should reject undefined state', () => {
+        const test = dom();
+        (() => {
+            test.use({
+                controller: {
+                    target: pseudom,
+                    builder: () => {},
+                    initialState: undefined,
+                    update: () => {},
+                },
+            });
+        }).should.throw(Error, /state/gi);
+    });
+
+    it('should reject malformed update function', () => {
+        const test = dom();
+        (() => {
+            test.use({
+                controller: {
+                    target: pseudom,
+                    builder: () => {},
+                    initialState: {},
+                    update: {},
+                },
+            });
+        }).should.throw(Error, /update/g);
+    });
+
+    it('should should call the update function with a function as argument', (done) => {
+        (() => {
+            newWindow(() => '', {}, (wrapper, update) => {
+                update.should.be.a('function');
+                done();
+            });
+        }).should.not.throw(Error);
+    });
+});
+
+/*newWindow((s) => (
     ['span  .test  |  height: 20px;', {}, [s]]
 ), 'test', (wrapper, update) => {
     console.log(wrapper.outerHTML);
     update('test2', () => {
         console.log(wrapper.outerHTML);
     });
-});
+});*/

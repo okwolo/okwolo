@@ -111,20 +111,20 @@ describe('isFunction', () => {
 });
 
 describe('isObject', () => {
-    const isFunction = utils.isFunction;
+    const isObject = utils.isObject;
 
     it('should return true when object', () => {
-        isFunction({}).should.equal(true);
-        isFunction([]).should.equal(true);
+        isObject({}).should.equal(true);
     });
 
     it('should return false for all other values', () => {
-        isFunction(undefined).should.equal(false);
-        isFunction(null).should.equal(false);
-        isFunction(0).should.equal(false);
-        isFunction('a').should.equal(false);
-        isFunction(() => {}).should.equal(false);
-        isFunction(new Date()).should.equal(false);
+        isObject(undefined).should.equal(false);
+        isObject(null).should.equal(false);
+        isObject(0).should.equal(false);
+        isObject('a').should.equal(false);
+        isObject([]).should.equal(false);
+        isObject(() => {}).should.equal(false);
+        isObject(new Date()).should.equal(false);
     });
 });
 
@@ -138,7 +138,7 @@ describe('isNode', () => {
         isNode('a').should.equal(false);
         isNode([]).should.equal(false);
         isNode({}).should.equal(false);
-        isNode(() => {}).should.equal(true);
+        isNode(() => {}).should.equal(false);
     });
 });
 
