@@ -1,13 +1,19 @@
 const {deepCopy, isDefined} = require('../goo-utils/goo.utils');
 
-const mkdir = () => ({':params': {}});
+const reservedParamKey = ':params';
+const reservedCallbackKey = ':callback';
+
+const mkdir = () => {
+    const temp = {};
+    temp[reservedParamKey] = {};
+    return temp;
+};
 
 const pathStore = mkdir();
 
 const explodePath = (path) => {
     return path
         .replace(/\?[^]*$/g, '')
-        .replace(/^\/|\/$/g, '')
         .split('/');
 };
 
@@ -16,17 +22,17 @@ const register = (path, callback) => {
     let currentLevel = pathStore;
     explodedPath.forEach((token, i) => {
         if (token[0] === ':') {
-            currentLevel[':params'][token.substring(1)] =
-                currentLevel[':params'][token.substring(1)] || [];
+            currentLevel[reservedParamKey][token.substring(1)] =
+                currentLevel[reservedParamKey][token.substring(1)] || [];
             let defaultObj = mkdir();
-            currentLevel[':params'][token.substring(1)].push(defaultObj);
+            currentLevel[reservedParamKey][token.substring(1)].push(defaultObj);
             currentLevel = defaultObj;
         } else {
             currentLevel[token] = currentLevel[token] || mkdir();
             currentLevel = currentLevel[token];
         }
         if (i === explodedPath.length - 1) {
-            currentLevel[':callback'] = callback;
+            currentLevel[reservedCallbackKey] = callback;
         }
     });
 };
@@ -37,16 +43,16 @@ const fetch = (path, params = {}) => {
         path = path.slice();
         params = deepCopy(params);
         if (path.length === 0) {
-            if (shard[':callback']) {
-                shard[':callback'](params);
+            if (shard[reservedCallbackKey]) {
+                shard[reservedCallbackKey](params);
             }
         } else {
             const next = path.shift();
             if (isDefined(shard[next])) {
                 explore(shard[next], path, params);
             }
-            Object.keys(shard[':params']).forEach((param) => {
-                shard[':params'][param].forEach((p) => {
+            Object.keys(shard[reservedParamKey]).forEach((param) => {
+                shard[reservedParamKey][param].forEach((p) => {
                     let temp = {};
                     temp[param] = next;
                     explore(p, path, Object.assign(params, temp));
@@ -57,12 +63,19 @@ const fetch = (path, params = {}) => {
     explore(pathStore, explodedPath, params);
 };
 
+let print = (obj) => {
+    console.log(JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'function') return value.toString();
+        else return value;
+    }, 4));
+};
+
 register('/user/:uid/details/:field', (params) => {
     console.log(params.uid, params.field);
     params.test();
 });
 
-fetch('/user/user/details/name?test=asdas&asda=tyre', {
+fetch('/user/123/details/name?test=asdas&asda=tyre', {
     test: () => {
         console.log('test');
     },
