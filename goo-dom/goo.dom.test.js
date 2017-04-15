@@ -115,6 +115,63 @@ describe('use -> controller', () => {
     });
 });
 
+describe('createController', () => {
+    it('should render the initial state immediately', (done) => {
+        newWindow(() => 'a', {}, (wrapper, update) => {
+            wrapper.should.not.equal(undefined);
+            done();
+        });
+    });
+
+    it('should remove all other elements in the target', (done) => {
+        jsdom.env(
+            '<div class="wrapper"><span></span></div>',
+            [],
+            (err, window) => {
+                window.requestAnimationFrame = (f) => setTimeout(f, 0);
+                const controller = dom();
+                const wrapper = window.document.querySelector('.wrapper');
+                controller.use({
+                    controller: {
+                        window: window,
+                        target: wrapper,
+                        builder: () => 'a',
+                        initialState: {},
+                        update: () => {},
+                    },
+                });
+                setTimeout(() => {
+                    wrapper.children.length.should.equal(0);
+                    done();
+                }, 0);
+            }
+        );
+    });
+
+    it('should add the builder function\s output to the target', (done) => {
+        newWindow(() => ['span'], {}, (wrapper, update) => {
+            wrapper.children[0].tagName.should.equal('SPAN');
+            done();
+        });
+    });
+});
+
+describe('build', () => {
+    it('should create textNodes out of strings', (done) => {
+        newWindow(() => 'test', {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('test');
+            done();
+        });
+    });
+
+    it('should create elements out of arrays', (done) => {
+        newWindow(() => ['span'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<span></span>');
+            done();
+        });
+    });
+});
+
 /*newWindow((s) => (
     ['span  .test  |  height: 20px;', {}, [s]]
 ), 'test', (wrapper, update) => {

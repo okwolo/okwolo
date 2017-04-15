@@ -5,9 +5,6 @@ const createController = (window, target, builder, initialState) => {
     // build vdom from state
     const build = (state) => {
         const parse = (element) => {
-            if (isNull(element)) {
-                return undefined;
-            }
             if (isString(element)) {
                 return {text: element};
             }
