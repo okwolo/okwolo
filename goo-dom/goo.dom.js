@@ -1,4 +1,4 @@
-const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
+const {assert, isDefined, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
 
 // creates a DOM controller
 const createController = (window, target, builder, initialState) => {
