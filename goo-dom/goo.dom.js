@@ -10,7 +10,7 @@ const createController = (window, target, builder, initialState) => {
             }
             assert(isArray(element), `vdom object is not an array or string\n${element}`);
             assert(isString(element[0]), `tag property is not a string\n${element}`);
-            // [match, tagName, id, className, style]
+            // capture groups: tagName, id, className, style
             const match = /^ *(\w+) *(?:#([^#\s.]+))? *((?:\.[^#\s.]+)*)? *(?:\|\s*([^\s]{1}[^\n]*?))? *$/.exec(element[0]);
             assert(isArray(match), `tag property cannot be parsed\n"${element[0]}"`);
             if (!isObject(element[1])) {
@@ -65,7 +65,8 @@ const createController = (window, target, builder, initialState) => {
         return velem;
     };
 
-    // shallow diff of two objects which returns an array of the modified keys (functions always different)
+    /* shallow diff of two objects which returns an array of the
+        modified keys (functions always considered different)*/
     const diff = (original, successor) => {
         return Object.keys(Object.assign({}, original, successor)).filter((key) => {
             const valueOriginal = original[key];
