@@ -9,16 +9,17 @@ const state = () => {
     const queue = makeQueue();
 
     const addAction = (action) => {
-        assert(isString(action.type), `action type ${action.type} is not a string`);
-        assert(isFunction(action.handler), `handler for action ${action.type} is not a function`);
-        assert(isArray(action.target), `target of action ${action.type} is not an array`);
-        action.target.forEach((address) => {
-            assert(isString(address), `target of action type ${action.type} is not an array of strings ${action.target}`);
+        const {type, handler, target} = action;
+        assert(isString(type), `action type ${type} is not a string`);
+        assert(isFunction(handler), `handler for action ${type} is not a function`);
+        assert(isArray(target), `target of action ${type} is not an array`);
+        target.forEach((address) => {
+            assert(isString(address), `target of action type ${type} is not an array of strings ${target}`);
         });
-        if (actions[action.type] === undefined) {
-            actions[action.type] = [action];
+        if (actions[type] === undefined) {
+            actions[type] = [action];
         } else {
-            actions[action.type].push(action);
+            actions[type].push(action);
         }
     };
 

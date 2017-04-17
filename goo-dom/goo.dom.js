@@ -139,14 +139,14 @@ const createController = (window, target, builder, initialState) => {
     return {} = {update};
 };
 
-const dom = () => {
-    const controllerBlobHandler = (controller) => {
-        assert(isNode(controller.target), `target is not a dom node\n${controller.target}`);
-        assert(isFunction(controller.builder), `builder is not a function\n${controller.builder}`);
-        assert(isDefined(controller.initialState), `initialState is not defined\n${controller.initialState}`);
-        assert(isFunction(controller.update), `update is not a function\n${controller.update}`);
-        const {update} = createController(controller.window || window, controller.target, controller.builder, controller.initialState);
-        controller.update(update);
+const dom = (_window = window) => {
+    const controllerBlobHandler = ({target, builder, initialState, update}) => {
+        assert(isNode(target), `target is not a dom node\n${target}`);
+        assert(isFunction(builder), `builder is not a function\n${builder}`);
+        assert(isDefined(initialState), `initialState is not defined\n${initialState}`);
+        assert(isFunction(update), `update is not a function\n${update}`);
+        const {_update} = createController(_window, target, builder, initialState);
+        update(_update);
     };
 
     const use = (blob) => {

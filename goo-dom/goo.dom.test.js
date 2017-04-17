@@ -15,12 +15,11 @@ const newWindow = (builder, initialState, callback) => {
                 console.error(err);
             }
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
-            const controller = dom();
+            const controller = dom(window);
             let update = null;
             const wrapper = window.document.querySelector('.wrapper');
             controller.use({
                 controller: {
-                    window: window,
                     target: wrapper,
                     builder: builder,
                     initialState: initialState,
@@ -43,14 +42,14 @@ describe('goo-dom', () => {
     });
 
     it('should have a use function', () => {
-        const test = dom();
+        const test = dom({});
         test.use.should.be.a('function');
     });
 });
 
 describe('use -> controller', () => {
     it('should reject malformed targets', () => {
-        const test = dom();
+        const test = dom({});
         (() => {
             test.use({
                 controller: {
@@ -64,7 +63,7 @@ describe('use -> controller', () => {
     });
 
     it('should reject malformed builders', () => {
-        const test = dom();
+        const test = dom({});
         (() => {
             test.use({
                 controller: {
@@ -78,7 +77,7 @@ describe('use -> controller', () => {
     });
 
     it('should reject undefined state', () => {
-        const test = dom();
+        const test = dom({});
         (() => {
             test.use({
                 controller: {
@@ -92,7 +91,7 @@ describe('use -> controller', () => {
     });
 
     it('should reject malformed update function', () => {
-        const test = dom();
+        const test = dom({});
         (() => {
             test.use({
                 controller: {
@@ -129,11 +128,10 @@ describe('createController', () => {
             [],
             (err, window) => {
                 window.requestAnimationFrame = (f) => setTimeout(f, 0);
-                const controller = dom();
+                const controller = dom(window);
                 const wrapper = window.document.querySelector('.wrapper');
                 controller.use({
                     controller: {
-                        window: window,
                         target: wrapper,
                         builder: () => 'a',
                         initialState: {},
