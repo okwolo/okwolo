@@ -63,24 +63,27 @@ const utils = () => {
 
     // handle common blob logic
     const blobHandler = (blobs, blob, queue) => {
-        Object.keys(blob).forEach((key) => {
+        const returnValues = [];
+        Object.keys(blob).forEach((key, i) => {
+            returnValues.push([]);
             if (isDefined(blobs[key])) {
                 let blobObject = blob[key];
                 if (!isArray(blobObject)) {
                     blobObject = [blobObject];
                 }
-                blobObject.forEach((drop) => {
+                blobObject.forEach((drop, j) => {
                     if (isDefined(queue)) {
                         queue.add(() => {
-                            blobs[key](drop);
+                            returnValues[i][j] = blobs[key](drop);
                             queue.done();
                         });
                     } else {
-                        blobs[key](drop);
+                        returnValues[i][j] = blobs[key](drop);
                     }
                 });
             }
         });
+        return returnValues;
     };
 
     // public interface
