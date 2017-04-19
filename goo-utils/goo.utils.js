@@ -15,7 +15,7 @@ const utils = () => {
                 return deepCopy(element);
             });
         }
-        if (typeof obj === 'object') {
+        if (typeof obj === 'object' && obj) {
             const keys = Object.keys(obj);
             const temp = {};
             keys.forEach((key) => {
@@ -90,11 +90,3 @@ const utils = () => {
 };
 
 module.exports = utils();
-
-console.log(utils().blobHandler({
-    test: () => 0,
-    t: () => 1
-}, {
-    test: [0,0,0,0,0,0],
-    t: 1,
-}));

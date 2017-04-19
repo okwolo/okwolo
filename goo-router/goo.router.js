@@ -75,10 +75,10 @@ const router = (_window = window) => {
         assert(isString(path), `register path is not a string\n${path}`);
         assert(isFunction(callback), `callback for path ${path} is not a function\n${callback}`);
         register(pathStore)(path, callback);
-        // chacking new path against current url
+        // chacking new path against current pathname
         const temp = mkdir();
         register(temp)(path, callback);
-        fetch(temp)(_window.location.pathname, _window.history.state);
+        fetch(temp)(_window.location.pathname, _window.history.state || {});
     };
 
     // fetch wrapper that makes the browser aware of the url change
@@ -99,38 +99,3 @@ const router = (_window = window) => {
 };
 
 module.exports = router;
-
-// temp tests
-let print = (obj) => {
-    console.log(JSON.stringify(obj, (key, value) => {
-        if (typeof value === 'function') return value.toString();
-        else return value;
-    }, 4));
-};
-const pseuwindow = {
-    location: {
-        pathname: '/test/abc',
-    },
-    history: {
-        pushState: () => {},
-        state: {},
-    },
-};
-const testRouter = router(pseuwindow);
-testRouter.use({
-    route: [
-        {
-            path: '/test/abc',
-            callback: (x) => {
-                print(x);
-            },
-        }, {
-            path: '/test/:param',
-            callback: (x) => {
-                print(x);
-            },
-        },
-    ],
-});
-console.log('==');
-testRouter.redirect('/test/potato');
