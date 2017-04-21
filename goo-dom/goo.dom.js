@@ -1,10 +1,13 @@
-const {assert, isDefined, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
+const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
 
 // creates a DOM controller
 const createController = (window, target, builder, initialState) => {
     // build vdom from state
     const build = (state) => {
         const parse = (element) => {
+            if (isNull(element)) {
+                return {text: ''};
+            }
             if (isString(element)) {
                 return {text: element};
             }

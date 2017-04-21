@@ -168,6 +168,13 @@ describe('build', () => {
             done();
         });
     });
+
+    it('should create nothing when given null', (done) => {
+        newWindow(() => null, {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('');
+            done();
+        });
+    });
 });
 
 /*newWindow((s) => (
