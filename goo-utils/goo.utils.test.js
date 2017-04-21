@@ -40,6 +40,11 @@ describe('deepCopy', () => {
         let func = () => {};
         deepCopy({a: func}).a.should.equal(func);
     });
+
+    it('should handle null and undefined', () => {
+        should.equal(deepCopy(undefined), undefined);
+        should.equal(deepCopy(null), null);
+    });
 });
 
 describe('isDefined', () => {
