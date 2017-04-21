@@ -320,4 +320,35 @@ describe('blobHandler', () => {
         });
         test.should.equal(false);
     });
+
+    it('should return an array', () => {
+        blobHandler({}, {}).should.be.an('array');
+    });
+
+    it('should return an array for each key in blob', () => {
+        blobHandler({}, {test: ''}).length.should.equal(1);
+        blobHandler({}, {test: '', test2: ''}).length.should.equal(2);
+    });
+
+    it('should make each key\'s array the same length as the number of inputs', () => {
+        blobHandler({}, {test: ''})[0].length.should.equal(1);
+        blobHandler({}, {test: ['', '']})[0].length.should.equal(2);
+    });
+
+    it('should use null as the default value when there is no handler', () => {
+        should.equal(blobHandler({}, {test: ''})[0][0], null);
+    });
+
+    it('should return the return values of handlers', () => {
+        should.equal(blobHandler({
+            test: () => true,
+        }, {test: ''})[0][0], true);
+    });
+
+    it('should default to a null value for each element when using a queue', () => {
+        let queue = utils.makeQueue();
+        should.equal(blobHandler({
+            test: () => true,
+        }, {test: ''}, queue)[0][0], null);
+    });
 });

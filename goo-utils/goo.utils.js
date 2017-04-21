@@ -64,12 +64,12 @@ const utils = () => {
     // handle common blob logic
     const blobHandler = (blobs, blob, queue) => {
         return Object.keys(blob).map((key) => {
-            if (!isDefined(blobs[key])) {
-                return [];
-            }
             let blobObject = blob[key];
             if (!isArray(blobObject)) {
                 blobObject = [blobObject];
+            }
+            if (!isDefined(blobs[key])) {
+                return blobObject.map(() => null);
             }
             return blobObject.map((drop) => {
                 if (isDefined(queue)) {
