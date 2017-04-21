@@ -14,12 +14,19 @@ const mkdir = () => {
 const explodePath = (path) => {
     return path
         .replace(/\?[^]*$/g, '')
-        .split('/');
+        .split('/')
+        .map((p) => p.trim());
 };
 
 const router = (_window = window) => {
     // store all the registered routes in an encoded format
     const pathStore = mkdir();
+
+    // store initial pathName
+    let currentPath = _window.location.pathname;
+    if (_window.document.origin === null) {
+        currentPath = '';
+    }
 
     // add a route/callback combo to the store given as argument
     const register = (store) => (path, callback) => {
@@ -78,15 +85,20 @@ const router = (_window = window) => {
         // chacking new path against current pathname
         const temp = mkdir();
         register(temp)(path, callback);
-        fetch(temp)(_window.location.pathname, _window.history.state || {});
+        fetch(temp)(currentPath, _window.history.state || {});
     };
 
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
         assert(isString(path), `redirect path is not a string\n${path}`);
         assert(isObject(params), `redirect params is not an object\n${params}`);
-        _window.history.pushState({}, '', path);
-        fetch(pathStore)(path, params);
+        currentPath = path;
+        if (_window.document.origin !== null) {
+            _window.history.pushState({}, '', currentPath);
+        } else {
+            console.log(`goo-router:: path changed to${currentPath}`);
+        }
+        fetch(pathStore)(currentPath, params);
     };
 
     const use = (blob) => {

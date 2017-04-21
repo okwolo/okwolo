@@ -12,14 +12,13 @@ const print = (obj) => {
 };
 
 const newWindow = (initialPath, callback) => {
-    jsdom.env(
-        'https://example.com' + initialPath,
-        [],
-        (err, window) => {
+    jsdom.env({
+        url: 'https://example.com' + initialPath,
+        done: (err, window) => {
             const app = router(window);
             callback(window, app);
-        }
-    );
+        },
+    });
 };
 
 describe('goo-router', () => {
@@ -28,12 +27,12 @@ describe('goo-router', () => {
     });
 
     it('should have a use function', () => {
-        const test = router({});
+        const test = router({location: '', document: {origin: ''}});
         test.use.should.be.a('function');
     });
 
     it('should have a redirect function', () => {
-        const test = router({});
+        const test = router({location: '', document: {origin: ''}});
         test.redirect.should.be.a('function');
     });
 });
@@ -96,6 +95,26 @@ describe('use -> route', () => {
             });
             router.redirect('/test');
             test.should.equal(true);
+            done();
+        });
+    });
+});
+
+describe('redirect', () => {
+    it('should reject malformed paths', (done) => {
+        newWindow('/', (window, router) => {
+            (() => {
+                router.redirect(undefined);
+            }).should.throw(Error, /path/);
+            done();
+        });
+    });
+
+    it('should accept empty params', (done) => {
+        newWindow('/', (window, router) => {
+            (() => {
+                router.redirect('');
+            }).should.not.throw(Error, /params/);
             done();
         });
     });
