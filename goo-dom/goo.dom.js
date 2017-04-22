@@ -100,8 +100,14 @@ const createController = (window, target, builder, initialState) => {
                 if (original.tagName !== successor.tagName) {
                     // replace
                     const oldDOM = original.DOM;
-                    originalParent.children[parentIndex] = render(successor);
-                    originalParent.DOM.replaceChild(originalParent.children[parentIndex].DOM, oldDOM);
+                    if (isDefined(originalParent.children)) {
+                        originalParent.children[parentIndex] = render(successor);
+                        originalParent.DOM.replaceChild(originalParent.children[parentIndex].DOM, oldDOM);
+                    } else { // case when replaced element is root
+                        vdom = render(successor);
+                        target.innerHTML = '';
+                        target.appendChild(vdom.DOM);
+                    }
                 } else {
                     // edit
                     if (original.DOM.nodeType === 3) {
@@ -132,7 +138,7 @@ const createController = (window, target, builder, initialState) => {
     };
 
     // storing initial vdom
-    const vdom = render(build(initialState));
+    let vdom = render(build(initialState));
 
     // first render to DOM
     window.requestAnimationFrame(() => {
@@ -140,7 +146,7 @@ const createController = (window, target, builder, initialState) => {
         target.appendChild(vdom.DOM);
     });
 
-    return {} = {update};
+    return update;
 };
 
 const dom = (_window = window) => {
@@ -148,13 +154,11 @@ const dom = (_window = window) => {
         assert(isNode(target), `target is not a dom node\n${target}`);
         assert(isFunction(builder), `builder is not a function\n${builder}`);
         assert(isDefined(initialState), `initialState is not defined\n${initialState}`);
-        assert(isFunction(update), `update is not a function\n${update}`);
-        const {_update} = createController(_window, target, builder, initialState);
-        update(_update);
+        return createController(_window, target, builder, initialState);
     };
 
     const use = (blob) => {
-        blobHandler({
+        return blobHandler({
             controller: controllerBlobHandler,
         }, blob);
     };

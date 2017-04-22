@@ -16,16 +16,14 @@ const newWindow = (builder, initialState, callback) => {
             }
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
             const controller = dom(window);
-            let update = null;
             const wrapper = window.document.querySelector('.wrapper');
-            controller.use({
+            let update = controller.use({
                 controller: {
                     target: wrapper,
                     builder: builder,
                     initialState: initialState,
-                    update: (u) => update = u,
                 },
-            });
+            })[0][0];
             setTimeout(() => {
                 callback(wrapper, (newState, callback) => {
                     update(newState);
@@ -89,29 +87,6 @@ describe('use -> controller', () => {
             });
         }).should.throw(Error, /state/gi);
     });
-
-    it('should reject malformed update function', () => {
-        const test = dom({});
-        (() => {
-            test.use({
-                controller: {
-                    target: pseudom,
-                    builder: () => {},
-                    initialState: {},
-                    update: {},
-                },
-            });
-        }).should.throw(Error, /update/g);
-    });
-
-    it('should should call the update function with a function as argument', (done) => {
-        (() => {
-            newWindow(() => '', {}, (wrapper, update) => {
-                update.should.be.a('function');
-                done();
-            });
-        }).should.not.throw(Error);
-    });
 });
 
 describe('createController', () => {
@@ -154,7 +129,7 @@ describe('createController', () => {
     });
 });
 
-describe('build', () => {
+describe('build/render', () => {
     it('should create textNodes out of strings', (done) => {
         newWindow(() => 'test', {}, (wrapper, update) => {
             wrapper.innerHTML.should.equal('test');
@@ -175,13 +150,58 @@ describe('build', () => {
             done();
         });
     });
+
+    it('should read the tagName from the first element in the array', (done) => {
+        newWindow(() => ['test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test></test>');
+            done();
+        });
+    });
+
+    it('should read the attributes from the second element in the array', (done) => {
+        newWindow(() => ['test', {id: 'test'}], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test id="test"></test>');
+            done();
+        });
+    });
+
+    it('should be possible to append an id to the tagName using #', (done) => {
+        newWindow(() => ['test#test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test id="test"></test>');
+            done();
+        });
+    });
+
+    it('should be possible to append an classNames to the tagName using .', (done) => {
+        newWindow(() => ['test.test.test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test class="test test"></test>');
+            done();
+        });
+    });
+
+    it('should be possible to append styles to the tagName using |', (done) => {
+        newWindow(() => ['test|height:2px;'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test style="height: 2px;"></test>');
+            done();
+        });
+    });
+
+    it('should read the children from the third element in the array', (done) => {
+        newWindow(() => ['test', {}, ['test']], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<test>test</test>');
+            done();
+        });
+    });
 });
 
-/*newWindow((s) => (
-    ['span  .test  |  height: 20px;', {}, [s]]
-), 'test', (wrapper, update) => {
-    console.log(wrapper.outerHTML);
-    update('test2', () => {
-        console.log(wrapper.outerHTML);
+describe('update', () => {
+    it('should rerender the new dom', (done) => {
+        newWindow((s) => [s, {}, [s]], 'a', (wrapper, update) => {
+            wrapper.innerHTML.should.equal('<a>a</a>');
+            update('b', () => {
+                wrapper.innerHTML.should.equal('<b>b</b>');
+                done();
+            });
+        });
     });
-});*/
+});
