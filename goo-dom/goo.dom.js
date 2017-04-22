@@ -37,6 +37,9 @@ const createController = (window, target, builder, initialState) => {
                 element[1].style = element[1].style.replace(/^;/g, '');
             }
             if (isDefined(element[2])) {
+                if (isString(element[2])) {
+                    element[2] = [element[2]];
+                }
                 assert(isArray(element[2]), `children of vdom object is not an array\n${element}`);
             } else {
                 element[2] = [];
@@ -150,7 +153,7 @@ const createController = (window, target, builder, initialState) => {
 };
 
 const dom = (_window = window) => {
-    const controllerBlobHandler = ({target, builder, initialState, update}) => {
+    const controllerBlobHandler = ({target, builder, initialState}) => {
         assert(isNode(target), `target is not a dom node\n${target}`);
         assert(isFunction(builder), `builder is not a function\n${builder}`);
         assert(isDefined(initialState), `initialState is not defined\n${initialState}`);

@@ -62,7 +62,7 @@ const utils = () => {
     };
 
     // handle common blob logic
-    const blobHandler = (blobs, blob, queue) => {
+    const blobHandler = (blobs, blob = {}, queue) => {
         return Object.keys(blob).map((key) => {
             let blobObject = blob[key];
             if (!isArray(blobObject)) {
