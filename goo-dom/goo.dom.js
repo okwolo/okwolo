@@ -14,7 +14,7 @@ const createController = (window, target, builder, initialState) => {
             assert(isArray(element), `vdom object is not an array or string\n${element}`);
             assert(isString(element[0]), `tag property is not a string\n${element}`);
             // capture groups: tagName, id, className, style
-            const match = /^ *(\w+) *(?:#([^#\s.]+))? *((?:\.[^#\s.]+)*)? *(?:\|\s*([^\s]{1}[^\n]*?))? *$/.exec(element[0]);
+            const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(element[0]);
             assert(isArray(match), `tag property cannot be parsed\n"${element[0]}"`);
             if (!isObject(element[1])) {
                 element[1] = {};
@@ -120,7 +120,7 @@ const createController = (window, target, builder, initialState) => {
                         if (attributesDiff.length !== 0) {
                             attributesDiff.forEach((key) => {
                                 original.attributes[key] = successor.attributes[key];
-                                original.DOM[key] = parseAttribute(successor.attributes[key]);
+                                original.DOM[key] = successor.attributes[key];
                             });
                         }
                     }

@@ -204,4 +204,15 @@ describe('update', () => {
             });
         });
     });
+
+    it('should not replace elements when the tagName doesn\'t change', (done) => {
+        let element = null;
+        newWindow((s) => ['test' + s], '', (wrapper, update) => {
+            element = wrapper.children[0];
+            update('#id.class|height:0px;', () => {
+                wrapper.children[0].should.equal(element);
+                done();
+            });
+        });
+    });
 });
