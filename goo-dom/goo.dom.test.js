@@ -95,7 +95,6 @@ describe('createController', () => {
                 const wrapper = window.document.querySelector('.wrapper');
                 dom(window, wrapper, () => 'a', {});
                 setTimeout(() => {
-                    console.log(wrapper.outerHTML);
                     wrapper.children.length.should.equal(0);
                     done();
                 }, 0);
@@ -194,6 +193,31 @@ describe('update', () => {
             update('#id.class|height:0px;', () => {
                 wrapper.children[0].should.equal(element);
                 done();
+            });
+        });
+    });
+
+    it('should be able to replace all elements', (done) => {
+        newWindow((s) => s, '', (wrapper, update) => {
+            wrapper.innerHTML.should.equal('');
+            update('test1', () => {
+                wrapper.innerHTML.should.equal('test1');
+                update('test2', () => {
+                    wrapper.innerHTML.should.equal('test2');
+                    update(['test3', {}, ['test3']], () => {
+                        wrapper.innerHTML.should.equal('<test3>test3</test3>');
+                        update(['test4', {}, [['test4']]], () => {
+                            wrapper.innerHTML.should.equal('<test4><test4></test4></test4>');
+                            update('', () => {
+                                wrapper.innerHTML.should.equal('');
+                                update('test5', () => {
+                                    wrapper.innerHTML.should.equal('test5');
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
             });
         });
     });

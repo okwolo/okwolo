@@ -10,11 +10,11 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (isString(element)) {
                 return {text: element};
             }
-            assert(isArray(element), `vdom object is not an array or string\n${element}`);
-            assert(isString(element[0]), `tag property is not a string\n${element}`);
+            assert(isArray(element), 'vdom object is not an array or string', element);
+            assert(isString(element[0]), 'tag property is not a string', element);
             // capture groups: tagName, id, className, style
             const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(element[0]);
-            assert(isArray(match), `tag property cannot be parsed\n"${element[0]}"`);
+            assert(isArray(match), 'tag property cannot be parsed', element[0]);
             if (!isObject(element[1])) {
                 element[1] = {};
             }
@@ -39,7 +39,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 if (isString(element[2])) {
                     element[2] = [element[2]];
                 }
-                assert(isArray(element[2]), `children of vdom object is not an array\n${element}`);
+                assert(isArray(element[2]), 'children of vdom object is not an array', element);
             } else {
                 element[2] = [];
             }
@@ -99,7 +99,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             // remove
             if (!isDefined(successor)) {
                 originalParent.DOM.removeChild(original.DOM);
-                originalParent.children.splice(parentIndex, 1);
+                setTimeout(() => delete originalParent.children[parentIndex], 0);
                 return;
             }
             // replace
@@ -153,7 +153,9 @@ const dom = (_window = window, _target, _builder, _state) => {
     let builder = undefined;
     let state = undefined;
 
+    let hasDrawn = false;
     const drawToTarget = () => {
+        hasDrawn = true;
         _window.requestAnimationFrame(() => {
             target.innerHTML = '';
             target.appendChild(vdom.DOM);
@@ -165,7 +167,7 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const replaceTarget = (newTarget) => {
-        assert(isNode(newTarget), `target is not a DOM node\n${newTarget}`);
+        assert(isNode(newTarget), 'target is not a DOM node', newTarget);
         target = newTarget;
         if (requiredVariablesAreDefined()) {
             drawToTarget();
@@ -173,19 +175,23 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const replaceBuilder = (newBuilder) => {
-        assert(isFunction(newBuilder), `builder is not a function\n${newBuilder}`);
+        assert(isFunction(newBuilder), 'builder is not a function', newBuilder);
         builder = newBuilder;
         if (requiredVariablesAreDefined()) {
-            drawToTarget();
+            if (!hasDrawn) {
+                drawToTarget();
+            }
             update(state);
         }
     };
 
     const updateState = (newState) => {
-        assert(isDefined(newState), `new state is not defined\n${newState}`);
+        assert(isDefined(newState), 'new state is not defined', newState);
         state = newState;
         if (requiredVariablesAreDefined()) {
-            drawToTarget();
+            if (!hasDrawn) {
+                drawToTarget();
+            }
             update(state);
         }
     };
@@ -201,6 +207,8 @@ const dom = (_window = window, _target, _builder, _state) => {
     }
 
     const use = (blob) => {
+        // making sure only one value is given to each handler
+        Object.keys(blob).forEach((key) => blob[key] = [blob[key]]);
         return blobHandler({
             target: replaceTarget,
             builder: replaceBuilder,

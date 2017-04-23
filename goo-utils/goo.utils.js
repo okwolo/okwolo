@@ -32,9 +32,16 @@ const utils = () => {
     };
 
     // throw errors when assertion fails
-    const assert = (result, message) => {
+    const assert = (result, message, culprit) => {
+        const print = (obj) => {
+            return JSON.stringify(obj, (key, value) => {
+                return (typeof value === 'function')
+                    ? value.toString()
+                    : value;
+            }, 4);
+        };
         if (!result) {
-            err(message || 'assertion has failed');
+            err(message + (culprit?('\n' + print(culprit)):'') || 'assertion has failed');
         }
     };
 

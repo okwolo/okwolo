@@ -193,6 +193,14 @@ describe('assert', () => {
             assert(false, message);
         }).should.throw(Error, new RegExp(message));
     });
+
+    it('should append the contents of the culprit', () => {
+        (() => {
+            assert(false, 'test', {
+                testKey: () => {},
+            });
+        }).should.throw(Error, /testKey[^\n]*\(\) => {}/);
+    });
 });
 
 describe('makeQueue', () => {
