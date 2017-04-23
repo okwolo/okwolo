@@ -6,6 +6,8 @@ const jsdom = require('jsdom');
 
 let pseudom = {tagName: true, nodeName: true, ownerDocument: true, removeAttribute: true};
 
+testWindow = null;
+
 const newWindow = (builder, initialState, callback) => {
     jsdom.env(
         '<div class="wrapper"></div>',
@@ -14,19 +16,13 @@ const newWindow = (builder, initialState, callback) => {
             if (err) {
                 console.error(err);
             }
+            testWindow = window;
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
-            const controller = dom(window);
             const wrapper = window.document.querySelector('.wrapper');
-            let update = controller.use({
-                controller: {
-                    target: wrapper,
-                    builder: builder,
-                    initialState: initialState,
-                },
-            })[0][0];
+            const handler = dom(window, wrapper, builder, initialState);
             setTimeout(() => {
                 callback(wrapper, (newState, callback) => {
-                    update(newState);
+                    handler.use({state: newState});
                     setTimeout(callback, 0);
                 });
             }, 0);
@@ -34,56 +30,49 @@ const newWindow = (builder, initialState, callback) => {
     );
 };
 
+newWindow(() => '', {}, () => {});
+
 describe('goo-dom', () => {
     it('should return a function', () => {
         dom.should.be.a('function');
     });
 
     it('should have a use function', () => {
-        const test = dom({});
+        const test = dom(testWindow);
         test.use.should.be.a('function');
     });
 });
 
 describe('use -> controller', () => {
     it('should reject malformed targets', () => {
-        const test = dom({});
+        const test = dom(testWindow);
         (() => {
             test.use({
-                controller: {
-                    target: '',
-                    builder: () => {},
-                    initialState: {},
-                    update: () => {},
-                },
+                target: '',
+                builder: () => {},
+                state: {},
             });
         }).should.throw(Error, /target/g);
     });
 
     it('should reject malformed builders', () => {
-        const test = dom({});
+        const test = dom(testWindow);
         (() => {
             test.use({
-                controller: {
-                    target: pseudom,
-                    builder: {},
-                    initialState: {},
-                    update: () => {},
-                },
+                target: pseudom,
+                builder: {},
+                state: {},
             });
         }).should.throw(Error, /builder/g);
     });
 
     it('should reject undefined state', () => {
-        const test = dom({});
+        const test = dom(testWindow);
         (() => {
             test.use({
-                controller: {
-                    target: pseudom,
-                    builder: () => {},
-                    initialState: undefined,
-                    update: () => {},
-                },
+                target: pseudom,
+                builder: () => {},
+                state: undefined,
             });
         }).should.throw(Error, /state/gi);
     });
@@ -91,8 +80,8 @@ describe('use -> controller', () => {
 
 describe('createController', () => {
     it('should render the initial state immediately', (done) => {
-        newWindow(() => 'a', {}, (wrapper, update) => {
-            wrapper.should.not.equal(undefined);
+        newWindow(() => ['test'], {}, (wrapper, update) => {
+            wrapper.children[0].should.not.equal(undefined);
             done();
         });
     });
@@ -103,17 +92,10 @@ describe('createController', () => {
             [],
             (err, window) => {
                 window.requestAnimationFrame = (f) => setTimeout(f, 0);
-                const controller = dom(window);
                 const wrapper = window.document.querySelector('.wrapper');
-                controller.use({
-                    controller: {
-                        target: wrapper,
-                        builder: () => 'a',
-                        initialState: {},
-                        update: () => {},
-                    },
-                });
+                dom(window, wrapper, () => 'a', {});
                 setTimeout(() => {
+                    console.log(wrapper.outerHTML);
                     wrapper.children.length.should.equal(0);
                     done();
                 }, 0);

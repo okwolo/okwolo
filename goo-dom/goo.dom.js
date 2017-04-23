@@ -1,7 +1,6 @@
 const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
 
-// creates a DOM controller
-const createController = (window, target, builder, initialState) => {
+const dom = (_window = window, _target, _builder, _state) => {
     // build vdom from state
     const build = (state) => {
         const parse = (element) => {
@@ -56,10 +55,10 @@ const createController = (window, target, builder, initialState) => {
     // recursively creates DOM elements from vdom object
     const render = (velem) => {
         if (isDefined(velem.text)) {
-            velem.DOM = window.document.createTextNode(velem.text);
+            velem.DOM = _window.document.createTextNode(velem.text);
             return velem;
         }
-        const element = window.document.createElement(velem.tagName);
+        const element = _window.document.createElement(velem.tagName);
         Object.keys(velem.attributes).forEach((attribute) => {
             element[attribute] = velem.attributes[attribute];
         });
@@ -85,84 +84,127 @@ const createController = (window, target, builder, initialState) => {
 
     // update vdom and real DOM to new state
     const update = (newState) => {
-        window.requestAnimationFrame(() => _update(vdom, build(newState), {}));
+        _window.requestAnimationFrame(() => _update(vdom, build(newState), {DOM: target, children: [vdom]}, 0));
         // recursive function to update an element according to new state
         const _update = (original, successor, originalParent, parentIndex) => {
             if (!isDefined(original) && !isDefined(successor)) {
                 return;
             }
+            // add
             if (!isDefined(original)) {
-                // add
                 originalParent.children[parentIndex] = render(successor);
                 originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
-            } else if (!isDefined(successor)) {
-                // remove
-                originalParent.DOM.removeChild(original.DOM);
-                originalParent.children[parentIndex] = undefined;
-            } else {
-                if (original.tagName !== successor.tagName) {
-                    // replace
-                    const oldDOM = original.DOM;
-                    if (isDefined(originalParent.children)) {
-                        originalParent.children[parentIndex] = render(successor);
-                        originalParent.DOM.replaceChild(originalParent.children[parentIndex].DOM, oldDOM);
-                    } else { // case when replaced element is root
-                        vdom = render(successor);
-                        target.innerHTML = '';
-                        target.appendChild(vdom.DOM);
-                    }
-                } else {
-                    // edit
-                    if (original.DOM.nodeType === 3) {
-                        if (original.text !== successor.text) {
-                            original.DOM.nodeValue = successor.text;
-                            original.text = successor.text;
-                        }
-                    } else {
-                        const attributesDiff = diff(original.attributes, successor.attributes);
-                        if (attributesDiff.length !== 0) {
-                            attributesDiff.forEach((key) => {
-                                original.attributes[key] = successor.attributes[key];
-                                original.DOM[key] = successor.attributes[key];
-                            });
-                        }
-                    }
-                }
-                const keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
-                const visited = {};
-                keys.forEach((key) => {
-                    if (visited[key] === undefined) {
-                        visited[key] = true;
-                        _update(original.children[key], successor.children[key], original, key);
-                    }
-                });
+                return;
             }
+            // remove
+            if (!isDefined(successor)) {
+                originalParent.DOM.removeChild(original.DOM);
+                originalParent.children.splice(parentIndex, 1);
+                return;
+            }
+            // replace
+            if (original.tagName !== successor.tagName) {
+                const oldDOM = original.DOM;
+                const newVDOM = render(successor);
+                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                if (isDefined(newVDOM.text)) {
+                    originalParent.children[parentIndex].DOM = newVDOM.DOM;
+                    originalParent.children[parentIndex].text = newVDOM.text;
+                    delete originalParent.children[parentIndex].tagName;
+                    delete originalParent.children[parentIndex].attributes;
+                    delete originalParent.children[parentIndex].children;
+                } else {
+                    originalParent.children[parentIndex].DOM = newVDOM.DOM;
+                    delete originalParent.children[parentIndex].text;
+                    originalParent.children[parentIndex].tagName = newVDOM.tagName;
+                    originalParent.children[parentIndex].attributes = newVDOM.attributes;
+                    originalParent.children[parentIndex].children = newVDOM.children;
+                }
+                return;
+            }
+            // edit
+            if (original.DOM.nodeType === 3) {
+                if (original.text !== successor.text) {
+                    original.DOM.nodeValue = successor.text;
+                    original.text = successor.text;
+                }
+            } else {
+                const attributesDiff = diff(original.attributes, successor.attributes);
+                if (attributesDiff.length !== 0) {
+                    attributesDiff.forEach((key) => {
+                        original.attributes[key] = successor.attributes[key];
+                        original.DOM[key] = successor.attributes[key];
+                    });
+                }
+            }
+            const keys = (Object.keys(original.children || {}).concat(Object.keys(successor.children || {})));
+            const visited = {};
+            keys.forEach((key) => {
+                if (visited[key] === undefined) {
+                    visited[key] = true;
+                    _update(original.children[key], successor.children[key], original, key);
+                }
+            });
         };
     };
 
-    // storing initial vdom
-    let vdom = render(build(initialState));
+    let vdom = render({text: ''});
+    let target = undefined;
+    let builder = undefined;
+    let state = undefined;
 
-    // first render to DOM
-    window.requestAnimationFrame(() => {
-        target.innerHTML = '';
-        target.appendChild(vdom.DOM);
-    });
-
-    return update;
-};
-
-const dom = (_window = window) => {
-    const controllerBlobHandler = ({target, builder, initialState}) => {
-        assert(isNode(target), `target is not a dom node\n${target}`);
-        assert(isFunction(builder), `builder is not a function\n${builder}`);
-        assert(isDefined(initialState), `initialState is not defined\n${initialState}`);
-        return createController(_window, target, builder, initialState);
+    const drawToTarget = () => {
+        _window.requestAnimationFrame(() => {
+            target.innerHTML = '';
+            target.appendChild(vdom.DOM);
+        });
     };
+
+    const requiredVariablesAreDefined = () => {
+        return isDefined(target) && isDefined(builder) && isDefined(state);
+    };
+
+    const replaceTarget = (newTarget) => {
+        assert(isNode(newTarget), `target is not a DOM node\n${newTarget}`);
+        target = newTarget;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
+    };
+
+    const replaceBuilder = (newBuilder) => {
+        assert(isFunction(newBuilder), `builder is not a function\n${newBuilder}`);
+        builder = newBuilder;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+            update(state);
+        }
+    };
+
+    const updateState = (newState) => {
+        assert(isDefined(newState), `new state is not defined\n${newState}`);
+        state = newState;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+            update(state);
+        }
+    };
+
+    if (isDefined(_target)) {
+        replaceTarget(_target);
+    }
+    if (isDefined(_builder)) {
+        replaceBuilder(_builder);
+    }
+    if (isDefined(_state)) {
+        updateState(_state);
+    }
 
     const use = (blob) => {
         return blobHandler({
-            controller: controllerBlobHandler,
+            target: replaceTarget,
+            builder: replaceBuilder,
+            state: updateState,
         }, blob);
     };
 
