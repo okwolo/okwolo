@@ -22,6 +22,11 @@ const router = (_window = window) => {
     // store all the registered routes in an encoded format
     const pathStore = mkdir();
 
+    // fallback function
+    let fallback = (path) => {
+        console.log(`no route was found for ${path}`);
+    };
+
     // store initial pathName
     let currentPath = _window.location.pathname;
     if (_window.document.origin === null) {
@@ -59,6 +64,7 @@ const router = (_window = window) => {
             if (path.length === 0) {
                 if (fragment[callbackKey]) {
                     fragment[callbackKey](params);
+                    found = true;
                 }
             } else {
                 const next = path.shift();
@@ -74,7 +80,9 @@ const router = (_window = window) => {
                 });
             }
         };
+        let found = false;
         explore(store, explodedPath, params);
+        return found;
     };
 
     // register wrapper that runs the current page's url against new routes
@@ -88,6 +96,12 @@ const router = (_window = window) => {
         fetch(temp)(currentPath, _window.history.state || {});
     };
 
+    // replace the current fallback function
+    const replaceFallback = (callback) => {
+        assert(isFunction(callback), 'callback for fallback is not a function', callback);
+        fallback = callback;
+    };
+
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
         assert(isString(path), 'redirect path is not a string', path);
@@ -98,12 +112,16 @@ const router = (_window = window) => {
         } else {
             console.log(`goo-router:: path changed to${currentPath}`);
         }
-        fetch(pathStore)(currentPath, params);
+        let found = fetch(pathStore)(currentPath, params);
+        if (!found) {
+            fallback(path);
+        }
     };
 
     const use = (blob) => {
         blobHandler({
             route: addRoute,
+            fallback: replaceFallback,
         }, blob);
     };
 

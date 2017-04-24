@@ -4,13 +4,6 @@ const router = require('./goo.router');
 
 const jsdom = require('jsdom');
 
-const print = (obj) => {
-    console.log(JSON.stringify(obj, (key, value) => {
-        if (typeof value === 'function') return value.toString();
-        else return value;
-    }, 4));
-};
-
 const newWindow = (initialPath, callback) => {
     jsdom.env({
         url: 'https://example.com' + initialPath,
@@ -98,6 +91,54 @@ describe('use -> route', () => {
             done();
         });
     });
+
+    it('should accumulate params and pass them to the callback', (done) => {
+        let test = null;
+        newWindow('/', (window, router) => {
+            router.use({
+                route: {
+                    path: '/user/:id/fetch/:field',
+                    callback: (params) => {
+                        test = params;
+                    },
+                },
+            });
+            router.redirect('/user/123/fetch/name');
+            test.id.should.equal('123');
+            test.field.should.equal('name');
+            done();
+        });
+    });
+});
+
+describe('use -> fallback', () => {
+    it('should call the fallback when the route is not found', (done) => {
+        let test = false;
+        newWindow('/', (window, router) => {
+            router.use({
+                fallback: () => {
+                    test = true;
+                },
+            });
+            router.redirect('/test');
+            test.should.equal(true);
+            done();
+        });
+    });
+
+    it('should call the fallback with the path as argument', (done) => {
+        let test = null;
+        newWindow('/', (window, router) => {
+            router.use({
+                fallback: (path) => {
+                    test = path;
+                },
+            });
+            router.redirect('/test');
+            test.should.equal('/test');
+            done();
+        });
+    });
 });
 
 describe('redirect', () => {
@@ -113,7 +154,11 @@ describe('redirect', () => {
     it('should accept empty params', (done) => {
         newWindow('/', (window, router) => {
             (() => {
-                router.redirect('');
+                router.use({route: {
+                    path: '/',
+                    callback: () => {},
+                }});
+                router.redirect('/');
             }).should.not.throw(Error, /params/);
             done();
         });
