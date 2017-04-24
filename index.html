@@ -10,22 +10,19 @@
     <script>
         let app = goo(document.body.children[0]);
 
-        app.setState({});
+        app.setState(['button1', 'button2', 'button3']);
 
-        const buttons = ['button1', 'button2', 'button3'];
-
-        app(() => (
-            ['div.buttons', {}, buttons.map((name) => (
+        app((state) => (
+            ['div.buttons', {}, state.map((name) => (
                 ['button', {onclick: () => {app.redirect(name)}},
                     name
                 ]
             ))]
         ));
 
-        buttons.forEach((name) => {
+        app.getState().forEach((name) => {
             app(name, () => name);
         });
-
     </script>
 </body>
 </html>

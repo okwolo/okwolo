@@ -2,7 +2,7 @@ const dom = require('../goo-dom/goo.dom');
 const state = require('../goo-state/goo.state');
 const router = require('../goo-router/goo.router');
 const history = require('../goo-history/goo.history');
-const {isFunction, assert} = require('../goo-utils/goo.utils');
+const {isFunction, assert, deepCopy} = require('../goo-utils/goo.utils');
 
 const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const domHandler = dom(_window, rootElement);
@@ -45,7 +45,7 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     // override state
     const setState = (replacement) => {
         act('__OVERRIDE__', isFunction(replacement)
-            ? replacement(_state)
+            ? replacement(deepCopy(_state))
             : replacement);
     };
 
@@ -72,12 +72,18 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         act('REDO', {});
     };
 
+    const getState = () => {
+        assert(!(_state && _state.__unset__), 'cannot get state before it has been set');
+        return deepCopy(_state);
+    };
+
     return Object.assign(register, {
-        redirect: routeHandler.redirect,
         setState: setState,
+        getState: getState,
+        redirect: routeHandler.redirect,
+        act: act,
         undo: undo,
         redo: redo,
-        act: act,
         use: use,
     });
 };
