@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="./goo.min.js"></script>
+</head>
+<body>
+    <div class="wrapper"></div>
+    <script>
+        let app = goo(document.body.children[0]);
+
+        app.setState({});
+
+        const buttons = ['button1', 'button2', 'button3'];
+
+        app(() => (
+            ['div.buttons', {}, buttons.map((name) => (
+                ['button', {onclick: () => {app.redirect(name)}},
+                    name
+                ]
+            ))]
+        ));
+
+        buttons.forEach((name) => {
+            app(name, () => name);
+        });
+
+    </script>
+</body>
+</html>

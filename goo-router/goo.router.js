@@ -24,7 +24,7 @@ const router = (_window = window) => {
 
     // fallback function
     let fallback = (path) => {
-        console.log(`no route was found for ${path}`);
+        console.log(`no route was found for\n>>>${path}`);
     };
 
     // store initial pathName
@@ -88,7 +88,7 @@ const router = (_window = window) => {
     // register wrapper that runs the current page's url against new routes
     const addRoute = ({path, callback}) => {
         assert(isString(path), 'register path is not a string', path);
-        assert(isFunction(callback), `callback for path ${path} is not a function`, callback);
+        assert(isFunction(callback), `callback for path is not a function\n>>>${path}`, callback);
         register(pathStore)(path, callback);
         // chacking new path against current pathname
         const temp = mkdir();
@@ -107,10 +107,10 @@ const router = (_window = window) => {
         assert(isString(path), 'redirect path is not a string', path);
         assert(isObject(params), 'redirect params is not an object', params);
         currentPath = path;
-        if (_window.document.origin !== null) {
+        if (_window.document.origin !== null && _window.document.origin !== 'null') {
             _window.history.pushState({}, '', currentPath);
         } else {
-            console.log(`goo-router:: path changed to${currentPath}`);
+            console.log(`goo-router:: path changed to\n>>> ${currentPath}`);
         }
         let found = fetch(pathStore)(currentPath, params);
         if (!found) {

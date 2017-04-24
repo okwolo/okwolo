@@ -38,7 +38,7 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
 
     // adding currentState and forwarding act calls
     const act = (type, params) => {
-        assert(!_state.__unset__, 'cannot act on state before it has been set');
+        assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', 'cannot act on state before it has been set');
         stateHandler.act(_state, type, params);
     };
 
@@ -52,7 +52,7 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     // register a route/controller combo
     const register = (pathOrBuilder, builder) => {
         if(isFunction(pathOrBuilder)) {
-            use({builder: builder});
+            use({builder: pathOrBuilder});
         } else {
             use({route: {
                 path: pathOrBuilder,
@@ -85,6 +85,7 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
 // making goo function available as an import or in the global window object
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = goo;
-} else {
-    _window.goo = goo;
+}
+if (!!window) {
+    window.goo = goo;
 }

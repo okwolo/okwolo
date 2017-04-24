@@ -11,7 +11,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 return {text: element};
             }
             assert(isArray(element), 'vdom object is not an array or string', element);
-            assert(isString(element[0]), 'tag property is not a string', element);
+            assert(isString(element[0]), 'tag property is not a string', element[0]);
             // capture groups: tagName, id, className, style
             const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(element[0]);
             assert(isArray(match), 'tag property cannot be parsed', element[0]);
