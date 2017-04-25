@@ -14,9 +14,9 @@
 
         app((state) => (
             ['div.buttons', {}, state.map((name) => (
-                ['button', {onclick: () => {app.redirect(name)}},
+                ['button', {onclick: () => {app.redirect(name)}}, [
                     name
-                ]
+                ]]
             ))]
         ));
 

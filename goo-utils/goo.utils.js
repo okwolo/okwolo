@@ -41,7 +41,7 @@ const utils = () => {
             }, 4);
         };
         if (!result) {
-            err(message + (culprit?('\n' + print(culprit)):'') || 'assertion has failed');
+            err(message + (culprit?('\n>>>' + print(culprit)):'') || 'assertion has failed');
         }
     };
 

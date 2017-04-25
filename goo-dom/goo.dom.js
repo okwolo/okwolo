@@ -36,10 +36,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 element[1].style = element[1].style.replace(/^;/g, '');
             }
             if (isDefined(element[2])) {
-                if (isString(element[2])) {
-                    element[2] = [element[2]];
-                }
-                assert(isArray(element[2]), 'children of vdom object is not an array', element);
+                assert(isArray(element[2]), 'children of vdom object is not an array', element[2]);
             } else {
                 element[2] = [];
             }
