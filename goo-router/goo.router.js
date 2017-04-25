@@ -18,6 +18,8 @@ const explodePath = (path) => {
         .map((p) => p.trim());
 };
 
+const isHosted = (_window) => _window.document.origin !== null && _window.document.origin !== 'null';
+
 const router = (_window = window) => {
     // store all the registered routes in an encoded format
     const pathStore = mkdir();
@@ -29,7 +31,7 @@ const router = (_window = window) => {
 
     // store initial pathName
     let currentPath = _window.location.pathname;
-    if (_window.document.origin === null) {
+    if (!isHosted(_window)) {
         currentPath = '';
     }
 
@@ -107,7 +109,7 @@ const router = (_window = window) => {
         assert(isString(path), 'redirect path is not a string', path);
         assert(isObject(params), 'redirect params is not an object', params);
         currentPath = path;
-        if (_window.document.origin !== null && _window.document.origin !== 'null') {
+        if (isHosted(_window)) {
             _window.history.pushState({}, '', currentPath);
         } else {
             console.log(`goo-router:: path changed to\n>>> ${currentPath}`);
