@@ -1,9 +1,11 @@
-const {deepCopy} = require('../goo-utils/goo.utils');
+const {deepCopy, isDefined} = require('../goo-utils/goo.utils');
 
 const history = () => {
     let past = [];
-    let current = deepCopy(args.state);
+    let current = undefined;
     let future = [];
+
+    const historyLength = 20;
 
     const undoAction = {
         type: 'UNDO',
@@ -19,7 +21,7 @@ const history = () => {
     };
 
     const redoAction = {
-        type: 'UNDO',
+        type: 'REDO',
         target: [],
         handler: (state) => {
             if (future.length > 0) {
@@ -31,15 +33,15 @@ const history = () => {
         },
     };
 
-    updateState = (state, type) => {
+    const updateState = (state, type) => {
         if (type !== 'UNDO' && type !== 'REDO') {
             future = [];
             past.push(current);
-            if (past.length > options.historyLength) {
+            if (past.length > historyLength) {
                 past.shift();
             }
         }
-        current = state;
+        current = deepCopy(state);
     };
 
     return {

@@ -205,12 +205,13 @@ const dom = (_window = window, _target, _builder, _state) => {
 
     const use = (blob) => {
         // making sure only one value is given to each handler
-        Object.keys(blob).forEach((key) => blob[key] = [blob[key]]);
+        const newBlob = {};
+        Object.keys(blob).map((b) => newBlob[b] = [blob[b]]);
         return blobHandler({
             target: replaceTarget,
             builder: replaceBuilder,
             state: updateState,
-        }, blob);
+        }, newBlob);
     };
 
     return {} = {use};

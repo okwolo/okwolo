@@ -12,17 +12,32 @@
 
         app.setState(['button1', 'button2', 'button3']);
 
-        app((state) => (
-            ['div.buttons', {}, state.map((name) => (
-                ['button', {onclick: () => {app.redirect(name)}}, [
-                    name
-                ]]
-            ))]
-        ));
+        app.use({action: {
+            type: 'INCREMENT',
+            target: [],
+            handler: (target, params) => {
+                target[params] = 'button' + (1 + +target[params][6]);
+                return target;
+            }
+        }})
 
-        app.getState().forEach((name) => {
-            app(name, () => name);
-        });
+        app((state) => (
+            ['div', {}, [
+                ['div.buttons', {}, state.map((name, i) => (
+                    ['button', {onclick: () => app.act('INCREMENT', i)}, [
+                        name
+                    ]]
+                ))],
+                ['div.history', {}, [
+                    ['button', {onclick: () => app.undo()}, [
+                        'UNDO'
+                    ]],
+                    ['button', {onclick: () => app.redo()}, [
+                        'REDO'
+                    ]]
+                ]],
+            ]]
+        ));
     </script>
 </body>
 </html>

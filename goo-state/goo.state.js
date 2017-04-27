@@ -10,11 +10,11 @@ const state = () => {
 
     const addAction = (action) => {
         const {type, handler, target} = action;
-        assert(isString(type), `action type "${type}" is not a string`);
-        assert(isFunction(handler), `handler for action ${type} is not a function`, handler);
-        assert(isArray(target), `target of action ${type} is not an array`, target);
+        assert(isString(type), `@use>action: action type "${type}" is not a string`, action);
+        assert(isFunction(handler), `@use>action: handler for action ${type} is not a function`, handler);
+        assert(isArray(target), `@use>action: target of action ${type} is not an array`, target);
         target.forEach((address) => {
-            assert(isString(address), `target of action type ${type} is not an array of strings ${target}`);
+            assert(isString(address), `@use>action: target of action type ${type} is not an array of strings ${target}`);
         });
         if (actions[type] === undefined) {
             actions[type] = [action];
@@ -24,12 +24,12 @@ const state = () => {
     };
 
     const addMiddleware = (handler) => {
-        assert(isFunction(handler), 'middleware is not a function', handler);
+        assert(isFunction(handler), '@use>middleware: middleware is not a function', handler);
         middleware.push(handler);
     };
 
     const addWatcher = (handler) => {
-        assert(isFunction(handler), 'watcher is not a function', handler);
+        assert(isFunction(handler), '@use>watcher: watcher is not a function', handler);
         watchers.push(handler);
     };
 
