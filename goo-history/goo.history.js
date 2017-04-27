@@ -1,8 +1,8 @@
-const {deepCopy, isDefined} = require('../goo-utils/goo.utils');
+const {deepCopy} = require('../goo-utils/goo.utils');
 
 const history = () => {
     let past = [];
-    let current = undefined;
+    let current = {__unset__: true};
     let future = [];
 
     const historyLength = 20;
@@ -11,7 +11,7 @@ const history = () => {
         type: 'UNDO',
         target: [],
         handler: (state) => {
-            if (past.length > 0) {
+            if (past.length > 0 && past[past.length-1].__unset__ !== true) {
                 future.push(current);
                 return past.pop();
             } else {
