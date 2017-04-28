@@ -87,6 +87,14 @@ const router = (_window = window) => {
         return found;
     };
 
+    _window.onpopstate = () => {
+        currentPath = _window.location.pathname;
+        let found = fetch(pathStore)(currentPath, _window.history.state || {});
+        if (!found) {
+            fallback(currentPath);
+        }
+    };
+
     // register wrapper that runs the current page's url against new routes
     const addRoute = ({path, callback}) => {
         assert(isString(path), 'register path is not a string', path);

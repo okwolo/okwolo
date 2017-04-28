@@ -34,10 +34,15 @@
                     ]],
                     ['button', {onclick: () => app.redo()}, [
                         'REDO'
+                    ]],
+                    ['button', {onclick: () => app.redirect('/test')}, [
+                        'test'
                     ]]
                 ]],
             ]]
         ));
+
+        app('/test', () => 'test');
     </script>
 </body>
 </html>
