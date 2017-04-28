@@ -27,6 +27,7 @@ const router = (_window = window) => {
     // store base url to prepend to all addresses
     let baseUrl = '';
 
+    // removes base url from a path
     let removeBaseUrl = (path) => {
         return path.replace(new RegExp('\^' + baseUrl), '') || '';
     };
@@ -138,7 +139,7 @@ const router = (_window = window) => {
     const replaceBaseUrl = (base) => {
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
-        // TODO reload page
+        fetch(pathStore)(currentPath, _window.history.state || {});
     };
 
     const use = (blob) => {
