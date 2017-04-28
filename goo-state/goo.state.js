@@ -35,7 +35,7 @@ const state = () => {
 
     // supported blobs and their execution
     const use = (blob) => {
-        blobHandler({
+        return blobHandler({
             action: addAction,
             middleware: addMiddleware,
             watcher: addWatcher,

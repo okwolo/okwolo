@@ -138,10 +138,11 @@ const router = (_window = window) => {
     const replaceBaseUrl = (base) => {
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
+        // TODO reload page
     };
 
     const use = (blob) => {
-        blobHandler({
+        return blobHandler({
             route: addRoute,
             base: replaceBaseUrl,
             fallback: replaceFallback,

@@ -43,6 +43,12 @@ describe('goo-dom', () => {
     });
 });
 
+describe('dom -> use', () => {
+    it('should return an array', () => {
+        dom(testWindow).use({}).should.be.an('array');
+    });
+});
+
 describe('use -> controller', () => {
     it('should reject malformed targets', () => {
         const test = dom(testWindow);

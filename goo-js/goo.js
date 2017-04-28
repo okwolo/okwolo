@@ -12,8 +12,11 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     // forwarding use calls
     const use = (blob) => {
         assert(isObject(blob), 'cannot use blobs that are not objects', blob);
-        [domHandler, stateHandler, routeHandler]
-            .forEach((g) => g.use(blob));
+        return [domHandler, stateHandler, routeHandler]
+            .reduce((accumulator, g) => {
+                accumulator.push(g.use(blob));
+                return accumulator;
+            }, []);
     };
 
     // adding blobs
@@ -83,9 +86,9 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         getState: getState,
         redirect: routeHandler.redirect,
         act: act,
+        use: use,
         undo: undo,
         redo: redo,
-        use: use,
     });
 };
 

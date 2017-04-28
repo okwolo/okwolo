@@ -24,6 +24,12 @@ describe('goo-state', () => {
     });
 });
 
+describe('state -> use', () => {
+    it('should return an array', () => {
+        state().use({}).should.be.an('array');
+    });
+});
+
 describe('use -> action', () => {
     it('should register and use well formed actions', () => {
         const stateManager = state();

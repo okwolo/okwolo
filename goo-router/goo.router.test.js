@@ -30,6 +30,12 @@ describe('goo-router', () => {
     });
 });
 
+describe('router -> use', () => {
+    it('should return an array', () => {
+        router({location: '', document: {origin: ''}}).use({}).should.be.an('array');
+    });
+});
+
 describe('use -> route', () => {
     it('should reject malformed paths', (done) => {
         newWindow('/', (window, router) => {
