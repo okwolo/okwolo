@@ -51,18 +51,18 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     };
 
     // register a route/controller combo
-    const register = (pathOrBuilder, builder) => {
-        if(isFunction(pathOrBuilder)) {
-            use({builder: pathOrBuilder});
-        } else {
-            use({route: {
-                path: pathOrBuilder,
-                callback: (params) => {
-                    const _builder = (newState) => builder(newState, params);
-                    use({builder: _builder});
-                },
-            }});
+    const register = (path, builder) => {
+        if (isFunction(path)) {
+            builder = path;
+            path = '';
         }
+        use({route: {
+            path: path,
+            callback: (params) => {
+                const _builder = (newState) => builder(newState, params);
+                use({builder: _builder});
+            },
+        }});
     };
 
     // making it easier to use undo/redo

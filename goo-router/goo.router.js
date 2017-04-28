@@ -24,6 +24,13 @@ const router = (_window = window) => {
     // store all the registered routes in an encoded format
     const pathStore = mkdir();
 
+    // store base url to prepend to all addresses
+    let baseUrl = '';
+
+    let removeBaseUrl = (path) => {
+        return path.replace(new RegExp('\^' + baseUrl), '') || '';
+    };
+
     // fallback function
     let fallback = (path) => {
         console.log(`no route was found for\n>>>${path}`);
@@ -88,7 +95,7 @@ const router = (_window = window) => {
     };
 
     _window.onpopstate = () => {
-        currentPath = _window.location.pathname;
+        currentPath = removeBaseUrl(_window.location.pathname);
         let found = fetch(pathStore)(currentPath, _window.history.state || {});
         if (!found) {
             fallback(currentPath);
@@ -118,9 +125,9 @@ const router = (_window = window) => {
         assert(isObject(params), 'redirect params is not an object', params);
         currentPath = path;
         if (isHosted(_window)) {
-            _window.history.pushState({}, '', currentPath);
+            _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
         } else {
-            console.log(`goo-router:: path changed to\n>>> ${currentPath}`);
+            console.log(`goo-router:: path changed to\n>>>${currentPath}`);
         }
         let found = fetch(pathStore)(currentPath, params);
         if (!found) {
@@ -128,9 +135,15 @@ const router = (_window = window) => {
         }
     };
 
+    const replaceBaseUrl = (base) => {
+        baseUrl = base;
+        currentPath = removeBaseUrl(currentPath);
+    };
+
     const use = (blob) => {
         blobHandler({
             route: addRoute,
+            base: replaceBaseUrl,
             fallback: replaceFallback,
         }, blob);
     };
