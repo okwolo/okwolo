@@ -150,7 +150,7 @@ const router = (_window = window) => {
         }, blob);
     };
 
-    return {} = {redirect, use};
+    return {redirect, use};
 };
 
 module.exports = router;

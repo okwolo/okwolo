@@ -99,7 +99,7 @@ const state = () => {
         });
     };
 
-    return {} = {act, use};
+    return {act, use};
 };
 
 module.exports = state;

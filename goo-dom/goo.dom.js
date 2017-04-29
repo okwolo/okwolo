@@ -214,7 +214,7 @@ const dom = (_window = window, _target, _builder, _state) => {
         }, newBlob);
     };
 
-    return {} = {use};
+    return {use};
 };
 
 module.exports = dom;

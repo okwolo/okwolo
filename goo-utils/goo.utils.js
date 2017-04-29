@@ -65,7 +65,7 @@ const utils = () => {
             queue.shift();
             run();
         };
-        return {} = {add, done};
+        return {add, done};
     };
 
     // handle common blob logic
@@ -93,7 +93,7 @@ const utils = () => {
     };
 
     // public interface
-    return {} = {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, blobHandler};
+    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, blobHandler};
 };
 
 module.exports = utils();
