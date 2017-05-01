@@ -10,7 +10,7 @@ const history = () => {
     const undoAction = {
         type: 'UNDO',
         target: [],
-        handler: (state) => {
+        handler: () => {
             if (past.length > 0 && past[past.length-1].__unset__ !== true) {
                 future.push(current);
                 return past.pop();
@@ -23,7 +23,7 @@ const history = () => {
     const redoAction = {
         type: 'REDO',
         target: [],
-        handler: (state) => {
+        handler: () => {
             if (future.length > 0) {
                 past.push(current);
                 return future.pop();

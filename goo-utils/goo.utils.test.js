@@ -359,4 +359,10 @@ describe('blobHandler', () => {
             test: () => true,
         }, {test: ''}, queue)[0][0], null);
     });
+
+    it('should reject malformed blobs', () => {
+        (() => {
+            blobHandler({}, true);
+        }).should.throw(Error, /blob/);
+    });
 });

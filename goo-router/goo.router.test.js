@@ -97,27 +97,18 @@ describe('use -> route', () => {
             done();
         });
     });
-
-    it('should accumulate params and pass them to the callback', (done) => {
-        let test = null;
-        newWindow('/', (window, router) => {
-            router.use({
-                route: {
-                    path: '/user/:id/fetch/:field',
-                    callback: (params) => {
-                        test = params;
-                    },
-                },
-            });
-            router.redirect('/user/123/fetch/name');
-            test.id.should.equal('123');
-            test.field.should.equal('name');
-            done();
-        });
-    });
 });
 
 describe('use -> fallback', () => {
+    it('should reject malformed fallbacks', (done) => {
+        newWindow('/', (window, router) => {
+            (() => {
+                router.use({fallback: true});
+            }).should.throw(Error, /fallback/);
+            done();
+        });
+    });
+
     it('should call the fallback when the route is not found', (done) => {
         let test = false;
         newWindow('/', (window, router) => {
@@ -147,6 +138,43 @@ describe('use -> fallback', () => {
     });
 });
 
+describe('use -> base', () => {
+    it('should reject malformed inputs', (done) => {
+        newWindow('/', (window, router) => {
+            (() => {
+                router.use({base: true});
+            }).should.throw(Error, /base/);
+            done();
+        });
+    });
+
+    it('should add the base url to all new pathnames', (done) => {
+        newWindow('/', (window, router) => {
+            router.use({route: {path: '/test', callback: () => {}}});
+            router.use({base: '/testBase'});
+            router.redirect('/test');
+            window.location.pathname.should.equal('/testBase/test');
+            done();
+        });
+    });
+
+    it('should be applied to the current pathname', (done) => {
+        newWindow('/testBase', (window, router) => {
+            let test = false;
+            router.use({route: {
+                path: '',
+                callback: () => {
+                    test = true;
+                },
+            }});
+            test.should.equal(false);
+            router.use({base: '/testBase'});
+            test.should.equal(true);
+            done();
+        });
+    });
+});
+
 describe('redirect', () => {
     it('should reject malformed paths', (done) => {
         newWindow('/', (window, router) => {
@@ -166,6 +194,33 @@ describe('redirect', () => {
                 }});
                 router.redirect('/');
             }).should.not.throw(Error, /params/);
+            done();
+        });
+    });
+
+    it('should change the pathname', (done) => {
+        newWindow('/', (window, router) => {
+            router.use({route: {path: '/test/xyz', callback: () => {}}});
+            router.redirect('/test/xyz');
+            window.location.pathname.should.equal('/test/xyz');
+            done();
+        });
+    });
+
+    it('should accumulate params and pass them to the callback', (done) => {
+        let test = null;
+        newWindow('/', (window, router) => {
+            router.use({
+                route: {
+                    path: '/user/:id/fetch/:field',
+                    callback: (params) => {
+                        test = params;
+                    },
+                },
+            });
+            router.redirect('/user/123/fetch/name');
+            test.id.should.equal('123');
+            test.field.should.equal('name');
             done();
         });
     });

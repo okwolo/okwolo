@@ -95,6 +95,7 @@ const router = (_window = window) => {
         return found;
     };
 
+    // handle back/forward events
     _window.onpopstate = () => {
         currentPath = removeBaseUrl(_window.location.pathname);
         let found = fetch(pathStore)(currentPath, _window.history.state || {});
@@ -126,6 +127,9 @@ const router = (_window = window) => {
         assert(isObject(params), 'redirect params is not an object', params);
         currentPath = path;
         if (isHosted(_window)) {
+            /* edge doesn't care that the file is local and will allow pushState.
+                it also includes "/C:" in the location.pathname, but adds it to
+                the path given to pushState. which means it needs to be removed here */
             _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
         } else {
             console.log(`goo-router:: path changed to\n>>>${currentPath}`);
@@ -136,7 +140,9 @@ const router = (_window = window) => {
         }
     };
 
+    // replace the base url, adjust the current and try to fetch with the new url
     const replaceBaseUrl = (base) => {
+        assert(isString(base), 'base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         fetch(pathStore)(currentPath, _window.history.state || {});

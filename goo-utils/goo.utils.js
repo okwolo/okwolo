@@ -70,6 +70,7 @@ const utils = () => {
 
     // handle common blob logic
     const blobHandler = (blobs, blob = {}, queue) => {
+        assert(isObject(blob), 'blob is not an object', blob);
         return Object.keys(blob).map((key) => {
             let blobObject = blob[key];
             if (!isArray(blobObject)) {
