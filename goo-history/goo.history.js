@@ -11,7 +11,7 @@ const history = () => {
         type: 'UNDO',
         target: [],
         handler: () => {
-            if (past.length > 0 && past[past.length-1].__unset__ !== true) {
+            if (past.length > 0 && (!past[past.length-1] || past[past.length-1].__unset__ !== true)) {
                 future.push(current);
                 return past.pop();
             } else {
@@ -37,7 +37,7 @@ const history = () => {
         if (type !== 'UNDO' && type !== 'REDO') {
             future = [];
             past.push(current);
-            if (past.length > historyLength) {
+            if (past.length > historyLength + 1) {
                 past.shift();
             }
         }
