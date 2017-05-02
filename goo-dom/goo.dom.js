@@ -11,39 +11,41 @@ const dom = (_window = window, _target, _builder, _state) => {
                 return {text: element};
             }
             assert(isArray(element), 'vdom object is not an array or string', element);
-            assert(isString(element[0]), 'tag property is not a string', element[0]);
+            let [tagType, attributes, children] = element;
+            assert(isString(tagType), 'tag property is not a string', tagType);
             // capture groups: tagName, id, className, style
-            const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(element[0]);
-            assert(isArray(match), 'tag property cannot be parsed', element[0]);
-            if (!isObject(element[1])) {
-                element[1] = {};
+            const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+            assert(isArray(match), 'tag property cannot be parsed', tagType);
+            let [, tagName, id, className, style] = match;
+            if (!isObject(attributes)) {
+                attributes = {};
             }
-            if (isDefined(match[2]) && !isDefined(element[1].id)) {
-                element[1].id = match[2].trim();
+            if (isDefined(id) && !isDefined(attributes.id)) {
+                attributes.id = id.trim();
             }
-            if (isDefined(match[3])) {
-                if (!isDefined(element[1].className)) {
-                    element[1].className = '';
+            if (isDefined(className)) {
+                if (!isDefined(attributes.className)) {
+                    attributes.className = '';
                 }
-                element[1].className += match[3].replace(/\./g, ' ');
-                element[1].className = element[1].className.trim();
+                attributes.className += className.replace(/\./g, ' ');
+                attributes.className = attributes.className.trim();
             }
-            if (isDefined(match[4])) {
-                if (!isDefined(element[1].style)) {
-                    element[1].style = '';
+            if (isDefined(style)) {
+                if (!isDefined(attributes.style)) {
+                    attributes.style = '';
                 }
-                element[1].style += ';' + match[4];
-                element[1].style = element[1].style.replace(/^;/g, '');
+                attributes.style += ';' + style;
+                attributes.style = attributes.style.replace(/^;/g, '');
             }
-            if (isDefined(element[2])) {
-                assert(isArray(element[2]), 'children of vdom object is not an array', element[2]);
+            if (isDefined(children)) {
+                assert(isArray(children), 'children of vdom object is not an array', children);
             } else {
-                element[2] = [];
+                children = [];
             }
             return {
-                tagName: match[1],
-                attributes: element[1],
-                children: element[2].map((c) => parse(c)),
+                tagName: tagName,
+                attributes: attributes,
+                children: children.map((c) => parse(c)),
             };
         };
         return parse(builder(state));

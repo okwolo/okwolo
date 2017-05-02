@@ -18,14 +18,14 @@ const explodePath = (path) => {
         .map((p) => p.trim());
 };
 
-const isHosted = (_window) => _window.document.origin !== null && _window.document.origin !== 'null';
-
 const router = (_window = window) => {
     // store all the registered routes in an encoded format
     const pathStore = mkdir();
 
     // store base url to prepend to all addresses
     let baseUrl = '';
+
+    let isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     // removes base url from a path
     let removeBaseUrl = (path) => {
@@ -39,7 +39,7 @@ const router = (_window = window) => {
 
     // store initial pathName
     let currentPath = _window.location.pathname;
-    if (!isHosted(_window)) {
+    if (!isHosted) {
         currentPath = '';
     }
 
@@ -126,7 +126,7 @@ const router = (_window = window) => {
         assert(isString(path), 'redirect path is not a string', path);
         assert(isObject(params), 'redirect params is not an object', params);
         currentPath = path;
-        if (isHosted(_window)) {
+        if (isHosted) {
             /* edge doesn't care that the file is local and will allow pushState.
                 it also includes "/C:" in the location.pathname, but adds it to
                 the path given to pushState. which means it needs to be removed here */
