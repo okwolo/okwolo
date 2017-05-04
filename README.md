@@ -4,11 +4,11 @@ https://github.com/g-harel/goo
     <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="350"/>
 </p>
 
-Goo.js is a small framework made to jumpstart projects by solving common web application challenges like state management, layout and routing. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
+Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
 
 # Introduction
 
-The first step in using goo is creating the master object that will contain the whole application.
+The first step in using goo is creating the master object that will contain the entire application.
 
 ````javascript
 let app = goo(target[, initialState[, window]]);
@@ -16,7 +16,7 @@ let app = goo(target[, initialState[, window]]);
 
 The target is a DOM node that will serve as the root of the application. It can be changed after initialization. The initialState parameter is optional, but actions cannot be executed and no layout will be drawn until it is set. If there is a need to specify the window object, it can also be done during this initialization.
 
-The new app function can now be used to create the app's layout using the following syntax.
+The app's layout can now be defined using the following syntax.
 
 ````javascript
 let app = goo(document.body, null);
@@ -24,7 +24,7 @@ let app = goo(document.body, null);
 app(() => 'Hello World!');
 ````
 
-`app` takes a function as argument which is required to return valid vdom. The app's state is given as an argument to this function.
+The current state will be given as an argument to this function for it to create and return valid vdom.
 
 ````javascript
 let app = goo(document.body, 'Hello World!');
@@ -32,11 +32,14 @@ let app = goo(document.body, 'Hello World!');
 app((state) => state);
 ````
 
-The implementation of this function is entirely free. This means that, for example, certain vdom "components" can created in other places and assembled here.
+The internal implementation of this function is entirely free. Which means that, for example, certain vdom "components" can be created in other places and assembled here.
 
 There are two types of vdom objects. The first, which was used in the above example, is a simple string. The second type represents html tags. These vdom nodes take the form of an array.
 
 ````javascript
+// text element
+let vdom = 'Hello World!'; // Hello World!
+
 // simple div element
 let vdom = ['div']; // <div></div>
 
@@ -78,7 +81,7 @@ app((fruits) => (
 ));
 ````
 
-To change the state of our app, `setState` can be used. This will re-render the layout with the new state.
+To change the state of the app, `setState` can be used. This will re-render the layout with the new state.
 
 `app.setState(newState)`
 
@@ -158,9 +161,11 @@ app.use({middleware: (next, state, actionType, params) => {
 }})
 ````
 
-This syntax allows middlware to be asynchronous. If `next` is called with parameters, they will override the ones issued by the act call.
+This syntax allows middlware to be asynchronous.
 
-Out of the box, goo adds undo and redo actions and provides functions to call the actions for an easier syntax.
+If `next` is called with parameters, they will override the ones issued by the act call.
+
+Out of the box, goo adds undo and redo actions and provides a shortcut syntax.
 
 ````javascript
 // undo
