@@ -9,6 +9,8 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const stateHandler = state();
     const routeHandler = router(_window);
 
+    _state = deepCopy(_state);
+
     // forwarding use calls
     const use = (blob) => {
         assert(isObject(blob), 'cannot use blobs that are not objects', blob);

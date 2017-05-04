@@ -32,10 +32,10 @@ const dom = (_window = window, _target, _builder, _state) => {
             }
             if (isDefined(style)) {
                 if (!isDefined(attributes.style)) {
-                    attributes.style = '';
+                    attributes.style = style;
+                } else {
+                    attributes.style += ';' + style;
                 }
-                attributes.style += ';' + style;
-                attributes.style = attributes.style.replace(/^;/g, '');
             }
             if (isDefined(children)) {
                 assert(isArray(children), 'children of vdom object is not an array', children);
@@ -106,6 +106,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 const oldDOM = original.DOM;
                 const newVDOM = render(successor);
                 originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                /* need to manually delete to preserve reference to past object */
                 if (isDefined(newVDOM.text)) {
                     originalParent.children[parentIndex].DOM = newVDOM.DOM;
                     originalParent.children[parentIndex].text = newVDOM.text;
