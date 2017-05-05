@@ -242,3 +242,28 @@ app.use({fallback: () => {
 An important consideration here is that since routes can be added at any point during the app's lifetime, the fallback will only be called when redirect is used or a popstate event is fired. A way to get around this would be to add some html into the target element which will be cleared when a route is matched.
 
 A second important consideration is that it is possible for more than one route to match with the one provided. There is no mechanism to prioritize any specific route and the resulting layout cannot be guaranteed.
+
+# Blobs
+
+As mentioned earlier, goo and its modules have use function. This function takes a single object as argument that is called a blob. Blobs are very powerful since they are passed to each module and can contain many functionalities that are not at the top level of the goo api. A blob can have as many unique keys as necessary. Each key will be tested on each module to determine if that module supports it. The value assigned to each key can be a single object, or an array of objects (ex. adding multiple actions at once). This library is purposefully built to handle the addition of blobs in any order and after any amount of delay.
+
+Here is an example of a blob that adds two watchers and one middleware.
+
+````javascript
+let app = goo(document.body, null);
+
+app.use({
+    watcher: [
+        (state, actionType, params) => {
+            // ...
+        },
+        (state, actionType, params) => {
+            // ...
+        },
+    ],
+    middleware: (next, state, actionType, params) => {
+        // ...
+        next();
+    },
+});
+````
