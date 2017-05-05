@@ -1,0 +1,9 @@
+debug.log
+
+legacy/*
+
+node_modules/*
+
+yarn.lock
+
+example/dist/*

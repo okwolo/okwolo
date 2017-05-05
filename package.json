@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-shorthand & del npm-debug.log",
-    "start:example": "cd example & start index.html & webpack --watch",
+    "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-router & npm publish ./goo-history & del npm-debug.log",
     "test": "mocha \"*/*.test.js\"",
     "autotest": "nodemon -x \"npm run test -s\"",
-    "bundle": "webpack --watch"
+    "bundle": "webpack --watch -p"
   },
   "dependencies": {
     "goo-js": "^1.1.0"

@@ -81,17 +81,17 @@ app((fruits) => (
 ));
 ````
 
-To change the state of the app, `setState` can be used. This will re-render the layout with the new state.
+# State Management
+
+The only way to modify the state once it is set is by using `setState` or by calling an action using the `act` function.
+
+Calling `setState` will re-render the layout with the new state.
 
 `app.setState(newState)`
 
 ````javascript
 app.setState(['peach', 'strawberry', 'banana']);
 ````
-
-# State Management
-
-The only way to modify the state once it is set is by using `setState` or by calling an action using the `act` function.
 
 Actions can be defined with the app's `use` function.
 
@@ -179,4 +179,66 @@ app.redo();
 
 # Routing
 
-TODO
+To create a new route, a new builder function needs to be defined.
+
+````javascript
+let app = goo(document.body, null);
+
+app('/route', (state) => {
+    // ...
+});
+````
+
+When a route is not specified, it is implied that the route is an empty string.
+
+Arguments can also be passed through routes and they will be provided to the function as second argument.
+
+````javascript
+let app = goo(document.body, null);
+
+app('/user/:uid/profile', (state, params) => {
+    // params === {uid: "..."}
+});
+````
+
+When the page loads, the current path name will be compared against registered routes. This means that a page refresh will show the right route if the server knows to return the same web page at this different route.
+
+It is also possible to define a base route if the application is in a sub directory.
+
+````javascript
+let app = goo(document.body, null);
+
+app.use({base: '/webapp'});
+
+app('/main', () => 'Hello World!'); // will be shown at "/webapp/main"
+````
+
+To navigate between pages, there is a `redirect` function that can also pass params to the route's function.
+
+`redirect(path[, params])`
+
+````javascript
+let app = goo(document.body, null);
+
+app('/profile/:name', (state, params) => {
+    return 'Hello ' + params.name + ' you are ' + params.status;
+});
+
+app.redirect('/profile/John123', {status: 'registered'});
+````
+
+When a route doesn't match with anything, the router will call a fallback function. It can be overridden with the use syntax.
+
+````javascript
+let app = goo(document.body, null);
+
+app(() => 'Main Page');
+
+app.use({fallback: () => {
+    app.redirect('');
+}});
+````
+
+An important consideration here is that since routes can be added at any point during the app's lifetime, the fallback will only be called when redirect is used or a popstate event is fired. A way to get around this would be to add some html into the target element which will be cleared when a route is matched.
+
+A second important consideration is that it is possible for more than one route to match with the one provided. There is no mechanism to prioritize any specific route and the resulting layout cannot be guaranteed.

@@ -85,10 +85,15 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
 
     return Object.assign(register, {
         setState: setState,
+        s: setState,
         getState: getState,
+        g: getState,
         redirect: routeHandler.redirect,
+        r: routeHandler.redirect,
         act: act,
+        a: act,
         use: use,
+        u: use,
         undo: undo,
         redo: redo,
     });
