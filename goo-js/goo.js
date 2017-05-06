@@ -83,6 +83,10 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         return deepCopy(_state);
     };
 
+    const update = () => {
+        use({state: _state});
+    };
+
     return Object.assign(register, {
         setState: setState,
         s: setState,
@@ -93,7 +97,8 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         act: act,
         a: act,
         use: use,
-        u: use,
+        update: update,
+        u: update,
         undo: undo,
         redo: redo,
     });
