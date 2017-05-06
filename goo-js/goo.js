@@ -101,6 +101,7 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         u: update,
         undo: undo,
         redo: redo,
+        shared: {},
     });
 };
 
