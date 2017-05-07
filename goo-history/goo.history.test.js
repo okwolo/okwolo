@@ -17,8 +17,8 @@ const newState = (initialState) => {
         return newState;
     };
 
-    const setState = (newState) => {
-        temp.watcher(newState, '----');
+    const setState = (newState, type) => {
+        temp.watcher(newState, type || '----');
         return newState;
     };
 
@@ -91,5 +91,12 @@ describe('goo-history', () => {
         let last = state.undo();
         should.equal(last, null);
         should.equal(last, state.undo());
+    });
+
+    it('should not store the state when the action type has the ignore prefix', () => {
+        const state = newState('test');
+        state.setState(0, '*IGNORE');
+        state.setState(1);
+        state.undo().should.equal('test');
     });
 });

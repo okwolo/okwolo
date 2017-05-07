@@ -98,7 +98,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             // remove
             if (!isDefined(successor)) {
                 originalParent.DOM.removeChild(original.DOM);
-                setTimeout(() => delete originalParent.children[parentIndex], 0);
+                delete originalParent.children[parentIndex];
                 return;
             }
             // replace

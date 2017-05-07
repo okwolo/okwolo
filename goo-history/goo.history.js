@@ -6,6 +6,7 @@ const history = () => {
     let future = [];
 
     const historyLength = 20;
+    const ignorePrefix = '*';
 
     const undoAction = {
         type: 'UNDO',
@@ -34,6 +35,9 @@ const history = () => {
     };
 
     const updateState = (state, type) => {
+        if (type[0] === '*') {
+            return;
+        }
         if (type !== 'UNDO' && type !== 'REDO') {
             future = [];
             past.push(current);
