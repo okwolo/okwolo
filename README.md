@@ -6,7 +6,7 @@ https://github.com/g-harel/goo
 
 Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
 
-# Introduction
+# Layout
 
 The first step in using goo is creating the master object that will contain the entire application.
 
@@ -177,6 +177,8 @@ app.act('REDO');
 app.redo();
 ````
 
+Declaring an action type that starts with the `*` character will exclude the actions from the undo/redo stack. This can be useful to manipulate menus and other application functionality that does not change the data of the app.
+
 # Routing
 
 To create a new route, a new builder function needs to be defined.
@@ -266,4 +268,16 @@ app.use({
         next();
     },
 });
+````
+
+# Pseudo-global space
+
+An an object created with `goo()` will have an empty object at its `_` key. This can be used to declare helper functions or any other data. Since the app object is generally passed on to all "components", they will all have access to this space.
+
+````javascript
+let app = goo(document.body, null);
+
+app._.formatDate = () => {
+    // ...
+};
 ````
