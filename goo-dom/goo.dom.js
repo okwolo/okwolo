@@ -1,4 +1,4 @@
-const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils');
+const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('../goo-utils/goo.utils');
 
 const dom = (_window = window, _target, _builder, _state) => {
     // build vdom from state
@@ -88,6 +88,8 @@ const dom = (_window = window, _target, _builder, _state) => {
     // update vdom and real DOM to new state
     const update = (newState) => {
         _window.requestAnimationFrame(() => _update(vdom, build(newState), {DOM: target, children: [vdom]}, 0));
+        let queue = makeQueue();
+        queue.add(() => {});
         // recursive function to update an element according to new state
         const _update = (original, successor, originalParent, parentIndex) => {
             if (!isDefined(original) && !isDefined(successor)) {
@@ -102,7 +104,10 @@ const dom = (_window = window, _target, _builder, _state) => {
             // remove
             if (!isDefined(successor)) {
                 originalParent.DOM.removeChild(original.DOM);
-                delete originalParent.children[parentIndex];
+                queue.add(() => {
+                    delete originalParent.children[parentIndex];
+                    queue.done();
+                });
                 return;
             }
             // replace
@@ -150,6 +155,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 }
             });
         };
+        queue.done();
     };
 
     let vdom = render({text: ''});
