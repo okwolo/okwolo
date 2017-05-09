@@ -23,12 +23,18 @@
             }
         }})
 
+        let button = {
+            component: (name, index) => (
+                ['button', {onclick: () => app.act('INCREMENT', index)}, [
+                    name
+                ]]
+            )
+        }
+
         app((state) => (
             ['div', {}, [
                 ['div.buttons', {}, state.map((name, i) => (
-                    ['button', {onclick: () => app.act('INCREMENT', i)}, [
-                        name
-                    ]]
+                    [button.component, name, i]
                 ))],
                 ['div.history', {}, [
                     ['button', {onclick: () => app.undo()}, [

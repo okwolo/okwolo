@@ -34,7 +34,7 @@ app((state) => state);
 
 The internal implementation of this function is entirely free. Which means that, for example, certain vdom "components" can be created in other places and assembled here.
 
-There are two types of vdom objects. The first, which was used in the above example, is a simple string. The second type represents html tags. These vdom nodes take the form of an array.
+There are a few types of vdom objects. The first, which was used in the above example, is a simple string. The second type represents html tags. These vdom nodes take the form of an array. The last type is a "component" which is also an array. However, this array starts with a function and is followed by its arguments. Components are also nestable which allows a component to return another component.
 
 ````javascript
 // text element
@@ -47,10 +47,13 @@ let vdom = ['div']; // <div></div>
 let vdom = ['div', {id: 'banner'}]; // <div id="banner"></div>
 
 // children are placed at the third index using an array
-let vdom = ['div', {}, ['Hello World!']]; //<div>Hello World!</div>
+let vdom = ['div', {}, ['Hello World!']]; // <div>Hello World!</div>
+
+// component element
+let vdom = [makeDiv, 'className', 'content'] // <div class="className">content</div>
 ````
 
-An element's id, class and style can be added to the first index.
+In the case of the generic element, its id, class and style can be added to the first index.
 
 ````javascript
 let vdom = ['div#banner']; // <div id="banner"></div>

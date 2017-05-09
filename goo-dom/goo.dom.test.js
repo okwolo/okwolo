@@ -179,6 +179,27 @@ describe('build/render', () => {
             done();
         });
     });
+
+    it('should should accept components', (done) => {
+        newWindow(() => [() => 'test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('test');
+            done();
+        });
+    });
+
+    it('should should pass arguments to components', (done) => {
+        newWindow(() => [(a) => a, 'test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('test');
+            done();
+        });
+    });
+
+    it('should should support nested components', (done) => {
+        newWindow(() => [(a) => [(b) => [(c) => c, b], a], 'test'], {}, (wrapper, update) => {
+            wrapper.innerHTML.should.equal('test');
+            done();
+        });
+    });
 });
 
 describe('update', () => {

@@ -11,6 +11,10 @@ const dom = (_window = window, _target, _builder, _state) => {
                 return {text: element};
             }
             assert(isArray(element), 'vdom object is not an array or string', element);
+            if (isFunction(element[0])) {
+                let [, ...args] = element;
+                return parse(element[0](...args));
+            }
             let [tagType, attributes, children] = element;
             assert(isString(tagType), 'tag property is not a string', tagType);
             // capture groups: tagName, id, className, style

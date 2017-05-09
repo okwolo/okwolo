@@ -35,7 +35,7 @@ const history = () => {
     };
 
     const updateState = (state, type) => {
-        if (type[0] === '*') {
+        if (type[0] === ignorePrefix) {
             return;
         }
         if (type !== 'UNDO' && type !== 'REDO') {
