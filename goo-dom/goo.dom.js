@@ -1,4 +1,4 @@
-const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('../goo-utils/goo.utils');
+const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('../goo-utils/goo.utils')();
 
 const dom = (_window = window, _target, _builder, _state) => {
     // build vdom from state
@@ -87,9 +87,12 @@ const dom = (_window = window, _target, _builder, _state) => {
 
     // update vdom and real DOM to new state
     const update = (newState) => {
-        _window.requestAnimationFrame(() => _update(vdom, build(newState), {DOM: target, children: [vdom]}, 0));
+        // using a queue to clean up deleted nodes after diffing finishes
         let queue = makeQueue();
-        queue.add(() => {});
+        queue.add(() => {
+            _window.requestAnimationFrame(() => _update(vdom, build(newState), {DOM: target, children: [vdom]}, 0));
+            queue.done();
+        });
         // recursive function to update an element according to new state
         const _update = (original, successor, originalParent, parentIndex) => {
             if (!isDefined(original) && !isDefined(successor)) {
@@ -155,7 +158,6 @@ const dom = (_window = window, _target, _builder, _state) => {
                 }
             });
         };
-        queue.done();
     };
 
     let vdom = render({text: ''});
@@ -220,6 +222,9 @@ const dom = (_window = window, _target, _builder, _state) => {
         // making sure only one value is given to each handler
         const newBlob = {};
         Object.keys(blob).map((b) => newBlob[b] = [blob[b]]);
+        if (isDefined(blob.name)) {
+            newBlob.name = blob.name;
+        }
         return blobHandler({
             target: replaceTarget,
             builder: replaceBuilder,

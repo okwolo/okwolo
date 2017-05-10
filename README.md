@@ -40,13 +40,9 @@ There are a few types of vdom objects. The first, which was used in the above ex
 // text element
 let vdom = 'Hello World!'; // Hello World!
 
-// simple div element
+// generic element
 let vdom = ['div']; // <div></div>
-
-// attributes are placed at the second index
 let vdom = ['div', {id: 'banner'}]; // <div id="banner"></div>
-
-// children are placed at the third index using an array
 let vdom = ['div', {}, ['Hello World!']]; // <div>Hello World!</div>
 
 // component element
@@ -73,12 +69,16 @@ Here is a more complex example where a list of fruits displayed.
 ````javascript
 let app = goo(document.body, ['orange', 'apple', 'pear']);
 
+let fruitItem = (fruitName) => (
+    ['li.fruit', {}, [
+        fruitName,
+    ]]
+);
+
 app((fruits) => (
     ['ul.fruit-list', {},
         fruits.map((fruit) => (
-            ['li.fruit', {}, [
-                fruit,
-            ]]
+            [fruitItem, fruit]
         )
     )]
 ));
@@ -208,7 +208,7 @@ app('/user/:uid/profile', (state, params) => {
 
 When the page loads, the current path name will be compared against registered routes. This means that a page refresh will show the right route if the server knows to return the same web page at this different route.
 
-It is also possible to define a base route if the application is in a sub directory.
+It is also possible to define a base route if the application is in a sub directory. This route needs to start with a forward slash for it to be properly interpreted by the browser.
 
 ````javascript
 let app = goo(document.body, null);
@@ -273,9 +273,30 @@ app.use({
 });
 ````
 
+Named blobs are an extension of regular blobs that ensure that only one instance of a blob is ever used in a single app instance. This can be done by simply adding a "name" key to a blob and using it as before.
+
+````javascript
+let app = goo(document.body, null);
+
+let myPlugin = {
+    name: 'myPluginName',
+    watcher: (state, actionType, params) => {
+        // ...
+    },
+    base: '/plugins/abc',
+}
+
+app.use(myPlugin);
+app.use(myPlugin); // will not add the watcher again
+````
+
+Some blob keys are reserved/recognized and should not be given to a blob unless the behavior is intended. Here is the current list.
+
+`name`, `action`, `middleware`, `watcher`, `route`, `base`, `fallback`, `target`, `builder`, `state`, `component`
+
 # Pseudo-global space
 
-An an object created with `goo()` will have an empty object at its `_` key. This can be used to declare helper functions or any other data. Since the app object is generally passed on to all "components", they will all have access to this space.
+An an object created with `goo()` will have an empty object at its `_` key. This can be used to declare helper functions or any other data. Since the app object is convenient to pass around to many functions, they will all have access to this space.
 
 ````javascript
 let app = goo(document.body, null);

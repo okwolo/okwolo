@@ -69,8 +69,17 @@ const utils = () => {
     };
 
     // handle common blob logic
+    const blobNames = {};
     const blobHandler = (blobs, blob = {}, queue) => {
         assert(isObject(blob), 'blob is not an object', blob);
+        if (isDefined(blob.name)) {
+            assert(isString(blob.name), 'a blob name must be a string', blob);
+            if (blobNames[blob.name] === true) {
+                return null;
+            } else {
+                blobNames[blob.name] = true;
+            }
+        }
         return Object.keys(blob).map((key) => {
             let blobObject = blob[key];
             if (!isArray(blobObject)) {
@@ -97,4 +106,4 @@ const utils = () => {
     return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, blobHandler};
 };
 
-module.exports = utils();
+module.exports = utils;

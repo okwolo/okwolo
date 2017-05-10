@@ -2,7 +2,7 @@ const dom = require('../goo-dom/goo.dom');
 const state = require('../goo-state/goo.state');
 const router = require('../goo-router/goo.router');
 const history = require('../goo-history/goo.history')();
-const {isFunction, isObject, assert, deepCopy} = require('../goo-utils/goo.utils');
+const {isFunction, isObject, isString, assert, deepCopy} = require('../goo-utils/goo.utils')();
 
 const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const domHandler = dom(_window, rootElement);
@@ -13,12 +13,8 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
 
     // forwarding use calls
     const use = (blob) => {
-        assert(isObject(blob), 'cannot use blobs that are not objects', blob);
         return [domHandler, stateHandler, routeHandler]
-            .reduce((accumulator, g) => {
-                accumulator.push(g.use(blob));
-                return accumulator;
-            }, []);
+            .map((g) => g.use(blob));
     };
 
     // adding blobs

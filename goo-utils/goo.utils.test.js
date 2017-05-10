@@ -3,7 +3,7 @@ const should = require('chai').should();
 const utils = require('./goo.utils');
 
 describe('deepCopy', () => {
-    const deepCopy = utils.deepCopy;
+    const deepCopy = utils().deepCopy;
 
     it('should copy an object', () => {
         let obj = {};
@@ -48,7 +48,7 @@ describe('deepCopy', () => {
 });
 
 describe('isDefined', () => {
-    const isDefined = utils.isDefined;
+    const isDefined = utils().isDefined;
 
     it('should return false when undefined', () => {
         isDefined(undefined).should.equal(false);
@@ -65,7 +65,7 @@ describe('isDefined', () => {
 });
 
 describe('isArray', () => {
-    const isArray = utils.isArray;
+    const isArray = utils().isArray;
 
     it('should return true when array', () => {
         isArray([]).should.equal(true);
@@ -82,7 +82,7 @@ describe('isArray', () => {
 });
 
 describe('isString', () => {
-    const isString = utils.isString;
+    const isString = utils().isString;
 
     it('should return true when string', () => {
         isString('a').should.equal(true);
@@ -99,7 +99,7 @@ describe('isString', () => {
 });
 
 describe('isFunction', () => {
-    const isFunction = utils.isFunction;
+    const isFunction = utils().isFunction;
 
     it('should return true when function', () => {
         isFunction(() => {}).should.equal(true);
@@ -116,7 +116,7 @@ describe('isFunction', () => {
 });
 
 describe('isObject', () => {
-    const isObject = utils.isObject;
+    const isObject = utils().isObject;
 
     it('should return true when object', () => {
         isObject({}).should.equal(true);
@@ -134,7 +134,7 @@ describe('isObject', () => {
 });
 
 describe('isNode', () => {
-    const isNode = utils.isNode;
+    const isNode = utils().isNode;
 
     it('should return false for all other values', () => {
         isNode(undefined).should.equal(false);
@@ -148,7 +148,7 @@ describe('isNode', () => {
 });
 
 describe('err', () => {
-    const err = utils.err;
+    const err = utils().err;
 
     it('should throw an error', () => {
         err.should.throw(Error);
@@ -167,7 +167,7 @@ describe('err', () => {
 });
 
 describe('assert', () => {
-    const assert = utils.assert;
+    const assert = utils().assert;
 
     it('should throw an error when false', () => {
         (() => {
@@ -204,7 +204,7 @@ describe('assert', () => {
 });
 
 describe('makeQueue', () => {
-    const makeQueue = utils.makeQueue;
+    const makeQueue = utils().makeQueue;
 
     it('should immediately call new functions when empty', () => {
         const queue = makeQueue();
@@ -249,7 +249,7 @@ describe('makeQueue', () => {
 });
 
 describe('blobHandler', () => {
-    const blobHandler = utils.blobHandler;
+    const blobHandler = utils().blobHandler;
 
     it('should call the function described in the blob', () => {
         let test = false;
@@ -310,7 +310,7 @@ describe('blobHandler', () => {
     });
 
     it('should use a queue if provided', (done) => {
-        let queue = utils.makeQueue();
+        let queue = utils().makeQueue();
         let test = false;
         queue.add(() => {
             setTimeout(() => {
@@ -354,7 +354,7 @@ describe('blobHandler', () => {
     });
 
     it('should default to a null value for each element when using a queue', () => {
-        let queue = utils.makeQueue();
+        let queue = utils().makeQueue();
         should.equal(blobHandler({
             test: () => true,
         }, {test: ''}, queue)[0][0], null);
@@ -364,5 +364,16 @@ describe('blobHandler', () => {
         (() => {
             blobHandler({}, true);
         }).should.throw(Error, /blob/);
+    });
+
+    it('should only accept one blob of the same name', () => {
+        let count = 0;
+        const handler = {
+            test: () => count++,
+        };
+        blobHandler(handler, {test: 'test', name: 'name'});
+        count.should.equal(1);
+        blobHandler(handler, {test: 'test', name: 'name'});
+        count.should.equal(1);
     });
 });
