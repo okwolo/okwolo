@@ -1,8 +1,8 @@
-const dom = require('../goo-dom/goo.dom');
-const state = require('../goo-state/goo.state');
-const router = require('../goo-router/goo.router');
-const history = require('../goo-history/goo.history')();
-const {isFunction, isObject, isString, assert, deepCopy} = require('../goo-utils/goo.utils')();
+const dom = require('goo-dom');
+const state = require('goo-state');
+const router = require('goo-router');
+const history = require('goo-history')();
+const {isFunction, assert, deepCopy} = require('goo-utils')();
 
 const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const domHandler = dom(_window, rootElement);

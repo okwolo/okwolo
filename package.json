@@ -8,9 +8,6 @@
     "autotest": "nodemon -x \"npm run test -s\"",
     "bundle": "webpack --watch"
   },
-  "dependencies": {
-    "goo-js": "^1.1.0"
-  },
   "devDependencies": {
     "babel-core": "^6.22.1",
     "babel-loader": "^6.2.10",
@@ -22,5 +19,8 @@
     "mocha": "^3.2.0",
     "nodemon": "^1.11.0",
     "webpack": "^2.2.1"
+  },
+  "dependencies": {
+    "goo-js": "^2.0.1"
   }
 }

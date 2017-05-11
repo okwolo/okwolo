@@ -1,4 +1,4 @@
-const {deepCopy} = require('../goo-utils/goo.utils')();
+const {deepCopy} = require('goo-utils')();
 
 const history = () => {
     let past = [];

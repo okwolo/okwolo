@@ -1,4 +1,4 @@
-const {deepCopy, assert, isDefined, isString, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils')();
+const {deepCopy, assert, isDefined, isString, isObject, isFunction, blobHandler} = require('goo-utils')();
 
 const paramKey = ':params';
 const callbackKey = ':callback';

@@ -1,4 +1,4 @@
-const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('../goo-utils/goo.utils')();
+const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('goo-utils')();
 
 const dom = (_window = window, _target, _builder, _state) => {
     // build vdom from state
