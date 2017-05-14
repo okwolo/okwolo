@@ -34,8 +34,18 @@ const history = () => {
         },
     };
 
+    const resetAction = {
+        type: '__RESET__',
+        target: [],
+        handler: () => {
+            past = [];
+            future = [];
+            return current;
+        },
+    };
+
     const updateState = (state, type) => {
-        if (type[0] === ignorePrefix) {
+        if (type === '__RESET__' || type[0] === ignorePrefix) {
             return;
         }
         if (type !== 'UNDO' && type !== 'REDO') {
@@ -49,7 +59,7 @@ const history = () => {
     };
 
     return {
-        action: [undoAction, redoAction],
+        action: [undoAction, redoAction, resetAction],
         watcher: updateState,
     };
 };

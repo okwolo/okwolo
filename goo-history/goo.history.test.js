@@ -17,6 +17,12 @@ const newState = (initialState) => {
         return newState;
     };
 
+    const reset = () => {
+        let newState = temp.action[2].handler();
+        temp.watcher(newState, '__RESET__');
+        return newState;
+    };
+
     const setState = (newState, type) => {
         temp.watcher(newState, type || '----');
         return newState;
@@ -24,7 +30,7 @@ const newState = (initialState) => {
 
     setState(initialState);
 
-    return {undo, redo, setState};
+    return {undo, redo, reset, setState};
 };
 
 describe('goo-history', () => {
@@ -98,5 +104,16 @@ describe('goo-history', () => {
         state.setState(0, '*IGNORE');
         state.setState(1);
         state.undo().should.equal('test');
+    });
+
+    it('should be able to reset the undo/redo stacks', () => {
+        const state = newState('test');
+        state.setState(0, 'UPDATE');
+        state.reset();
+        state.undo().should.equal(0);
+        state.setState(1, 'UPDATE');
+        state.undo();
+        state.reset();
+        state.redo().should.equal(0);
     });
 });
