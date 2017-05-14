@@ -1,6 +1,6 @@
 {
   "name": "goo-js",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "",
   "main": "goo.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "goo-dom": "^2.0.1",
     "goo-state": "^2.0.1",
     "goo-router": "^2.0.1",
-    "goo-history": "^2.0.1"
+    "goo-history": "^2.1.0"
   },
   "author": "g-harel",
   "license": "MIT"
