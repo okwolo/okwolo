@@ -38,9 +38,18 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         handler: (target, params) => params,
     }});
 
+    const update = () => {
+        use({state: _state});
+    };
+
     // adding currentState and forwarding act calls
     const act = (type, params) => {
         assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', 'cannot act on state before it has been set');
+        if (isFunction(type)) {
+            type();
+            update();
+            return;
+        }
         stateHandler.act(_state, type, params);
     };
 
@@ -55,7 +64,8 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const register = (path, builder) => {
         if (isFunction(path)) {
             builder = path;
-            path = '';
+            use({builder});
+            return;
         }
         use({route: {
             path: path,
@@ -77,10 +87,6 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     const getState = () => {
         assert(!(_state && _state.__unset__), 'cannot get state before it has been set');
         return deepCopy(_state);
-    };
-
-    const update = () => {
-        use({state: _state});
     };
 
     return Object.assign(register, {
