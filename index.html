@@ -31,7 +31,7 @@
             )
         }
 
-        app((state) => (
+        app(() => (state) => (
             ['div', {}, [
                 ['div.buttons', {}, state.map((name, i) => (
                     [button.component, name, i]
@@ -50,7 +50,7 @@
             ]]
         ));
 
-        app('/test', () => 'test');
+        app('/:value', ({value}) => () => value);
     </script>
 </body>
 </html>

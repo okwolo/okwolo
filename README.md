@@ -11,28 +11,38 @@ Goo.js is a small framework made to jumpstart projects by solving common web app
 The first step in using goo is creating the master object that will contain the entire application.
 
 ````javascript
-let app = goo(target[, initialState[, window]]);
+let app = goo(target[, window]);
+
+app.setState(initialState);
 ````
 
-The target is a DOM node that will serve as the root of the application. It can be changed after initialization. The initialState parameter is optional, but actions cannot be executed and no layout will be drawn until it is set. If there is a need to specify the window object, it can also be done during this initialization.
+The target is a DOM node that will serve as the root of the application. It can be changed after initialization. If there is a need to specify the window object, it can also be done during this initialization. For the app to start showing rendering, the state needs to be set using `setState()`.
 
 The app's layout can now be defined using the following syntax.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
 
-app(() => 'Hello World!');
+app.setState(null);
+
+app(() => () => 'Hello World!');
 ````
 
-The current state will be given as an argument to this function for it to create and return valid vdom.
+The function given to app should return a builder function that takes in state and returns vdom. The builder function is the only one that will be ran on updates. This allows some initialization to be done before returning it (this becomes especially handy with routes). Here is a more verbose example that is outputs results in the same thing as the previous example.
 
 ````javascript
-let app = goo(document.body, 'Hello World!');
+let app = goo(document.body);
 
-app((state) => state);
+app.setState('Hello World!');
+
+let builder = (state) => state;
+
+let createBuilder = () => builder;
+
+app(createBuilder);
 ````
 
-The internal implementation of this function is entirely free. Which means that, for example, certain vdom "components" can be created in other places and assembled here.
+The internal implementation of these functions is entirely free. Which means that, for example, certain vdom "components" can be created in other places and assembled here.
 
 There are a few types of vdom objects. The first, which was used in the above example, is a simple string. The second type represents html tags. These vdom nodes take the form of an array. The last type is a "component" which is also an array. However, this array starts with a function and is followed by its arguments. Components are also nestable which allows a component to return another component.
 
@@ -67,7 +77,9 @@ let vdom = ['div#banner.nav.hidden | font-size: 20px;'];
 Here is a more complex example where a list of fruits displayed.
 
 ````javascript
-let app = goo(document.body, ['orange', 'apple', 'pear']);
+let app = goo(document.body);
+
+app.setState(['orange', 'apple', 'pear']);
 
 let fruitItem = (fruitName) => (
     ['li.fruit', {}, [
@@ -75,7 +87,7 @@ let fruitItem = (fruitName) => (
     ]]
 );
 
-app((fruits) => (
+app(() => (fruits) => (
     ['ul.fruit-list', {},
         fruits.map((fruit) => (
             [fruitItem, fruit]
@@ -187,9 +199,11 @@ Declaring an action type that starts with the `*` character will exclude the act
 To create a new route, a new builder function needs to be defined.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
 
-app('/route', (state) => {
+app.setState(null);
+
+app('/route', () => (state) => {
     // ...
 });
 ````
@@ -199,9 +213,11 @@ When a route is not specified, it is implied that the route is an empty string.
 Arguments can also be passed through routes and they will be provided to the function as second argument.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
 
-app('/user/:uid/profile', (state, params) => {
+app.setState(null);
+
+app('/user/:uid/profile', (params) => (state) => {
     // params === {uid: "..."}
 });
 ````
@@ -211,11 +227,13 @@ When the page loads, the current path name will be compared against registered r
 It is also possible to define a base route if the application is in a sub directory. This route needs to start with a forward slash for it to be properly interpreted by the browser.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
+
+app.setState(null);
 
 app.use({base: '/webapp'});
 
-app('/main', () => 'Hello World!'); // will be shown at "/webapp/main"
+app('/main', () => () => 'Hello World!'); // will be shown at "/webapp/main"
 ````
 
 To navigate between pages, there is a `redirect` function that can also pass params to the route's function.
@@ -223,9 +241,11 @@ To navigate between pages, there is a `redirect` function that can also pass par
 `redirect(path[, params])`
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
 
-app('/profile/:name', (state, params) => {
+app.setState(null);
+
+app('/profile/:name', (params) => (state) => {
     return 'Hello ' + params.name + ' you are ' + params.status;
 });
 
@@ -235,9 +255,11 @@ app.redirect('/profile/John123', {status: 'registered'});
 When a route doesn't match with anything, the router will call a fallback function. It can be overridden with the use syntax.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
 
-app(() => 'Main Page');
+app.setState(null);
+
+app(() => () => 'Main Page');
 
 app.use({fallback: () => {
     app.redirect('');
@@ -255,7 +277,9 @@ As mentioned earlier, goo and its modules have use function. This function takes
 Here is an example of a blob that adds two watchers and one middleware.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
+
+app.setState(null);
 
 app.use({
     watcher: [
@@ -276,14 +300,15 @@ app.use({
 Named blobs are an extension of regular blobs that ensure that only one instance of a blob is ever used in a single app instance. This can be done by simply adding a "name" key to a blob and using it as before.
 
 ````javascript
-let app = goo(document.body, null);
+let app = goo(document.body);
+
+app.setState(null);
 
 let myPlugin = {
     name: 'myPluginName',
     watcher: (state, actionType, params) => {
         // ...
     },
-    base: '/plugins/abc',
 }
 
 app.use(myPlugin);
@@ -293,15 +318,3 @@ app.use(myPlugin); // will not add the watcher again
 Some blob keys are reserved/recognized and should not be given to a blob unless the behavior is intended. Here is the current list.
 
 `name`, `action`, `middleware`, `watcher`, `route`, `base`, `fallback`, `target`, `builder`, `state`, `component`
-
-# Pseudo-global space
-
-An an object created with `goo()` will have an empty object at its `_` key. This can be used to declare helper functions or any other data. Since the app object is convenient to pass around to many functions, they will all have access to this space.
-
-````javascript
-let app = goo(document.body, null);
-
-app._.formatDate = () => {
-    // ...
-};
-````

@@ -4,12 +4,12 @@ const router = require('goo-router');
 const history = require('goo-history')();
 const {isFunction, assert, deepCopy} = require('goo-utils')();
 
-const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
+const goo = (rootElement, _window = window) => {
     const domHandler = dom(_window, rootElement);
     const stateHandler = state();
     const routeHandler = router(_window);
 
-    _state = deepCopy(_state);
+    let _state = {__unset__: true};
 
     // forwarding use calls
     const use = (blob) => {
@@ -63,15 +63,14 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
     // register a route/controller combo
     const register = (path, builder) => {
         if (isFunction(path)) {
-            builder = path;
+            builder = path();
             use({builder});
             return;
         }
         use({route: {
             path: path,
             callback: (params) => {
-                const _builder = (newState) => builder(newState, params);
-                use({builder: _builder});
+                use({builder: builder(params)});
             },
         }});
     };
@@ -103,7 +102,6 @@ const goo = (rootElement, _state = {__unset__: true}, _window = window) => {
         u: update,
         undo: undo,
         redo: redo,
-        _: {},
     });
 };
 
