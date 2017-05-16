@@ -1,13 +1,14 @@
 {
   "name": "goo-router",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "",
   "main": "goo.router.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "goo-utils": "^2.0.1"
+    "goo-utils": "^2.0.1",
+    "path-to-regexp": "^1.7.0"
   },
   "author": "",
   "license": "MIT"

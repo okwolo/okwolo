@@ -1,26 +1,10 @@
-const {deepCopy, assert, isDefined, isString, isObject, isFunction, blobHandler} = require('goo-utils')();
+const pathToRegexp = require('path-to-regexp');
 
-const paramKey = ':params';
-const callbackKey = ':callback';
-
-// creates blank single-level route object
-const mkdir = () => {
-    const temp = {};
-    temp[paramKey] = {};
-    return temp;
-};
-
-// splits url path into array
-const explodePath = (path) => {
-    return path
-        .replace(/\?[^]*$/g, '')
-        .split('/')
-        .map((p) => p.trim());
-};
+const {assert, isString, isObject, isFunction, blobHandler} = require('goo-utils')();
 
 const router = (_window = window) => {
-    // store all the registered routes in an encoded format
-    const pathStore = mkdir();
+    // store all the registered routes
+    const pathStore = [];
 
     // store base url to prepend to all addresses
     let baseUrl = '';
@@ -45,53 +29,31 @@ const router = (_window = window) => {
 
     // add a route/callback combo to the store given as argument
     const register = (store) => (path, callback) => {
-        const explodedPath = explodePath(path);
-        let currentLevel = store;
-        explodedPath.forEach((token, i) => {
-            if (token[0] === ':') {
-                currentLevel[paramKey][token.substring(1)] =
-                    currentLevel[paramKey][token.substring(1)] || [];
-                let defaultObj = mkdir();
-                currentLevel[paramKey][token.substring(1)].push(defaultObj);
-                currentLevel = defaultObj;
-            } else {
-                currentLevel[token] = currentLevel[token] || mkdir();
-                currentLevel = currentLevel[token];
-            }
-            if (i === explodedPath.length - 1) {
-                currentLevel[callbackKey] = callback;
-            }
+        store.push({
+            pattern: pathToRegexp(path, [], {strict: true}),
+            callback,
         });
     };
 
     /* call all the callbacks from the store given as argument
         who's route matches path argument*/
     const fetch = (store) => (path, params) => {
-        const explodedPath = explodePath(path);
-        const explore = (fragment, path, params) => {
-            path = path.slice();
-            params = deepCopy(params);
-            if (path.length === 0) {
-                if (fragment[callbackKey]) {
-                    fragment[callbackKey](params);
-                    found = true;
-                }
-            } else {
-                const next = path.shift();
-                if (isDefined(fragment[next])) {
-                    explore(fragment[next], path, params);
-                }
-                Object.keys(fragment[paramKey]).forEach((param) => {
-                    fragment[paramKey][param].forEach((p) => {
-                        let temp = {};
-                        temp[param] = next;
-                        explore(p, path, Object.assign(params, temp));
-                    });
-                });
-            }
-        };
         let found = false;
-        explore(store, explodedPath, params);
+        store.forEach((registeredPath) => {
+            if (found) {
+                return;
+            }
+            let test = registeredPath.pattern.exec(path);
+            if (test === null) {
+                return;
+            }
+            found = true;
+            test.shift();
+            registeredPath.pattern.keys.forEach((key, i) => {
+                params[key.name] = test[i];
+            });
+            registeredPath.callback(params);
+        });
         return found;
     };
 
@@ -110,7 +72,7 @@ const router = (_window = window) => {
         assert(isFunction(callback), `callback for path is not a function\n>>>${path}`, callback);
         register(pathStore)(path, callback);
         // chacking new path against current pathname
-        const temp = mkdir();
+        const temp = [];
         register(temp)(path, callback);
         fetch(temp)(currentPath, _window.history.state || {});
     };
