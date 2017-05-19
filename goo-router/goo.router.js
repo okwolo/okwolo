@@ -9,6 +9,9 @@ const router = (_window = window) => {
     // store base url to prepend to all addresses
     let baseUrl = '';
 
+    // track if a path has matched on page load
+    let hasMatched = false;
+
     let isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     // removes base url from a path
@@ -71,10 +74,15 @@ const router = (_window = window) => {
         assert(isString(path), 'register path is not a string', path);
         assert(isFunction(callback), `callback for path is not a function\n>>>${path}`, callback);
         register(pathStore)(path, callback);
-        // chacking new path against current pathname
-        const temp = [];
-        register(temp)(path, callback);
-        fetch(temp)(currentPath, _window.history.state || {});
+        // checking new path against current pathname
+        if (!hasMatched) {
+            const temp = [];
+            register(temp)(path, callback);
+            let found = fetch(temp)(currentPath, _window.history.state || {});
+            if (found) {
+                hasMatched = true;
+            }
+        }
     };
 
     // replace the current fallback function
