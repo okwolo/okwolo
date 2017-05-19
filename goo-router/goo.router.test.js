@@ -97,6 +97,31 @@ describe('use -> route', () => {
             done();
         });
     });
+
+    it('should prioritize the earliest routes', (done) => {
+        let test = false;
+        newWindow('/', (window, router) => {
+            router.use({
+                route: [
+                    {
+                        path: '/*',
+                        callback: () => {
+                            test = 1;
+                        },
+                    },
+                    {
+                        path: '/test',
+                        callback: () => {
+                            test = 2;
+                        },
+                    },
+                ],
+            });
+            router.redirect('/test');
+            test.should.equal(1);
+            done();
+        });
+    });
 });
 
 describe('use -> fallback', () => {
