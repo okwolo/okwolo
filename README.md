@@ -208,9 +208,9 @@ app('/route', () => (state) => {
 });
 ````
 
-When a route is not specified, it is implied that the route is an empty string.
+When a route is not specified, it is implied that the route is a `*`. The route matching uses the same package as express, so the syntax should be familiar.
 
-Arguments can also be passed through routes and they will be provided to the function as second argument.
+Arguments can also be passed through routes and they will be provided to the function.
 
 ````javascript
 let app = goo(document.body);
@@ -251,24 +251,6 @@ app('/profile/:name', (params) => (state) => {
 
 app.redirect('/profile/John123', {status: 'registered'});
 ````
-
-When a route doesn't match with anything, the router will call a fallback function. It can be overridden with the use syntax.
-
-````javascript
-let app = goo(document.body);
-
-app.setState(null);
-
-app(() => () => 'Main Page');
-
-app.use({fallback: () => {
-    app.redirect('');
-}});
-````
-
-An important consideration here is that since routes can be added at any point during the app's lifetime, the fallback will only be called when redirect is used or a popstate event is fired. A way to get around this would be to add some html into the target element which will be cleared when a route is matched.
-
-A second important consideration is that it is possible for more than one route to match with the one provided. There is no mechanism to prioritize any specific route and the resulting layout cannot be guaranteed.
 
 # Blobs
 
@@ -317,4 +299,4 @@ app.use(myPlugin); // will not add the watcher again
 
 Some blob keys are reserved/recognized and should not be given to a blob unless the behavior is intended. Here is the current list.
 
-`name`, `action`, `middleware`, `watcher`, `route`, `base`, `fallback`, `target`, `builder`, `state`, `component`
+`name`, `action`, `middleware`, `watcher`, `route`, `base`, `target`, `builder`, `state`, `component`
