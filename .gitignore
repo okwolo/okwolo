@@ -7,3 +7,7 @@ legacy/*
 yarn.lock
 
 example/dist/*
+
+index.html
+
+goo.min.js

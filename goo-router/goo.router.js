@@ -19,11 +19,6 @@ const router = (_window = window) => {
         return path.replace(new RegExp('\^' + baseUrl), '') || '';
     };
 
-    // fallback function
-    let fallback = (path) => {
-        console.log(`no route was found for\n>>>${path}`);
-    };
-
     // store initial pathName
     let currentPath = _window.location.pathname;
     if (!isHosted) {
@@ -63,10 +58,7 @@ const router = (_window = window) => {
     // handle back/forward events
     _window.onpopstate = () => {
         currentPath = removeBaseUrl(_window.location.pathname);
-        let found = fetch(pathStore)(currentPath, _window.history.state || {});
-        if (!found) {
-            fallback(currentPath);
-        }
+        fetch(pathStore)(currentPath, _window.history.state || {});
     };
 
     // register wrapper that runs the current page's url against new routes
@@ -85,12 +77,6 @@ const router = (_window = window) => {
         }
     };
 
-    // replace the current fallback function
-    const replaceFallback = (callback) => {
-        assert(isFunction(callback), 'callback for fallback is not a function', callback);
-        fallback = callback;
-    };
-
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
         assert(isString(path), 'redirect path is not a string', path);
@@ -104,10 +90,7 @@ const router = (_window = window) => {
         } else {
             console.log(`goo-router:: path changed to\n>>>${currentPath}`);
         }
-        let found = fetch(pathStore)(currentPath, params);
-        if (!found) {
-            fallback(path);
-        }
+        return fetch(pathStore)(currentPath, params);
     };
 
     // replace the base url, adjust the current and try to fetch with the new url
@@ -122,7 +105,6 @@ const router = (_window = window) => {
         return blobHandler({
             route: addRoute,
             base: replaceBaseUrl,
-            fallback: replaceFallback,
         }, blob);
     };
 
