@@ -16,7 +16,7 @@ let app = goo(target[, window]);
 app.setState(initialState);
 ````
 
-The target is a DOM node that will serve as the root of the application. It can be changed after initialization. If there is a need to specify the window object, it can also be done during this initialization. For the app to start showing rendering, the state needs to be set using `setState()`.
+The target is a DOM node that will serve as the root of the application. It can be changed after initialization. If there is a need to specify the window object, it can also be done during this initialization. For the app to start rendering, the state needs to be set using `setState()`.
 
 The app's layout can now be defined using the following syntax.
 
