@@ -55,7 +55,7 @@ const utils = () => {
             }
         };
         const add = (func) => {
-            assert(isFunction(func));
+            assert(isFunction(func), '@goo.utils.makeQueue.add : added objects must be a function');
             queue.push(func);
             if (queue.length === 1) {
                 run();
@@ -71,9 +71,9 @@ const utils = () => {
     // handle common blob logic
     const blobNames = {};
     const blobHandler = (blobs, blob = {}, queue) => {
-        assert(isObject(blob), 'blob is not an object', blob);
+        assert(isObject(blob), '@goo.utils.blobHandler : blob is not an object', blob);
         if (isDefined(blob.name)) {
-            assert(isString(blob.name), 'a blob name must be a string', blob);
+            assert(isString(blob.name), '@goo.utils.blobHandler : a blob name must be a string', blob);
             if (blobNames[blob.name] === true) {
                 return null;
             } else {

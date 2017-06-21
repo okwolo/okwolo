@@ -10,16 +10,16 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (isString(element)) {
                 return {text: element};
             }
-            assert(isArray(element), 'vdom object is not an array or string', element);
+            assert(isArray(element), '@goo.dom.build : vdom object is not an array or string', element);
             if (isFunction(element[0])) {
                 let [, ...args] = element;
                 return parse(element[0](...args));
             }
             let [tagType, attributes, children] = element;
-            assert(isString(tagType), 'tag property is not a string', tagType);
+            assert(isString(tagType), '@goo.dom.build : tag property is not a string', tagType);
             // capture groups: tagName, id, className, style
             const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-            assert(isArray(match), 'tag property cannot be parsed', tagType);
+            assert(isArray(match), '@goo.dom.build : tag property cannot be parsed', tagType);
             let [, tagName, id, className, style] = match;
             if (!isObject(attributes)) {
                 attributes = {};
@@ -42,7 +42,7 @@ const dom = (_window = window, _target, _builder, _state) => {
                 }
             }
             if (isDefined(children)) {
-                assert(isArray(children), 'children of vdom object is not an array', children);
+                assert(isArray(children), '@goo.dom.build : children of vdom object is not an array', children);
             } else {
                 children = [];
             }
@@ -179,7 +179,7 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const replaceTarget = (newTarget) => {
-        assert(isNode(newTarget), 'target is not a DOM node', newTarget);
+        assert(isNode(newTarget), '@goo.dom.replaceTarget : target is not a DOM node', newTarget);
         target = newTarget;
         if (requiredVariablesAreDefined()) {
             drawToTarget();
@@ -187,7 +187,7 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const replaceBuilder = (newBuilder) => {
-        assert(isFunction(newBuilder), 'builder is not a function', newBuilder);
+        assert(isFunction(newBuilder), '@goo.dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
         if (requiredVariablesAreDefined()) {
             if (!hasDrawn) {
@@ -198,7 +198,7 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const updateState = (newState) => {
-        assert(isDefined(newState), 'new state is not defined', newState);
+        assert(isDefined(newState), '@goo.dom.updateState : new state is not defined', newState);
         state = newState;
         if (requiredVariablesAreDefined()) {
             if (!hasDrawn) {

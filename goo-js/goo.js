@@ -44,7 +44,7 @@ const goo = (rootElement, _window = window) => {
 
     // adding currentState and forwarding act calls
     const act = (type, params) => {
-        assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', 'cannot act on state before it has been set');
+        assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', '@goo.act : cannot act on state before it has been set');
         if (isFunction(type)) {
             type();
             update();
@@ -84,7 +84,7 @@ const goo = (rootElement, _window = window) => {
     };
 
     const getState = () => {
-        assert(!(_state && _state.__unset__), 'cannot get state before it has been set');
+        assert(!(_state && _state.__unset__), '@goo.getState : cannot get state before it has been set');
         return deepCopy(_state);
     };
 

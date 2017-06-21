@@ -10,11 +10,11 @@ const state = () => {
 
     const addAction = (action) => {
         const {type, handler, target} = action;
-        assert(isString(type), `@use>action: action type "${type}" is not a string`, action);
-        assert(isFunction(handler), `@use>action: handler for action ${type} is not a function`, handler);
-        assert(isArray(target), `@use>action: target of action ${type} is not an array`, target);
+        assert(isString(type), `@goo.state.addAction : action type "${type}" is not a string`, action);
+        assert(isFunction(handler), `@goo.state.addAction : handler for action ${type} is not a function`, handler);
+        assert(isArray(target), `@goo.state.addAction : target of action ${type} is not an array`, target);
         target.forEach((address) => {
-            assert(isString(address), `@use>action: target of action type ${type} is not an array of strings ${target}`);
+            assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings ${target}`);
         });
         if (actions[type] === undefined) {
             actions[type] = [action];
@@ -24,12 +24,12 @@ const state = () => {
     };
 
     const addMiddleware = (handler) => {
-        assert(isFunction(handler), '@use>middleware: middleware is not a function', handler);
+        assert(isFunction(handler), '@goo.state.addMiddleware : middleware is not a function', handler);
         middleware.push(handler);
     };
 
     const addWatcher = (handler) => {
-        assert(isFunction(handler), '@use>watcher: watcher is not a function', handler);
+        assert(isFunction(handler), '@goo.state.addWatcher : watcher is not a function', handler);
         watchers.push(handler);
     };
 
@@ -45,16 +45,16 @@ const state = () => {
     // exectute an action on the state
     const execute = (state, type, params) => {
         let newState = deepCopy(state);
-        assert(isDefined(actions[type]), `action type '${type}' was not found`);
+        assert(isDefined(actions[type]), `@goo.state.execute : action type '${type}' was not found`);
         actions[type].forEach((currentAction) => {
             let target = deepCopy(newState);
             if (currentAction.target.length > 0) {
                 let reference = newState;
                 currentAction.target.forEach((key, i, a) => {
-                    assert(isDefined(target[key]), `target of action ${type} does not exist: @state.${currentAction.target.slice(0, i+1).join('.')}`);
+                    assert(isDefined(target[key]), `@goo.state.execute : target of action ${type} does not exist: @state.${currentAction.target.slice(0, i+1).join('.')}`);
                     if (i === a.length - 1) {
                         let newValue = currentAction.handler(target[key], params);
-                        assert(isDefined(newValue), `result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
+                        assert(isDefined(newValue), `@goo.state.execute : result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
                         reference[key] = newValue;
                     } else {
                         target = target[key];
@@ -63,7 +63,7 @@ const state = () => {
                 });
             } else {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), `result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
+                assert(isDefined(newState), `@goo.state.execute : result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
             }
         });
 
@@ -92,8 +92,8 @@ const state = () => {
 
     // apply wrapper that uses the wait queue
     const act = (state, type, params = {}) => {
-        assert(isDefined(state), 'cannot call act with undefined state');
-        assert(isDefined(type), 'cannot call act with undefined type');
+        assert(isDefined(state), '@goo.state.act : cannot call act with undefined state');
+        assert(isDefined(type), '@goo.state.act : cannot call act with undefined type');
         queue.add(() => {
             apply(state, type, params);
         });

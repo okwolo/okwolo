@@ -124,45 +124,6 @@ describe('use -> route', () => {
     });
 });
 
-describe('use -> fallback', () => {
-    it('should reject malformed fallbacks', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.use({fallback: true});
-            }).should.throw(Error, /fallback/);
-            done();
-        });
-    });
-
-    it('should call the fallback when the route is not found', (done) => {
-        let test = false;
-        newWindow('/', (window, router) => {
-            router.use({
-                fallback: () => {
-                    test = true;
-                },
-            });
-            router.redirect('/test');
-            test.should.equal(true);
-            done();
-        });
-    });
-
-    it('should call the fallback with the path as argument', (done) => {
-        let test = null;
-        newWindow('/', (window, router) => {
-            router.use({
-                fallback: (path) => {
-                    test = path;
-                },
-            });
-            router.redirect('/test');
-            test.should.equal('/test');
-            done();
-        });
-    });
-});
-
 describe('use -> base', () => {
     it('should reject malformed inputs', (done) => {
         newWindow('/', (window, router) => {

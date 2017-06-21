@@ -63,8 +63,8 @@ const router = (_window = window) => {
 
     // register wrapper that runs the current page's url against new routes
     const addRoute = ({path, callback}) => {
-        assert(isString(path), 'register path is not a string', path);
-        assert(isFunction(callback), `callback for path is not a function\n>>>${path}`, callback);
+        assert(isString(path), '@goo.router.addRoute : register path is not a string', path);
+        assert(isFunction(callback), `@goo.router.addRoute : callback for path is not a function\n>>>${path}`, callback);
         register(pathStore)(path, callback);
         // checking new path against current pathname
         if (!hasMatched) {
@@ -79,8 +79,8 @@ const router = (_window = window) => {
 
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
-        assert(isString(path), 'redirect path is not a string', path);
-        assert(isObject(params), 'redirect params is not an object', params);
+        assert(isString(path), '@goo.router.redirect : redirect path is not a string', path);
+        assert(isObject(params), '@goo.router.redirect : redirect params is not an object', params);
         currentPath = path;
         if (isHosted) {
             /* edge doesn't care that the file is local and will allow pushState.
@@ -95,7 +95,7 @@ const router = (_window = window) => {
 
     // replace the base url, adjust the current and try to fetch with the new url
     const replaceBaseUrl = (base) => {
-        assert(isString(base), 'base url is not a string', base);
+        assert(isString(base), '@goo.router.replaceBaseUrl : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         fetch(pathStore)(currentPath, _window.history.state || {});
