@@ -1,60 +1,6 @@
 const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue, blobHandler} = require('goo-utils')();
 
-const dom = (_window = window, _target, _builder, _state) => {
-    // build vdom from state
-    const build = (state) => {
-        const parse = (element) => {
-            if (isNull(element)) {
-                return {text: ''};
-            }
-            if (isString(element)) {
-                return {text: element};
-            }
-            assert(isArray(element), '@goo.dom.build : vdom object is not an array or string', element);
-            if (isFunction(element[0])) {
-                let [, ...args] = element;
-                return parse(element[0](...args));
-            }
-            let [tagType, attributes, children] = element;
-            assert(isString(tagType), '@goo.dom.build : tag property is not a string', tagType);
-            // capture groups: tagName, id, className, style
-            const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-            assert(isArray(match), '@goo.dom.build : tag property cannot be parsed', tagType);
-            let [, tagName, id, className, style] = match;
-            if (!isObject(attributes)) {
-                attributes = {};
-            }
-            if (isDefined(id) && !isDefined(attributes.id)) {
-                attributes.id = id.trim();
-            }
-            if (isDefined(className)) {
-                if (!isDefined(attributes.className)) {
-                    attributes.className = '';
-                }
-                attributes.className += className.replace(/\./g, ' ');
-                attributes.className = attributes.className.trim();
-            }
-            if (isDefined(style)) {
-                if (!isDefined(attributes.style)) {
-                    attributes.style = style;
-                } else {
-                    attributes.style += ';' + style;
-                }
-            }
-            if (isDefined(children)) {
-                assert(isArray(children), '@goo.dom.build : children of vdom object is not an array', children);
-            } else {
-                children = [];
-            }
-            return {
-                tagName: tagName,
-                attributes: attributes,
-                children: children.map((c) => parse(c)),
-            };
-        };
-        return parse(builder(state));
-    };
-
+const createDefaultBlob = (_window) => {
     // recursively creates DOM elements from vdom object
     const render = (velem) => {
         if (isDefined(velem.text)) {
@@ -73,6 +19,71 @@ const dom = (_window = window, _target, _builder, _state) => {
         return velem;
     };
 
+    // initial draw to container
+    const draw = (vdom, target) => {
+        assert(isNode(target), '@goo.dom.draw : target is not a DOM node', target);
+        if (!isDefined(vdom)) {
+            vdom = {text: ''};
+        }
+        vdom = render(vdom);
+        _window.requestAnimationFrame(() => {
+            target.innerHTML = '';
+            target.appendChild(vdom.DOM);
+        });
+        return vdom;
+    };
+
+    // build vdom from builder output
+    const build = (element) => {
+        if (isNull(element)) {
+            return {text: ''};
+        }
+        if (isString(element)) {
+            return {text: element};
+        }
+        assert(isArray(element), '@goo.dom.build : vdom object is not an array or string', element);
+        if (isFunction(element[0])) {
+            let [, ...args] = element;
+            return build(element[0](...args));
+        }
+        let [tagType, attributes, children] = element;
+        assert(isString(tagType), '@goo.dom.build : tag property is not a string', tagType);
+        // capture groups: tagName, id, className, style
+        const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+        assert(isArray(match), '@goo.dom.build : tag property cannot be parsed', tagType);
+        let [, tagName, id, className, style] = match;
+        if (!isObject(attributes)) {
+            attributes = {};
+        }
+        if (isDefined(id) && !isDefined(attributes.id)) {
+            attributes.id = id.trim();
+        }
+        if (isDefined(className)) {
+            if (!isDefined(attributes.className)) {
+                attributes.className = '';
+            }
+            attributes.className += className.replace(/\./g, ' ');
+            attributes.className = attributes.className.trim();
+        }
+        if (isDefined(style)) {
+            if (!isDefined(attributes.style)) {
+                attributes.style = style;
+            } else {
+                attributes.style += ';' + style;
+            }
+        }
+        if (isDefined(children)) {
+            assert(isArray(children), '@goo.dom.build : children of vdom object is not an array', children);
+        } else {
+            children = [];
+        }
+        return {
+            tagName: tagName,
+            attributes: attributes,
+            children: children.map((c) => build(c)),
+        };
+    };
+
     /* shallow diff of two objects which returns an array of the
         modified keys (functions always considered different)*/
     const diff = (original, successor) => {
@@ -86,11 +97,12 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     // update vdom and real DOM to new state
-    const update = (newState) => {
+    const update = (vdom, newVdom, target) => {
+        assert(isNode(target), '@goo.dom.update : target is not a DOM node', target);
         // using a queue to clean up deleted nodes after diffing finishes
         let queue = makeQueue();
         queue.add(() => {
-            _window.requestAnimationFrame(() => _update(vdom, build(newState), {DOM: target, children: [vdom]}, 0));
+            _window.requestAnimationFrame(() => _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0));
             queue.done();
         });
         // recursive function to update an element according to new state
@@ -158,9 +170,16 @@ const dom = (_window = window, _target, _builder, _state) => {
                 }
             });
         };
+        return vdom;
     };
 
-    let vdom = render({text: ''});
+    return {draw, update, build};
+};
+
+const dom = (_window = window, _target, _builder, _state) => {
+    let {draw, update, build} = createDefaultBlob(_window);
+
+    let vdom = undefined;
     let target = undefined;
     let builder = undefined;
     let state = undefined;
@@ -168,10 +187,7 @@ const dom = (_window = window, _target, _builder, _state) => {
     let hasDrawn = false;
     const drawToTarget = () => {
         hasDrawn = true;
-        _window.requestAnimationFrame(() => {
-            target.innerHTML = '';
-            target.appendChild(vdom.DOM);
-        });
+        vdom = draw(vdom, target);
     };
 
     const requiredVariablesAreDefined = () => {
@@ -179,7 +195,6 @@ const dom = (_window = window, _target, _builder, _state) => {
     };
 
     const replaceTarget = (newTarget) => {
-        assert(isNode(newTarget), '@goo.dom.replaceTarget : target is not a DOM node', newTarget);
         target = newTarget;
         if (requiredVariablesAreDefined()) {
             drawToTarget();
@@ -193,7 +208,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (!hasDrawn) {
                 drawToTarget();
             }
-            update(state);
+            vdom = update(vdom, build(builder(state)), target);
         }
     };
 
@@ -204,7 +219,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (!hasDrawn) {
                 drawToTarget();
             }
-            update(state);
+            vdom = update(vdom, build(builder(state)), target);
         }
     };
 
