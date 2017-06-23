@@ -20,7 +20,7 @@ const createDefaultBlob = (_window) => {
     };
 
     // initial draw to container
-    const draw = (vdom, target) => {
+    const draw = (target, vdom) => {
         assert(isNode(target), '@goo.dom.draw : target is not a DOM node', target);
         if (!isDefined(vdom)) {
             vdom = {text: ''};
@@ -97,7 +97,7 @@ const createDefaultBlob = (_window) => {
     };
 
     // update vdom and real DOM to new state
-    const update = (vdom, newVdom, target) => {
+    const update = (target, vdom, newVdom) => {
         assert(isNode(target), '@goo.dom.update : target is not a DOM node', target);
         // using a queue to clean up deleted nodes after diffing finishes
         let queue = makeQueue();
@@ -179,19 +179,74 @@ const createDefaultBlob = (_window) => {
 const dom = (_window = window, _target, _builder, _state) => {
     let {draw, update, build} = createDefaultBlob(_window);
 
+    let prebuild = undefined;
+    let postbuild = undefined;
+
     let vdom = undefined;
     let target = undefined;
     let builder = undefined;
     let state = undefined;
 
+    const create = (state)=> {
+        let temp = builder(state);
+        if (prebuild) {
+            temp = prebuild(temp);
+        }
+        temp = build(temp);
+        if (postbuild) {
+            temp = postbuild(temp);
+        }
+        return temp;
+    };
+
     let hasDrawn = false;
     const drawToTarget = () => {
         hasDrawn = true;
-        vdom = draw(vdom, target);
+        vdom = draw(target, vdom);
     };
 
     const requiredVariablesAreDefined = () => {
         return isDefined(target) && isDefined(builder) && isDefined(state);
+    };
+
+    const replaceDraw = (newDraw) => {
+        assert(isFunction(newDraw), '@goo.dom.replaceDraw : new draw is not a function', newDraw);
+        draw = newDraw;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
+    };
+
+    const replaceUpdate = (newUpdate) => {
+        assert(isFunction(newUpdate), '@goo.dom.replaceUpdate : new target updater is not a function', newUpdate);
+        draw = newUpdate;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
+    };
+
+    const replaceBuild = (newBuild) => {
+        assert(isFunction(newBuild), '@goo.dom.replaceBuild : new build is not a function', newBuild);
+        build = newBuild;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
+    };
+
+    const replacePrebuild = (newPrebuild) => {
+        assert(isFunction(newPrebuild), '@goo.dom.replacePrebuild : new prebuild is not a function', newPrebuild);
+        prebuild = newPrebuild;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
+    };
+
+    const replacePostbuild = (newPostbuild) => {
+        assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
+        Postbuild = newPostbuild;
+        if (requiredVariablesAreDefined()) {
+            drawToTarget();
+        }
     };
 
     const replaceTarget = (newTarget) => {
@@ -208,7 +263,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (!hasDrawn) {
                 drawToTarget();
             }
-            vdom = update(vdom, build(builder(state)), target);
+            vdom = update(target, vdom, create(state));
         }
     };
 
@@ -219,7 +274,7 @@ const dom = (_window = window, _target, _builder, _state) => {
             if (!hasDrawn) {
                 drawToTarget();
             }
-            vdom = update(vdom, build(builder(state)), target);
+            vdom = update(target, vdom, create(state));
         }
     };
 
@@ -244,6 +299,11 @@ const dom = (_window = window, _target, _builder, _state) => {
             target: replaceTarget,
             builder: replaceBuilder,
             state: updateState,
+            draw: replaceDraw,
+            update: replaceUpdate,
+            build: replaceBuild,
+            prebuild: replacePrebuild,
+            postbuild: replacePostbuild,
         }, newBlob);
     };
 
