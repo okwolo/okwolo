@@ -1,7 +1,7 @@
 https://github.com/g-harel/goo
 
 <p align="center">
-    <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="350"/>
+    <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="370"/>
 </p>
 
 Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
@@ -42,7 +42,7 @@ app.use(blob);
   // blob: the blob to be added
 
 app.update();
-  // updates the app (when changes are not in state)
+  // updates the app (for use when changes are not represented in the state)
 
 app.undo();
   // undo last action (must be on state)
@@ -51,7 +51,7 @@ app.redo();
   // redo previous action (must be on state)
 ````
 
-# VDOM
+# Syntax
 
 ### text element
 
@@ -176,8 +176,8 @@ Here is the list of the recognized blob keys and the modules that consume them.
 
 ````javascript
 let action = {type, target, handler}
-  // type: a string which names the action
-  // target: an array to restrict the scope of an action to a specific "address" in the state
+  // type: string which names the action
+  // target: array to restrict the scope of an action to a specific "address" in the state
   // handler: function that makes the change on the target [(target, params) => modifiedTarget]
 ````
 
@@ -283,32 +283,152 @@ app.redirect('/users');
 
 ### target
 
+````javascript
+let target = target
+  // target: dom node in which to draw the app
+````
 
+````javascript
+let target = document.querySelector('.app-wrapper');
+
+app.use(target);
+````
 
 ### builder
 
+````javascript
+let builder = builder
+  // builder: function which creates vdom out of state [(state) => vdom]
+````
 
+````javascript
+let builder = (state) => (
+    ['div | background-color: red;', {} [
+       ['span.title', {} [
+           state.title,
+       ]]
+    ]]
+);
+
+app.use(builder);
+````
 
 ### state
 
+````javascript
+let state = state
+  // state: object to update ONLY the layout's state
+````
 
+````javascript
+let app = goo(document.body);
+
+app.setState('originalState');
+
+app(() => (state) => (
+    ['span', {}, [
+        state,
+    ]]
+));
+// <span>originalState</span>
+
+app.use({state: 'newState'});
+// <span>newState</span>
+
+app.getState(); // 'originalState'
+
+app.update();
+// <span>originalState</span>
+````
 
 ### draw
 
+````javascript
+let draw = draw
+  // draw: function that handles the initial drawing to a new target [(target, vdom) => vdom]
+````
 
+Using this blob key will override the default draw function.
+
+````javascript
+let draw = (target, vdom) => {
+    target.innerHTML = magicallyStringify(vdom);
+    return vdom;
+};
+
+app.use({draw})
+````
 
 ### update
 
+````javascript
+let update = update
+  // update: function that updates the target with new VDOM [(target, newVdom, currentVdom) => vdom]
+````
 
+Using this blob key will override the default update function.
+
+By overriding both the draw and the update functions it is possible to "render" to any target in any way.
+
+Here is an example of an app that renders to a string instead of a DOM node.
+
+````javascript
+let realTarget = '';
+
+let renderToTarget = (, vdom) => {
+    realTarget = magicallyStringify(vdom);
+    return vdom;
+};
+
+app.use({
+    draw: renderToTarget,
+    update: renderToTarget,
+})
+````
 
 ### build
 
+````javascript
+let build = build
+  // build: function that creates VDOM out of the return value of the app's builder(s) [(object) => vdom]
+````
 
+````javascript
+let input = (                 =>        let output = {
+    ['div#title', {}, [       =>            tagName: 'div',
+        'Hello World!',       =>            attributes: {
+    ]]                        =>                id: 'title',
+);                            =>            },
+                              =>            children: [
+                              =>                {
+                              =>                    text: 'Hello World!'
+                              =>                }
+                              =>            ],
+                              =>        };
+````
 
 ### prebuild
 
+````javascript
+let prebuild = prebuild
+  // prebuild: function to augment the default syntax before objects are passed to build [(object) => ... object]
+````
 
+Here is an example which wraps the app in a div.
+
+````javascript
+let prebuild = (original) => (
+    ['div | width: 100vw;', {},
+        original,
+    ]
+);
+
+app.use(prebuild);
+````
 
 ### postbuild
 
-
+````javascript
+let postbuild = postbuild
+  // postbuild: function to manipulate the vdom created by the build function [(vdom) => ... vdom]
+````
