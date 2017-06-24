@@ -4,6 +4,7 @@ const dom = require('./goo.dom');
 
 const jsdom = require('jsdom');
 
+// fake dom object that will pass the isNode test in goo-utils
 let pseudom = {tagName: true, nodeName: true, ownerDocument: true, removeAttribute: true};
 
 testWindow = null;
@@ -19,7 +20,8 @@ const newWindow = (builder, initialState, callback) => {
             testWindow = window;
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
             const wrapper = window.document.querySelector('.wrapper');
-            const handler = dom(window, wrapper, builder, initialState);
+            const handler = dom(wrapper, window);
+            handler.use({builder, state: initialState});
             setTimeout(() => {
                 callback(wrapper, (newState, callback) => {
                     handler.use({state: newState});
@@ -30,28 +32,38 @@ const newWindow = (builder, initialState, callback) => {
     );
 };
 
+// creating testWindow
 newWindow(() => '', {}, () => {});
 
 describe('goo-dom', () => {
-    it('should return a function', () => {
+    it('should be a function', () => {
         dom.should.be.a('function');
     });
 
+    it('should return a function', () => {
+        dom(undefined, testWindow).should.be.a('function');
+    });
+
     it('should have a use function', () => {
-        const test = dom(testWindow);
+        const test = dom(undefined, testWindow);
         test.use.should.be.a('function');
+    });
+
+    it('should have a setState function', () => {
+        const test = dom(undefined, testWindow);
+        test.setState.should.be.a('function');
     });
 });
 
 describe('dom -> use', () => {
     it('should return an array', () => {
-        dom(testWindow).use({}).should.be.an('array');
+        dom(undefined, testWindow).use({}).should.be.an('array');
     });
 });
 
 describe('use -> controller', () => {
     it('should reject malformed targets', () => {
-        const test = dom(testWindow);
+        const test = dom(undefined, testWindow);
         (() => {
             test.use({
                 target: '',
@@ -62,7 +74,7 @@ describe('use -> controller', () => {
     });
 
     it('should reject malformed builders', () => {
-        const test = dom(testWindow);
+        const test = dom(undefined, testWindow);
         (() => {
             test.use({
                 target: pseudom,
@@ -73,7 +85,7 @@ describe('use -> controller', () => {
     });
 
     it('should reject undefined state', () => {
-        const test = dom(testWindow);
+        const test = dom(undefined, testWindow);
         (() => {
             test.use({
                 target: pseudom,
@@ -99,7 +111,7 @@ describe('createController', () => {
             (err, window) => {
                 window.requestAnimationFrame = (f) => setTimeout(f, 0);
                 const wrapper = window.document.querySelector('.wrapper');
-                dom(window, wrapper, () => 'a', {});
+                dom(wrapper, window).use({builder: () => 'a', state: {}});
                 setTimeout(() => {
                     wrapper.children.length.should.equal(0);
                     done();

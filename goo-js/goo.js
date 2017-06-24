@@ -5,7 +5,7 @@ const history = require('goo-history')();
 const {isFunction, assert, deepCopy} = require('goo-utils')();
 
 const goo = (rootElement, _window = window) => {
-    const domHandler = dom(_window, rootElement);
+    const domHandler = dom(rootElement, _window);
     const stateHandler = state();
     const routeHandler = router(_window);
 
