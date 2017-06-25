@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-router & npm publish ./goo-history & del npm-debug.log",
-    "test": "mocha \"*/*.test.js\"",
+    "test": "mocha \"*/*test.js\"",
     "autotest": "nodemon -x \"npm run test -s\"",
     "bundle": "webpack",
     "bundle:watch": "webpack --watch",

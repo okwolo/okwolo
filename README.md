@@ -114,7 +114,7 @@ app(() => (fruits) => (
 ````
 
 ````html
-<ul class="blue fruit-list">
+<ul class="fruit-list">
     <li class="fruit">orange</li>
     <li class="fruit">apple</li>
     <li class="fruit">pear</li>

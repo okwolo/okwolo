@@ -48,25 +48,25 @@ const dom = (_target, _window = window) => {
     const replaceUpdate = (newUpdate) => {
         assert(isFunction(newUpdate), '@goo.dom.replaceUpdate : new target updater is not a function', newUpdate);
         update = newUpdate;
-        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replaceBuild = (newBuild) => {
         assert(isFunction(newBuild), '@goo.dom.replaceBuild : new build is not a function', newBuild);
         build = newBuild;
-        requiredVariablesAreDefined(drawToTarget);
+        requiredVariablesAreDefined(() => update(target, create(state), vdom));
     };
 
     const replacePrebuild = (newPrebuild) => {
         assert(isFunction(newPrebuild), '@goo.dom.replacePrebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
-        requiredVariablesAreDefined(drawToTarget);
+        requiredVariablesAreDefined(() => update(target, create(state), vdom));
     };
 
     const replacePostbuild = (newPostbuild) => {
         assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
-        requiredVariablesAreDefined(drawToTarget);
+        console.log('REPLACE POST');
+        requiredVariablesAreDefined(() => update(target, create(state), vdom));
     };
 
     const replaceTarget = (newTarget) => {
