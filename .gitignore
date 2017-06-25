@@ -11,3 +11,7 @@ example/dist/*
 index.html
 
 goo.min.js
+
+goo.min.js.gz
+
+package-lock.json

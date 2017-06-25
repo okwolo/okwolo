@@ -1,3 +1,5 @@
+const CompressionPlugin = require('compression-webpack-plugin');
+
 module.exports = {
     entry: './goo-js/goo.js',
     output: {
@@ -18,4 +20,10 @@ module.exports = {
             },
         ],
     },
+    plugins: [
+        new CompressionPlugin({
+            asset: '[path].gz',
+            test: /goo\.min\.js$/,
+        }),
+    ],
 };
