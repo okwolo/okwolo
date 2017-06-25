@@ -1,4 +1,4 @@
-const {assert, isDefined, isFunction, blobHandler} = require('goo-utils')();
+const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('goo-utils')();
 
 const createDefaultBlob = require('./goo.dom.blob');
 
@@ -33,77 +33,67 @@ const dom = (_target, _window = window) => {
         vdom = draw(target, vdom);
     };
 
-    const requiredVariablesAreDefined = () => {
-        return isDefined(target) && isDefined(builder) && isDefined(state);
+    const requiredVariablesAreDefined = (callback) => {
+        if (isDefined(target) && isDefined(builder) && isDefined(state)) {
+            callback();
+        }
     };
 
     const replaceDraw = (newDraw) => {
         assert(isFunction(newDraw), '@goo.dom.replaceDraw : new draw is not a function', newDraw);
         draw = newDraw;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replaceUpdate = (newUpdate) => {
         assert(isFunction(newUpdate), '@goo.dom.replaceUpdate : new target updater is not a function', newUpdate);
         update = newUpdate;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replaceBuild = (newBuild) => {
         assert(isFunction(newBuild), '@goo.dom.replaceBuild : new build is not a function', newBuild);
         build = newBuild;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replacePrebuild = (newPrebuild) => {
         assert(isFunction(newPrebuild), '@goo.dom.replacePrebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replacePostbuild = (newPostbuild) => {
         assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replaceTarget = (newTarget) => {
         target = newTarget;
-        if (requiredVariablesAreDefined()) {
-            drawToTarget();
-        }
+        requiredVariablesAreDefined(drawToTarget);
     };
 
     const replaceBuilder = (newBuilder) => {
         assert(isFunction(newBuilder), '@goo.dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
-        if (requiredVariablesAreDefined()) {
+        requiredVariablesAreDefined(() => {
             if (!hasDrawn) {
                 drawToTarget();
             }
             vdom = update(target, create(state), vdom);
-        }
+        });
     };
 
     const updateState = (newState) => {
         assert(isDefined(newState), '@goo.dom.updateState : new state is not defined', newState);
         state = newState;
-        if (requiredVariablesAreDefined()) {
+        requiredVariablesAreDefined(() => {
             if (!hasDrawn) {
                 drawToTarget();
             }
             vdom = update(target, create(state), vdom);
-        }
+        });
     };
 
     const use = (blob) => {
@@ -131,11 +121,17 @@ const dom = (_target, _window = window) => {
 
     use(createDefaultBlob(_window));
 
-    const setState = (state) => {
-        use({state});
+    const setState = (_state) => {
+        use({state: isFunction()
+            ? _state(state)
+            : _state});
     };
 
-    return Object.assign(replaceBuilder, {use, setState});
+    const getState = () => {
+        return deepCopy(state);
+    };
+
+    return Object.assign(replaceBuilder, {use, setState, getState});
 };
 
 module.exports = dom;

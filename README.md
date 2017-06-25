@@ -172,7 +172,7 @@ Here is the list of the recognized blob keys and the modules that consume them.
 | goo-router | `name`, `route`, `base`                                                                  |
 | goo-dom    | `name`, `target`, `builder`, `state`, `draw`, `update`, `build`, `prebuild`, `postbuild` |
 
-### action
+### `action`
 
 ````javascript
 let action = {type, target, handler}
@@ -203,7 +203,7 @@ app.act('REMOVE_HOBBY', 0);
 app.getState(); // {name: 'John', hobbies: ['gardening']}
 ````
 
-### watcher
+### `watcher`
 
 Watchers cannot modify the state since they are given a copy, but they can issue more actions.
 
@@ -220,7 +220,7 @@ let watcher = (state, actionType, params) => {
 app.use({watcher});
 ````
 
-### middleware
+### `middleware`
 
 ````javascript
 let middleware = middleware
@@ -245,7 +245,7 @@ let middlware = (next, state, actionType, params) => {
 app.use({middleware});
 ````
 
-### route
+### `route`
 
 ````javascript
 let route = {path, callback}
@@ -264,7 +264,7 @@ let route = {
 app.redirect('/user/123/profile');
 ````
 
-### base
+### `base`
 
 ````javascript
 let base = base
@@ -281,7 +281,7 @@ app.redirect('/users');
   // matches routes for '/users'
 ````
 
-### target
+### `target`
 
 ````javascript
 let target = target
@@ -294,7 +294,7 @@ let target = document.querySelector('.app-wrapper');
 app.use(target);
 ````
 
-### builder
+### `builder`
 
 ````javascript
 let builder = builder
@@ -313,7 +313,7 @@ let builder = (state) => (
 app.use(builder);
 ````
 
-### state
+### `state`
 
 ````javascript
 let state = state
@@ -341,7 +341,7 @@ app.update();
 // <span>originalState</span>
 ````
 
-### draw
+### `draw`
 
 ````javascript
 let draw = draw
@@ -359,7 +359,7 @@ let draw = (target, vdom) => {
 app.use({draw})
 ````
 
-### update
+### `update`
 
 ````javascript
 let update = update
@@ -386,7 +386,7 @@ app.use({
 })
 ````
 
-### build
+### `build`
 
 ````javascript
 let build = build
@@ -407,7 +407,7 @@ let input = (                 =>        let output = {
                               =>        };
 ````
 
-### prebuild
+### `prebuild`
 
 ````javascript
 let prebuild = prebuild
@@ -426,7 +426,7 @@ let prebuild = (original) => (
 app.use(prebuild);
 ````
 
-### postbuild
+### `postbuild`
 
 ````javascript
 let postbuild = postbuild

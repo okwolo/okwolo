@@ -50,9 +50,11 @@ const blob = (_window) => {
         assert(isNode(target), '@goo.dom.update : target is not a DOM node', target);
         // using a queue to clean up deleted nodes after diffing finishes
         let queue = makeQueue();
-        queue.add(() => {
-            _window.requestAnimationFrame(() => _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0));
-            queue.done();
+        _window.requestAnimationFrame(() => {
+            queue.add(() => {
+                _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0);
+                queue.done();
+            });
         });
         // recursive function to update an element according to new state
         const _update = (original, successor, originalParent, parentIndex) => {
