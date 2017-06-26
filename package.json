@@ -5,10 +5,18 @@
   "scripts": {
     "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-router & npm publish ./goo-history & del npm-debug.log",
     "test": "mocha \"*/*test.js\"",
-    "autotest": "nodemon -x \"npm run test -s\"",
+    "test:watch": "nodemon -x \"npm run test -s\"",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha */*test.js -x */*test.js",
+    "coverage:open": "npm run coverage & start coverage/lcov-report/index.html",
+    "coverage:coveralls": "npm run coverage & cat coverage/lcov.info | coveralls",
     "bundle": "webpack",
     "bundle:watch": "webpack --watch",
     "bunlde:minify": "webpack -p"
+  },
+  "homepage": "http://github.com/g-harel/goo",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/g-harel/goo"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
@@ -16,10 +24,12 @@
     "babel-preset-es2015": "^6.22.0",
     "chai": "^3.5.0",
     "compression-webpack-plugin": "^0.4.0",
+    "coveralls": "^2.13.1",
     "eslint": "^3.15.0",
     "eslint-config-google": "^0.7.1",
+    "istanbul": "^0.4.5",
     "jsdom": "^9.12.0",
-    "mocha": "^3.2.0",
+    "mocha": "^3.4.2",
     "nodemon": "^1.11.0",
     "webpack": "^2.2.1"
   },

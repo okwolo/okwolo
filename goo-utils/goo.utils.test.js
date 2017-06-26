@@ -199,7 +199,7 @@ describe('assert', () => {
             assert(false, 'test', {
                 testKey: () => {},
             });
-        }).should.throw(Error, /testKey[^\n]*\(\) => {}/);
+        }).should.throw(Error, /testKey[^\n]*\(\) *=> *{}/);
     });
 });
 

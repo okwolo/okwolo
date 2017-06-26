@@ -1,9 +1,8 @@
-# [GOO](https://github.com/g-harel/goo) [![Build Status](https://travis-ci.org/g-harel/goo.svg?branch=master)](https://travis-ci.org/g-harel/goo)
+# [GOO](https://github.com/g-harel/goo) [![Build Status](https://travis-ci.org/g-harel/goo.svg?branch=master)](https://travis-ci.org/g-harel/goo) [![Coverage Status](https://coveralls.io/repos/github/g-harel/goo/badge.svg?branch=master)](https://coveralls.io/github/g-harel/goo?branch=master)
 
 <p align="center">
     <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="370"/>
 </p>
-
 
 Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
 

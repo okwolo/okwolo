@@ -15,3 +15,7 @@ goo.min.js
 goo.min.js.gz
 
 package-lock.json
+
+.nyc_output
+
+coverage/*
