@@ -65,7 +65,6 @@ const dom = (_target, _window = window) => {
     const replacePostbuild = (newPostbuild) => {
         assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
-        console.log('REPLACE POST');
         requiredVariablesAreDefined(() => update(target, create(state), vdom));
     };
 

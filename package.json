@@ -3,12 +3,21 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "publish": "npm publish ./goo-js & npm publish ./goo-dom & npm publish ./goo-state & npm publish ./goo-utils & npm publish ./goo-router & npm publish ./goo-history & del npm-debug.log",
+    "publish:goo-js": "npm publish ./goo-js",
+    "publish:goo-dom": "npm publish ./goo-dom",
+    "publish:goo-state": "npm publish ./goo-state",
+    "publish:goo-utils": "npm publish ./goo-utils",
+    "publish:goo-router": "npm publish ./goo-router",
+    "publish:goo-history": "npm publish ./goo-history",
+    "publish": "run-s publish:* dispose",
+    "dispose": "del npm-debug.log",
     "test": "mocha \"*/*test.js\"",
     "test:watch": "nodemon -x \"npm run test -s\"",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha */*test.js -x */*test.js",
-    "coverage:open": "npm run coverage & start coverage/lcov-report/index.html",
-    "coverage:coveralls": "npm run coverage & cat coverage/lcov.info | coveralls",
+    "coverage:open": "run-s coverage showcov",
+    "coverage:coveralls": "run-s coverage coveralls",
+    "showcov": "start coverage/lcov-report/index.html",
+    "coveralls": "cat coverage/lcov.info | coveralls",
     "bundle": "webpack",
     "bundle:watch": "webpack --watch",
     "bunlde:minify": "webpack -p"
@@ -31,6 +40,7 @@
     "jsdom": "^9.12.0",
     "mocha": "^3.4.2",
     "nodemon": "^1.11.0",
+    "npm-run-all": "^4.0.2",
     "webpack": "^2.2.1"
   },
   "dependencies": {
