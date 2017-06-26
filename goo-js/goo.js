@@ -104,6 +104,6 @@ const goo = (rootElement, _window = window) => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = goo;
 }
-if (!!window) {
+if (typeof window !== 'undefined') {
     window.goo = goo;
 }
