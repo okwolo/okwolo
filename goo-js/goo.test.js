@@ -22,7 +22,7 @@ const newWindow = (callback) => {
     );
 };
 
-describe.only('goo', () => {
+describe('goo', () => {
     it('should expose the top level api', (done) => {
         newWindow((app, wrapper) => {
             app.setState.should.exist;
