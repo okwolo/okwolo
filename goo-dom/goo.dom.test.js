@@ -12,6 +12,7 @@ testWindow = null;
 const newWindow = (builder, initialState, callback) => {
     jsdom.env(
         '<div class="wrapper"></div>',
+        [],
         (err, window) => {
             if (err) {
                 console.error(err);
