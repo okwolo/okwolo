@@ -161,6 +161,7 @@ const blob = (_window = window) => {
                 attributes.style = style;
             } else {
                 attributes.style += ';' + style;
+                attributes.style = attributes.style.replace(/;;/g, ';');
             }
         }
         if (isDefined(children)) {

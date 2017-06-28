@@ -33,8 +33,9 @@ const dom = (_target, _window = window) => {
         vdom = draw(target, vdom);
     };
 
-    const requiredVariablesAreDefined = (callback) => {
+    const canDraw = (callback) => {
         if (isDefined(target) && isDefined(builder) && isDefined(state)) {
+            requiredVariablesAreDefined = true;
             callback();
         }
     };
@@ -42,7 +43,7 @@ const dom = (_target, _window = window) => {
     const replaceDraw = (newDraw) => {
         assert(isFunction(newDraw), '@goo.dom.replaceDraw : new draw is not a function', newDraw);
         draw = newDraw;
-        requiredVariablesAreDefined(drawToTarget);
+        canDraw(drawToTarget);
     };
 
     const replaceUpdate = (newUpdate) => {
@@ -53,30 +54,30 @@ const dom = (_target, _window = window) => {
     const replaceBuild = (newBuild) => {
         assert(isFunction(newBuild), '@goo.dom.replaceBuild : new build is not a function', newBuild);
         build = newBuild;
-        requiredVariablesAreDefined(() => update(target, create(state), vdom));
+        canDraw(() => update(target, create(state), vdom));
     };
 
     const replacePrebuild = (newPrebuild) => {
         assert(isFunction(newPrebuild), '@goo.dom.replacePrebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
-        requiredVariablesAreDefined(() => update(target, create(state), vdom));
+        canDraw(() => update(target, create(state), vdom));
     };
 
     const replacePostbuild = (newPostbuild) => {
         assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
-        requiredVariablesAreDefined(() => update(target, create(state), vdom));
+        canDraw(() => update(target, create(state), vdom));
     };
 
     const replaceTarget = (newTarget) => {
         target = newTarget;
-        requiredVariablesAreDefined(drawToTarget);
+        canDraw(drawToTarget);
     };
 
     const replaceBuilder = (newBuilder) => {
         assert(isFunction(newBuilder), '@goo.dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
-        requiredVariablesAreDefined(() => {
+        canDraw(() => {
             if (!hasDrawn) {
                 drawToTarget();
             }
@@ -87,7 +88,7 @@ const dom = (_target, _window = window) => {
     const updateState = (newState) => {
         assert(isDefined(newState), '@goo.dom.updateState : new state is not defined', newState);
         state = newState;
-        requiredVariablesAreDefined(() => {
+        canDraw(() => {
             if (!hasDrawn) {
                 drawToTarget();
             }
@@ -121,7 +122,7 @@ const dom = (_target, _window = window) => {
     use(createDefaultBlob(_window));
 
     const setState = (_state) => {
-        use({state: isFunction()
+        use({state: isFunction(_state)
             ? _state(state)
             : _state});
     };

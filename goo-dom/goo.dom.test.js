@@ -193,6 +193,7 @@ describe('use -> postbuild', () => {
     it('should receive the built vdom and be able to edit it', (done) => {
         newWindow(() => 'test', {}, (wrapper, update, app) => {
             app.use({
+                name: 'test',
                 postbuild: (vdom) => {
                     vdom.should.deep.equal({text: 'test'});
                     return Object.assign({}, vdom, {text: 'changed'});
@@ -233,6 +234,28 @@ describe('goo-dom object', () => {
     it('should add the builder function\s output to the target', (done) => {
         newWindow(() => ['span'], {}, (wrapper, update) => {
             wrapper.children[0].tagName.should.equal('SPAN');
+            done();
+        });
+    });
+
+    it('should change its state with setState', (done) => {
+        newWindow((s) => s, 'test', (wrapper, update, app) => {
+            wrapper.innerHTML.should.equal('test');
+            app.setState('test2');
+            setTimeout(() => {
+                wrapper.innerHTML.should.equal('test2');
+                app.setState(() => 'test3');
+                setTimeout(() => {
+                    wrapper.innerHTML.should.equal('test3');
+                    done();
+                });
+            }, 0);
+        });
+    });
+
+    it('should get the current state with getState', (done) => {
+        newWindow(() => 'test', 'state', (wrapper, update, app) => {
+            app.getState().should.equal('state');
             done();
         });
     });
@@ -283,15 +306,15 @@ describe('goo-dom default blob', () => {
         });
 
         it('should be possible to append an classNames to the tagName using .', (done) => {
-            newWindow(() => ['test.test.test'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test class="test test"></test>');
+            newWindow(() => ['test.test.test', {className: 'tt'}], {}, (wrapper, update) => {
+                wrapper.innerHTML.should.equal('<test class="tt test test"></test>');
                 done();
             });
         });
 
         it('should be possible to append styles to the tagName using |', (done) => {
-            newWindow(() => ['test|height:2px;'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test style="height: 2px;"></test>');
+            newWindow(() => ['test|height:2px;', {style: 'width: 2px;'}], {}, (wrapper, update) => {
+                wrapper.innerHTML.should.equal('<test style="width: 2px; height: 2px;"></test>');
                 done();
             });
         });
@@ -343,6 +366,34 @@ describe('goo-dom default blob', () => {
                 update('#id.class|height:0px;', () => {
                     wrapper.children[0].should.equal(element);
                     done();
+                });
+            });
+        });
+
+        it('should be able to delete elements', (done) => {
+            newWindow((s) => ['div', {}, s.split('').map((l) => [l])], 'abc', (wrapper, update) => {
+                wrapper.innerHTML.should.equal(
+                    '<div>' +
+                        '<a></a>' +
+                        '<b></b>' +
+                        '<c></c>' +
+                    '</div>'
+                );
+                update('a', () => {
+                    wrapper.innerHTML.should.equal(
+                        '<div>' +
+                            '<a></a>' +
+                        '</div>'
+                    );
+                    update('cd', () => {
+                        wrapper.innerHTML.should.equal(
+                            '<div>' +
+                                '<c></c>' +
+                                '<d></d>' +
+                            '</div>'
+                        );
+                        done();
+                    });
                 });
             });
         });
