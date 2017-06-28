@@ -56,38 +56,38 @@ app.redo();
 ### text element
 
 ````javascript
-let vdom = 'Hello World!'; // Hello World!
+let elem = 'Hello World!'; // Hello World!
 ````
 
 ### tag elements
 
 ````javascript
-let vdom = ['div'];
+let elem = ['div'];
   // <div></div>
 
-let vdom = ['div', {id: 'banner'}];
+let elem = ['div', {id: 'banner'}];
   // <div id="banner"></div>
 
-let vdom = ['div', {}, ['Hello World!']];
+let elem = ['div', {}, ['Hello World!']];
   // <div>Hello World!</div>
 
-let vdom = ['div#banner'];
+let elem = ['div#banner'];
   // <div id="banner"></div>
 
-let vdom = ['div.nav'];
+let elem = ['div.nav'];
   // <div class="nav"></div>
 
-let vdom = ['div | height: 10px;'];
+let elem = ['div | height: 10px;'];
   // <div style="height: 10px;"></div>
 
-let vdom = ['div#banner.nav.hidden | font-size: 20px;'];
+let elem = ['div#banner.nav.hidden | font-size: 20px;'];
   // <div id="banner" class="nav hidden" style="font-size: 20px;"></div>"
 ````
 
 ### component element
 
 ````javascript
-let vdom = [makeDiv, 'className', 'content']
+let elem = [makeDiv, 'className', 'content']
   // <div class="className">content</div>
 ````
 

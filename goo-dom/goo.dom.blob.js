@@ -1,6 +1,6 @@
 const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue} = require('goo-utils')();
 
-const blob = (_window) => {
+const blob = (_window = window) => {
     // recursively creates DOM elements from vdom object
     const render = (velem) => {
         if (isDefined(velem.text)) {

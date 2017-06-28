@@ -1,5 +1,3 @@
-const should = require('chai').should();
-
 const goo = require('./goo');
 
 const jsdom = require('jsdom');
@@ -7,6 +5,7 @@ const jsdom = require('jsdom');
 const newWindow = (callback) => {
     jsdom.env(
         '<div class="wrapper"></div>',
+        [],
         (err, window) => {
             if (err) {
                 console.error(err);
@@ -14,8 +13,8 @@ const newWindow = (callback) => {
             testWindow = window;
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
             const wrapper = window.document.querySelector('.wrapper');
-            const app = goo(wrapper, window);
             setTimeout(() => {
+                const app = goo(wrapper, window);
                 callback(app, wrapper);
             }, 0);
         }

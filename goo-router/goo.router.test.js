@@ -1,5 +1,3 @@
-const should = require('chai').should();
-
 const router = require('./goo.router');
 
 const jsdom = require('jsdom');

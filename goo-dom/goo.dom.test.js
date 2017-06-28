@@ -1,11 +1,6 @@
-const should = require('chai').should();
-
 const dom = require('./goo.dom');
 
 const jsdom = require('jsdom');
-
-// fake dom object that will pass the isNode test in goo-utils
-let pseudom = {tagName: true, nodeName: true, ownerDocument: true, removeAttribute: true};
 
 testWindow = null;
 
