@@ -10,7 +10,6 @@ const newWindow = (callback) => {
             if (err) {
                 console.error(err);
             }
-            testWindow = window;
             window.requestAnimationFrame = (f) => setTimeout(f, 0);
             const wrapper = window.document.querySelector('.wrapper');
             setTimeout(() => {
@@ -21,7 +20,7 @@ const newWindow = (callback) => {
     );
 };
 
-describe('goo', () => {
+describe.skip('goo', () => {
     it('should expose the top level api', (done) => {
         newWindow((app, wrapper) => {
             app.setState.should.exist;
