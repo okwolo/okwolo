@@ -46,6 +46,6 @@
     "webpack": "^2.2.1"
   },
   "dependencies": {
-    "goo-js": "^2.3.0"
+    "goo-js": "*"
   }
 }

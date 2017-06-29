@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "goo-utils": "^2.0.1"
+    "goo-utils": "*"
   },
   "author": "",
   "license": "MIT"
