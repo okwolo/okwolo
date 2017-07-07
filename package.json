@@ -45,5 +45,7 @@
     "npm-run-all": "^4.0.2",
     "webpack": "^2.2.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "path-to-regexp": "^1.7.0"
+  }
 }
