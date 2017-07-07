@@ -62,6 +62,13 @@ let elem = 'Hello World!'; // Hello World!
 ### tag elements
 
 ````javascript
+let elem = [tagName, attributes, children];
+  // tagName: string representing the dom tag's name
+  // attributes: object containing all attributes of the element
+  // children: array of chil elements
+````
+
+````javascript
 let elem = ['div'];
   // <div></div>
 
@@ -123,15 +130,13 @@ app(() => (fruits) => (
 
 # Blobs
 
-Goo and its modules all have a `use` function which takes a single object as argument called a blob. Blobs are very powerful since they are passed to each module and can contain many functionalities that are not at the top level of the goo api. A blob can have as many unique keys as necessary. Each key will be tested on each module to determine if that module supports it. The value assigned to each key can be a single object, or an array of objects (ex. adding multiple actions at once). This library is purposefully built to handle the addition of blobs in any order and at any time in an application's lifecycle.
+Goo and its modules all have a `use` function which takes a single object as argument called a blob. Blobs are very powerful since they are understood by all modules and allow access to deeper layers than the top level api.
+
+A blob can have as many unique keys as necessary. Each key will be tested on each module to determine if that module supports it. The value assigned to each key can be a single object, or an array of objects (ex. adding multiple actions at once). This library is purposefully built to handle the addition of blobs in any order and at any time in an application's lifecycle.
 
 Here is an example of a blob that adds two watchers and changes the target.
 
 ````javascript
-let app = goo(document.body);
-
-app.setState(null);
-
 app.use({
     watcher: [
         (state, actionType, params) => {
@@ -205,12 +210,12 @@ app.getState(); // {name: 'John', hobbies: ['gardening']}
 
 ### `watcher`
 
-Watchers cannot modify the state since they are given a copy, but they can issue more actions.
-
 ````javascript
 let watcher = watcher
   // watcher: function that gets called after each state change [(state, actionType, params) => ...]
 ````
+
+Watchers cannot modify the state since they are given a copy, but they can issue more actions.
 
 ````javascript
 let watcher = (state, actionType, params) => {
@@ -236,9 +241,9 @@ If `next` is called with parameters, they will override the ones issued by the a
 let middlware = (next, state, actionType, params) => {
     if (params.test) {
         console.log('action changed to TEST');
-        next(state, 'TEST', params);
+        next(state, 'TEST');
     } else {
-        next(state, actionType);
+        next();
     }
 };
 
@@ -291,7 +296,7 @@ let target = target
 ````javascript
 let target = document.querySelector('.app-wrapper');
 
-app.use(target);
+app.use({target});
 ````
 
 ### `builder`
@@ -300,6 +305,8 @@ app.use(target);
 let builder = builder
   // builder: function which creates vdom out of state [(state) => vdom]
 ````
+
+Adding a new builder will override the current one (regardless of route).
 
 ````javascript
 let builder = (state) => (
@@ -319,6 +326,8 @@ app.use(builder);
 let state = state
   // state: object to update ONLY the layout's state
 ````
+
+It is not recommended to use this key since it can cause a lot of confusion. Since this will ONLY change the state of the DOM module.
 
 ````javascript
 let app = goo(document.body);
@@ -375,7 +384,7 @@ Here is an example of an app that renders to a string instead of a DOM node.
 ````javascript
 let realTarget = '';
 
-let renderToTarget = (, vdom) => {
+let renderToTarget = (target, vdom) => {
     realTarget = magicallyStringify(vdom);
     return vdom;
 };
@@ -423,7 +432,7 @@ let prebuild = (original) => (
     ]
 );
 
-app.use(prebuild);
+app.use({prebuild});
 ````
 
 ### `postbuild`

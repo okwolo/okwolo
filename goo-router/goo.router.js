@@ -1,6 +1,6 @@
 const pathToRegexp = require('path-to-regexp');
 
-const {assert, isString, isObject, isFunction, blobHandler} = require('goo-utils')();
+const {assert, isString, isObject, isFunction, blobHandler} = require('../goo-utils/goo.utils.js')();
 
 const router = (_window = window) => {
     // store all the registered routes

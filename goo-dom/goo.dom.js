@@ -1,4 +1,4 @@
-const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('goo-utils')();
+const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('../goo-utils/goo.utils.js')();
 
 const createDefaultBlob = require('./goo.dom.blob');
 
