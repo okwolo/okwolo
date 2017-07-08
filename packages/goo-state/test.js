@@ -1,6 +1,6 @@
 const should = require('chai').should();
 
-const state = require('./goo.state');
+const state = require('./');
 
 const testAction = (handler, target) => {
     return {

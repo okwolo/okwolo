@@ -1,0 +1,9 @@
+{
+  "name": "goo-dom",
+  "version": "2.1.0",
+  "dependencies": {
+    "goo-utils": "*"
+  },
+  "author": "g-harel",
+  "license": "MIT"
+}

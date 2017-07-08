@@ -1,18 +1,13 @@
 {
   "name": "goo-js",
   "version": "2.3.1",
-  "description": "",
-  "main": "goo.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "http://www.github.com/g-harel/goo"
   },
   "dependencies": {
-    "goo-utils": "*",
     "goo-dom": "*",
+    "goo-utils": "*",
     "goo-state": "*",
     "goo-router": "*",
     "goo-history": "*"

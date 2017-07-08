@@ -1,4 +1,4 @@
-const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils/goo.utils.js')();
+const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils')();
 
 // creates an object that acts on a state
 const state = () => {

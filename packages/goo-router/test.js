@@ -1,4 +1,4 @@
-const router = require('./goo.router');
+const router = require('./');
 
 const jsdom = require('jsdom');
 

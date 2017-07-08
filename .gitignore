@@ -1,21 +1,11 @@
 debug.log
 
-legacy/*
+node_modules/**
 
-*node_modules*
-
-yarn.lock
-
-example/dist/*
+goo.min*
 
 index.html
 
-goo.min.js
-
-goo.min.js.gz
-
-package-lock.json
-
 .nyc_output
 
-coverage/*
+coverage/**

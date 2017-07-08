@@ -1,6 +1,6 @@
 const should = require('chai').should();
 
-const utils = require('./goo.utils');
+const utils = require('./');
 
 describe('deepCopy', () => {
     const deepCopy = utils().deepCopy;

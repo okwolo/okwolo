@@ -1,6 +1,6 @@
 const should = require('chai').should();
 
-const history = require('./goo.history');
+const history = require('./');
 
 const newState = (initialState) => {
     const temp = history();

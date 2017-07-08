@@ -1,4 +1,4 @@
-const dom = require('./goo.dom');
+const dom = require('./');
 
 const jsdom = require('jsdom');
 

@@ -1,6 +1,6 @@
-const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('../goo-utils/goo.utils.js')();
+const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('../goo-utils')();
 
-const createDefaultBlob = require('./goo.dom.blob');
+const createDefaultBlob = require('./blob');
 
 const dom = (_target, _window = window) => {
     let draw = undefined;
