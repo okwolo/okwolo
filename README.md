@@ -14,10 +14,10 @@ goo(target[, window]);
   // window: window object can be specified if needed
 
 app(init)
-  // init: function that returns a vdom builder function [() => (state) => vdom]
+  // init: function that returns an element builder function [() => (state) => element]
 app(route, init);
   // route: string pattern to match paths (same as in express)
-  // init: function that returns a vdom builder function [(routeParams) => (state) => vdom]
+  // init: function that returns an element builder function [(routeParams) => (state) => element]
 
 app.setState(state);
   // state: an object to replace the current state
@@ -36,7 +36,7 @@ app.act(type[, params]);
   // type: string of the action type
   // params: arguments given to the action handler
 app.act(action);
-  // action: function to be called before updating the layout
+  // action: function that returns the new state [(currentState) => ... newState]
 
 app.use(blob);
   // blob: the blob to be added
@@ -59,13 +59,13 @@ app.redo();
 let elem = 'Hello World!'; // Hello World!
 ````
 
-### tag elements
+### tag element
 
 ````javascript
 let elem = [tagName, attributes, children];
   // tagName: string representing the dom tag's name
   // attributes: object containing all attributes of the element
-  // children: array of chil elements
+  // children: array of child elements
 ````
 
 ````javascript
@@ -94,8 +94,19 @@ let elem = ['div#banner.nav.hidden | font-size: 20px;'];
 ### component element
 
 ````javascript
-let elem = [makeDiv, 'className', 'content']
-  // <div class="className">content</div>
+let elem = [component, props, children];
+  // component: function which returns an element [(props) => element]
+  // props: object containing all props for the component
+  // children: array of child elements
+````
+
+````javascript
+let component = ({children, color}) => (
+    ['div', {style: `color: ${color}`}, children]
+);
+
+let elem = [component, {color: 'red'}, ['content']]
+  // <div style="color: red;">content</div>
 ````
 
 # Example
@@ -105,16 +116,16 @@ let app = goo(document.body);
 
 app.setState(['orange', 'apple', 'pear']);
 
-let fruitItem = (fruitName) => (
+let FruitItem = ({type}) => (
     ['li.fruit', {}, [
-        fruitName,
+        type,
     ]]
 );
 
 app(() => (fruits) => (
     ['ul.fruit-list', {},
-        fruits.map((fruit) => (
-            [fruitItem, fruit]
+        fruits.map((type) => (
+            [FruitItem, {type}]
         )
     )]
 ));

@@ -46,8 +46,7 @@ const goo = (rootElement, _window = window) => {
     const act = (type, params) => {
         assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', '@goo.act : cannot act on state before it has been set');
         if (isFunction(type)) {
-            type();
-            update();
+            act('__OVERRIDE__', type(deepCopy(_state)));
             return;
         }
         stateHandler.act(_state, type, params);

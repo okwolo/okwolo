@@ -326,22 +326,29 @@ describe('goo-dom default blob', () => {
             });
         });
 
-        it('should should accept components', (done) => {
+        it('should accept components', (done) => {
             newWindow(() => [() => 'test'], {}, (wrapper, update) => {
                 wrapper.innerHTML.should.equal('test');
                 done();
             });
         });
 
-        it('should should pass arguments to components', (done) => {
-            newWindow(() => [(a) => a, 'test'], {}, (wrapper, update) => {
+        it('should pass arguments to components', (done) => {
+            newWindow(() => [({a}) => a, {a: 'test'}], {}, (wrapper, update) => {
                 wrapper.innerHTML.should.equal('test');
                 done();
             });
         });
 
-        it('should should support nested components', (done) => {
-            newWindow(() => [(a) => [(b) => [(c) => c, b], a], 'test'], {}, (wrapper, update) => {
+        it('should pass children to component', (done) => {
+            newWindow(() => [({children}) => children[0], {}, ['test']], {}, (wrapper, update) => {
+                wrapper.innerHTML.should.equal('test');
+                done();
+            });
+        });
+
+        it('should support nested components', (done) => {
+            newWindow(() => [({a}) => [({b}) => [({c}) => c, {c: b}], {b: a}], {a: 'test'}], {}, (wrapper, update) => {
                 wrapper.innerHTML.should.equal('test');
                 done();
             });

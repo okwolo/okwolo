@@ -134,8 +134,11 @@ const blob = (_window = window) => {
         }
         assert(isArray(element), '@goo.dom.build : vdom object is not an array or string', element);
         if (isFunction(element[0])) {
-            let [, ...args] = element;
-            return build(element[0](...args));
+            let props = element[1] || {};
+            assert(isObject(props), '@goo.dom.build : component\'s props is not an object', props);
+            let children = element[2] || [];
+            assert(isArray(children), '@goo.dom.build : component\'s children is not an array', children);
+            return build(element[0](Object.assign({}, props, {children})));
         }
         let [tagType, attributes, children] = element;
         assert(isString(tagType), '@goo.dom.build : tag property is not a string', tagType);
