@@ -4,51 +4,57 @@
     <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="370"/>
 </p>
 
-Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. Details about each of the modules can be found in their respective sub directories, but they all have a common `.use` function that accepts goo's configuration objects called blobs.
+Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. All modules have a common `.use` function that accepts goo's configuration objects called blobs.
 
 # Top level api
 
 ````javascript
+// creates the app object
 goo(target[, window]);
   // target: DOM node
   // window: window object can be specified if needed
 
+// defines the layout of your app
 app(init)
   // init: function that returns an element builder function [() => (state) => element]
 app(route, init);
   // route: string pattern to match paths (same as in express)
   // init: function that returns an element builder function [(routeParams) => (state) => element]
 
+// sets the state from which layout is created
 app.setState(state);
   // state: an object to replace the current state
 app.setState(updater);
   // updater: function that returns the new state [(currentState) => ... newState]
 
+// returns a copy of the current state
 app.getState();
-  // returns: a copy of the current state
 
+// changes the path and renders layout from the new route
 app.redirect(path[, params]);
   // path: string of the new pathname
   // params: object to be passed to the route handler
   // returns: boolean value showing if path was matched
 
+// executes an action on the state
 app.act(type[, params]);
   // type: string of the action type
   // params: arguments given to the action handler
 app.act(action);
   // action: function that returns the new state [(currentState) => ... newState]
 
+// adds a blob to the app and sends it to all modules
 app.use(blob);
   // blob: the blob to be added
 
+// triggers a rerender from current state (for use when changes are not represented in the state)
 app.update();
-  // updates the app (for use when changes are not represented in the state)
 
+// undoes the last action (or setState call)
 app.undo();
-  // undo last action (must be on state)
 
+// redoes the previous action
 app.redo();
-  // redo previous action (must be on state)
 ````
 
 # Syntax
@@ -61,7 +67,8 @@ let elem = textContent;
 ````
 
 ````javascript
-let elem = 'Hello World!'; // Hello World!
+let elem = 'Hello World!';
+  // Hello World!
 ````
 
 ### tag element
@@ -232,7 +239,7 @@ app.use({watcher});
 ````javascript
 let middleware = middleware
   // middleware: function that is given control of an action before it is executed
-  //    [(next, state, actionType, params) => ... next(state, actionType, params)]
+  //    [(next, state, actionType, params) => ... next(state[, actionType[, params]])]
 ````
 
 This syntax allows middlware to be asynchronous.
@@ -256,8 +263,8 @@ app.use({middleware});
 
 ````javascript
 let route = {path, callback}
-  // path: string pattern to match paths (same as in express)
-  // callback: function that is called with the route params as argument [(params) => ...]
+  // path: string pattern to match paths (using express' syntax)
+  // callback: function that is called with the route params as argument [(routeParams) => ...]
 ````
 
 ````javascript
@@ -305,10 +312,8 @@ app.use({target});
 
 ````javascript
 let builder = builder
-  // builder: function which creates vdom out of state [(state) => vdom]
+  // builder: function which creates an element out of state [(state) => element]
 ````
-
-Adding a new builder will override the current one (regardless of route).
 
 ````javascript
 let builder = (state) => (
@@ -329,7 +334,7 @@ let state = state
   // state: object to update ONLY the layout's state
 ````
 
-It is not recommended to use this key since it can cause a lot of confusion. Since this will ONLY change the state of the DOM module.
+It is not recommended to use this key. It will ONLY change the state of the DOM module.
 
 ````javascript
 let app = goo(document.body);
@@ -346,7 +351,8 @@ app(() => (state) => (
 app.use({state: 'newState'});
 // <span>newState</span>
 
-app.getState(); // 'originalState'
+app.getState();
+// 'originalState'
 
 app.update();
 // <span>originalState</span>
@@ -356,7 +362,7 @@ app.update();
 
 ````javascript
 let draw = draw
-  // draw: function that handles the initial drawing to a new target [(target, vdom) => vdom]
+  // draw: function that handles the initial drawing to a new target [(target, vdom) => ... vdom]
 ````
 
 Using this blob key will override the default draw function.
@@ -374,7 +380,7 @@ app.use({draw})
 
 ````javascript
 let update = update
-  // update: function that updates the target with new VDOM [(target, newVdom, currentVdom) => vdom]
+  // update: function that updates the target with new vdom [(target, vdom, currentVdom) => ... vdom]
 ````
 
 Using this blob key will override the default update function.
@@ -401,11 +407,11 @@ app.use({
 
 ````javascript
 let build = build
-  // build: function that creates VDOM out of the return value of the app's builder(s) [(object) => vdom]
+  // build: function that creates VDOM out of the return value of an element [(element) => vdom]
 ````
 
 ````javascript
-let input = (                 =>        let output = {
+let element = (               =>        let vdom = {
     ['div#title', {}, [       =>            tagName: 'div',
         'Hello World!',       =>            attributes: {
     ]]                        =>                id: 'title',
@@ -422,7 +428,7 @@ let input = (                 =>        let output = {
 
 ````javascript
 let prebuild = prebuild
-  // prebuild: function to augment the default syntax before objects are passed to build [(object) => ... object]
+  // prebuild: function to augment the default syntax before elements are passed to build [(element) => ... element]
 ````
 
 Here is an example which wraps the app in a div.
