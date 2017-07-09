@@ -1,4 +1,4 @@
-const should = require('chai').should();
+'use strict';
 
 const history = require('./');
 
@@ -36,41 +36,57 @@ const newState = (initialState) => {
 describe('goo-history', () => {
     it('should return a blob with two actions and a watcher', () => {
         let test = history();
-        test.watcher.should.be.a('function');
-        test.action.should.be.an('array');
-        test.action[0].should.be.an('object');
-        test.action[0].target.should.be.an('array');
-        test.action[0].target.length.should.equal(0);
-        test.action[0].type.should.equal('UNDO');
-        test.action[0].handler.should.be.a('function');
-        test.action[1].should.be.an('object');
-        test.action[1].target.should.be.an('array');
-        test.action[1].target.length.should.equal(0);
-        test.action[1].type.should.equal('REDO');
-        test.action[1].handler.should.be.a('function');
+        expect(test.watcher)
+            .toBeInstanceOf(Function);
+
+        expect(test.action)
+            .toBeInstanceOf(Array);
+
+        expect(test.action[0])
+            .toBeInstanceOf(Object);
+        expect(test.action[0].target)
+            .toEqual([]);
+        expect(test.action[0].type)
+            .toBe('UNDO');
+        expect(test.action[0].handler)
+            .toBeInstanceOf(Function);
+
+        expect(test.action[1])
+            .toBeInstanceOf(Object);
+        expect(test.action[1].target)
+            .toEqual([]);
+        expect(test.action[1].type)
+            .toBe('REDO');
+        expect(test.action[1].handler)
+            .toBeInstanceOf(Function);
     });
 
     it('should not undo if there is nothing to undo', () => {
         const state = newState('test');
-        state.undo().should.equal('test');
+        expect(state.undo())
+            .toBe('test');
     });
 
-    it('should not redo if there is nothing to undo', () => {
+    it('should not redo if there is nothing to redo', () => {
         const state = newState('test');
-        state.redo().should.equal('test');
+        expect(state.redo())
+            .toBe('test');
     });
 
     it('should undo state changes', () => {
         const state = newState('test');
         state.setState('different state');
-        state.undo().should.equal('test');
+        expect(state.undo())
+            .toBe('test');
     });
 
     it('should redo state changes', () => {
         const state = newState('test');
         state.setState('different state');
-        state.undo().should.equal('test');
-        state.redo().should.equal('different state');
+        expect(state.undo())
+            .toBe('test');
+        expect(state.redo())
+            .toBe('different state');
     });
 
     it('should properly handle null/undefined states', () => {
@@ -78,11 +94,15 @@ describe('goo-history', () => {
         state.setState(null);
         state.setState(undefined);
         state.setState('test');
-        should.equal(state.undo(), undefined);
-        should.equal(state.undo(), null);
+        expect(state.undo())
+            .toBe(undefined);
+        expect(state.undo())
+            .toBe(null);
         state.undo();
-        should.equal(state.redo(), null);
-        should.equal(state.redo(), undefined);
+        expect(state.redo())
+            .toBe(null);
+        expect(state.redo())
+            .toBe(undefined);
     });
 
     it('should store 20 past states', () => {
@@ -95,25 +115,30 @@ describe('goo-history', () => {
             state.undo();
         }
         let last = state.undo();
-        should.equal(last, null);
-        should.equal(last, state.undo());
+        expect(last)
+            .toBe(null);
+        expect(last)
+            .toBe(state.undo());
     });
 
     it('should not store the state when the action type has the ignore prefix', () => {
         const state = newState('test');
         state.setState(0, '*IGNORE');
         state.setState(1);
-        state.undo().should.equal('test');
+        expect(state.undo())
+            .toBe('test');
     });
 
     it('should be able to reset the undo/redo stacks', () => {
         const state = newState('test');
         state.setState(0, 'UPDATE');
         state.reset();
-        state.undo().should.equal(0);
+        expect(state.undo())
+            .toBe(0);
         state.setState(1, 'UPDATE');
         state.undo();
         state.reset();
-        state.redo().should.equal(0);
+        expect(state.redo())
+            .toBe(0);
     });
 });

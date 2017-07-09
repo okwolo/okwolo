@@ -1,211 +1,166 @@
+'use strict';
+
 const router = require('./');
 
-const jsdom = require('jsdom');
+Object.defineProperty(window.document, 'origin', {value: 'http://www.example.com'});
 
-const newWindow = (initialPath, callback) => {
-    jsdom.env({
-        url: 'https://example.com' + initialPath,
-        done: (err, window) => {
-            const app = router(window);
-            callback(window, app);
-        },
+window.history.pushState = (obj, title, path) => {
+    const parser = document.createElement('a');
+    parser.href = window.document.origin + path;
+    ['href', 'protocol', 'host', 'hostname', 'origin', 'port', 'pathname', 'search', 'hash'].forEach((prop) => {
+        Object.defineProperty(window.location, prop, {
+            value: parser[prop],
+            writable: true,
+            configurable: true,
+        });
     });
 };
 
 describe('goo-router', () => {
     it('should return a function', () => {
-        router.should.be.a('function');
+        expect(router)
+            .toBeInstanceOf(Function);
     });
 
     it('should have a use function', () => {
-        const test = router({location: '', document: {origin: ''}});
-        test.use.should.be.a('function');
+        expect(router().use)
+            .toBeInstanceOf(Function);
     });
 
     it('should have a redirect function', () => {
-        const test = router({location: '', document: {origin: ''}});
-        test.redirect.should.be.a('function');
+        expect(router().redirect)
+            .toBeInstanceOf(Function);
     });
-});
 
-describe('router -> use', () => {
-    it('should return an array', () => {
-        router({location: '', document: {origin: ''}}).use({}).should.be.an('array');
+    describe('redirect', () => {
+        it('should reject malformed paths', () => {
+            expect(() => router().redirect(undefined))
+                .toThrow(/path/);
+        });
+
+        it('should accept no params', () => {
+            router().redirect('/', undefined);
+        });
+
+        it('should change the pathname', () => {
+            router().redirect('/test/xyz');
+            expect(window.location.pathname)
+                .toBe('/test/xyz');
+        });
+
+        it('should accumulate params and pass them to the callback', () => {
+            const test = jest.fn();
+            let app = router();
+            app.use({route: {
+                path: '/user/:id/fetch/:field',
+                callback: test,
+            }});
+            app.redirect('/user/123/fetch/name');
+            expect(test)
+                .toHaveBeenCalledWith({id: '123', field: 'name'});
+        });
     });
-});
 
-describe('use -> route', () => {
-    it('should reject malformed paths', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.use({
-                    route: {
+    describe('use', () => {
+        it('should return an array', () => {
+            expect(router().use({}))
+                .toBeInstanceOf(Array);
+        });
+
+        describe('route', () => {
+            it('should reject malformed paths', () => {
+                let app = router();
+                expect(() => {
+                    app.use({route: {
                         path: {},
                         callback: () => {},
-                    },
-                });
-            }).should.throw(Error, /path/);
-            done();
-        });
-    });
+                    }});
+                })
+                    .toThrow(/path/);
+            });
 
-    it('should reject malformed callback', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.use({
-                    route: {
+            it('should reject malformed callback', () => {
+                let app = router();
+                expect(() => {
+                    app.use({route: {
                         path: '',
                         callback: '',
-                    },
-                });
-            }).should.throw(Error, /callback/);
-            done();
-        });
-    });
+                    }});
+                })
+                    .toThrow(/callback/);
+            });
 
-    it('should check the current pathname against new routes', (done) => {
-        let test = false;
-        newWindow('/test', (window, router) => {
-            router.use({
-                route: {
+            it('should check the current pathname against new routes', () => {
+                const test = jest.fn();
+                window.history.pushState({}, '', '/test');
+                router().use({route: {
                     path: '/test',
-                    callback: () => {
-                        test = true;
-                    },
-                },
-            });
-            test.should.equal(true);
-            done();
-        });
-    });
-
-    it('should save routes for future redirects', (done) => {
-        let test = false;
-        newWindow('/', (window, router) => {
-            router.use({
-                route: {
-                    path: '/test',
-                    callback: () => {
-                        test = true;
-                    },
-                },
-            });
-            router.redirect('/test');
-            test.should.equal(true);
-            done();
-        });
-    });
-
-    it('should prioritize the earliest routes', (done) => {
-        let test = false;
-        newWindow('/', (window, router) => {
-            router.use({
-                route: [
-                    {
-                        path: '/*',
-                        callback: () => {
-                            test = 1;
-                        },
-                    },
-                    {
-                        path: '/test',
-                        callback: () => {
-                            test = 2;
-                        },
-                    },
-                ],
-            });
-            router.redirect('/test');
-            test.should.equal(1);
-            done();
-        });
-    });
-});
-
-describe('use -> base', () => {
-    it('should reject malformed inputs', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.use({base: true});
-            }).should.throw(Error, /base/);
-            done();
-        });
-    });
-
-    it('should add the base url to all new pathnames', (done) => {
-        newWindow('/', (window, router) => {
-            router.use({route: {path: '/test', callback: () => {}}});
-            router.use({base: '/testBase'});
-            router.redirect('/test');
-            window.location.pathname.should.equal('/testBase/test');
-            done();
-        });
-    });
-
-    it('should be applied to the current pathname', (done) => {
-        newWindow('/testBase', (window, router) => {
-            let test = false;
-            router.use({route: {
-                path: '',
-                callback: () => {
-                    test = true;
-                },
-            }});
-            test.should.equal(false);
-            router.use({base: '/testBase'});
-            test.should.equal(true);
-            done();
-        });
-    });
-});
-
-describe('redirect', () => {
-    it('should reject malformed paths', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.redirect(undefined);
-            }).should.throw(Error, /path/);
-            done();
-        });
-    });
-
-    it('should accept empty params', (done) => {
-        newWindow('/', (window, router) => {
-            (() => {
-                router.use({route: {
-                    path: '/',
-                    callback: () => {},
+                    callback: test,
                 }});
-                router.redirect('/');
-            }).should.not.throw(Error, /params/);
-            done();
-        });
-    });
-
-    it('should change the pathname', (done) => {
-        newWindow('/', (window, router) => {
-            router.use({route: {path: '/test/xyz', callback: () => {}}});
-            router.redirect('/test/xyz');
-            window.location.pathname.should.equal('/test/xyz');
-            done();
-        });
-    });
-
-    it('should accumulate params and pass them to the callback', (done) => {
-        let test = null;
-        newWindow('/', (window, router) => {
-            router.use({
-                route: {
-                    path: '/user/:id/fetch/:field',
-                    callback: (params) => {
-                        test = params;
-                    },
-                },
+                expect(test)
+                    .toHaveBeenCalled();
             });
-            router.redirect('/user/123/fetch/name');
-            test.id.should.equal('123');
-            test.field.should.equal('name');
-            done();
+
+            it('should save routes for future redirects', () => {
+                const test = jest.fn();
+                let app = router();
+                app.use({route: {
+                    path: '/test',
+                    callback: test,
+                }});
+                app.redirect('/test');
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should prioritize the earliest routes', () => {
+                const test1 = jest.fn();
+                const test2 = jest.fn();
+                let app = router();
+                app.use({route: {
+                    path: '/test',
+                    callback: test1,
+                }});
+                app.use({route: {
+                    path: '/*',
+                    callback: test2,
+                }});
+                app.redirect('/test');
+                expect(test1)
+                    .toHaveBeenCalled();
+            });
+        });
+
+        describe('base', () => {
+            it('should reject malformed inputs', () => {
+                expect(() => {
+                    router().use({base: true});
+                })
+                    .toThrow(/base/);
+            });
+
+            it('should add the base url to all new pathnames', () => {
+                let app = router();
+                app.use({base: '/testBase'});
+                app.redirect('/test');
+                expect(window.location.pathname)
+                    .toBe('/testBase/test');
+            });
+
+            it('should be applied to the current pathname', () => {
+                const test = jest.fn();
+                let app = router();
+                window.history.pushState({}, '', '/testBase/test');
+                app.use({route: {
+                    path: '/test',
+                    callback: test,
+                }});
+                expect(test)
+                    .toHaveBeenCalledTimes(0);
+                app.use({base: '/testBase'});
+                expect(test)
+                    .toHaveBeenCalled();
+            });
         });
     });
 });

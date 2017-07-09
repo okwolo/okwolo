@@ -1,432 +1,543 @@
+'use strict';
+
 const dom = require('./');
 
-const jsdom = require('jsdom');
+window.requestAnimationFrame = (f) => setTimeout(f, 0);
 
-testWindow = null;
+let sleep = async (t = 1) => new Promise((resolve) => setTimeout(resolve, t));
 
-const newWindow = (builder, initialState, callback) => {
-    jsdom.env(
-        '<div class="wrapper"></div>',
-        [],
-        (err, window) => {
-            if (err) {
-                console.error(err);
-            }
-            testWindow = window;
-            window.requestAnimationFrame = (f) => setTimeout(f, 0);
-            const wrapper = window.document.querySelector('.wrapper');
-            const handler = dom(wrapper, window);
-            handler.use({builder, state: initialState});
-            setTimeout(() => {
-                callback(wrapper, (newState, callback) => {
-                    handler.use({state: newState});
-                    setTimeout(callback, 0);
-                }, handler);
-            }, 0);
-        }
-    );
-};
-
-// creating testWindow
-newWindow(() => '', {}, () => {});
+let wrapper;
 
 describe('goo-dom', () => {
+    beforeEach(() => {
+        wrapper = document.createElement('div');
+        document.body.appendChild(wrapper);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(wrapper);
+        wrapper = null;
+    });
+
     it('should be a function', () => {
-        dom.should.be.a('function');
+        expect(dom)
+            .toBeInstanceOf(Function);
     });
 
     it('should return a function', () => {
-        dom(undefined, testWindow).should.be.a('function');
+        const app = dom(wrapper);
+        expect(app)
+            .toBeInstanceOf(Function);
     });
 
     it('should have a use function', () => {
-        const test = dom(undefined, testWindow);
-        test.use.should.be.a('function');
+        const app = dom(wrapper);
+        expect(app.use)
+            .toBeInstanceOf(Function);
     });
 
     it('should have a setState function', () => {
-        const test = dom(undefined, testWindow);
-        test.setState.should.be.a('function');
-    });
-});
-
-describe('dom -> use', () => {
-    it('should return an array', () => {
-        dom(undefined, testWindow).use({}).should.be.an('array');
-    });
-});
-
-describe('use -> target', () => {
-    it('should reject malformed targets', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: '',
-                builder: () => {},
-                state: {},
-            });
-        }).should.throw(Error, /target/g);
-    });
-});
-
-describe('use -> builder', () => {
-    it('should reject malformed builders', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                builder: {},
-            });
-        }).should.throw(Error, /builder/g);
-    });
-});
-
-describe('use -> state', () => {
-    it('should reject undefined state', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                state: undefined,
-            });
-        }).should.throw(Error, /state/gi);
-    });
-});
-
-describe('use -> draw', () => {
-    it('should reject malformed draw', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: testWindow.document.body,
-                builder: () => 'test',
-                state: {},
-                draw: {},
-            });
-        }).should.throw(Error, /draw/g);
-    });
-});
-
-describe('use -> update', () => {
-    it('should reject malformed update', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: testWindow.document.body,
-                builder: () => 'test',
-                state: {},
-                update: {},
-            });
-        }).should.throw(Error, /update/g);
-    });
-});
-
-describe('use -> build', () => {
-    it('should reject malformed build', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: testWindow.document.body,
-                builder: () => 'test',
-                state: {},
-                build: {},
-            });
-        }).should.throw(Error, /build/g);
+        const app = dom(wrapper);
+        expect(app.setState)
+            .toBeInstanceOf(Function);
     });
 
-    it('should receive the builder\'s output and be able to edit it', (done) => {
-        newWindow(() => 'test', {}, (wrapper, update, app) => {
-            app.use({
-                build: (vdom) => {
-                    vdom.should.deep.equal('test');
-                    return {text: 'changed'};
-                },
-            });
-            setTimeout(() => {
-                wrapper.innerHTML.should.equal('changed');
-                done();
-            }, 0);
-        });
-    });
-});
-
-describe('use -> prebuild', () => {
-    it('should reject malformed prebuild', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: testWindow.document.body,
-                builder: () => 'test',
-                state: {},
-                prebuild: {},
-            });
-        }).should.throw(Error, /prebuild/g);
+    it('should add the builder function\'s output to the target', async () => {
+        const app = dom(wrapper);
+        app.setState({});
+        app(() => ['span']);
+        await sleep();
+        expect(wrapper.children[0].tagName)
+            .toBe('SPAN');
     });
 
-    it('should receive the builder\'s output and be able to edit it', (done) => {
-        newWindow(() => 'test', {}, (wrapper, update, app) => {
-            app.use({
-                prebuild: (vdom) => {
-                    vdom.should.deep.equal('test');
-                    return ['div.test'];
-                },
-            });
-            setTimeout(() => {
-                wrapper.innerHTML.should.equal('<div class="test"></div>');
-                done();
-            }, 0);
+    it('should change its state with setState', async () => {
+        const app = dom(wrapper);
+        app((s) => s);
+        app.setState('test1');
+        expect(app.getState())
+            .toBe('test1');
+        app.setState((state) => {
+            expect(state)
+                .toBe('test1');
+            return 'test2'
         });
-    });
-});
-
-describe('use -> postbuild', () => {
-    it('should reject malformed postbuild', () => {
-        const test = dom(undefined, testWindow);
-        (() => {
-            test.use({
-                target: testWindow.document.body,
-                builder: () => 'test',
-                state: {},
-                postbuild: {},
-            });
-        }).should.throw(Error, /postbuild/g);
+        expect(app.getState())
+            .toBe('test2');
     });
 
-    it('should receive the built vdom and be able to edit it', (done) => {
-        newWindow(() => 'test', {}, (wrapper, update, app) => {
-            app.use({
-                name: 'test',
-                postbuild: (vdom) => {
-                    vdom.should.deep.equal({text: 'test'});
-                    return Object.assign({}, vdom, {text: 'changed'});
-                },
-            });
-            setTimeout(() => {
-                wrapper.innerHTML.should.equal('changed');
-                done();
-            }, 0);
-        });
-    });
-});
-
-describe('goo-dom object', () => {
-    it('should render the initial state immediately', (done) => {
-        newWindow(() => ['test'], {}, (wrapper, update) => {
-            wrapper.children[0].should.not.equal(undefined);
-            done();
-        });
+    it('should get the current state with getState', () => {
+        const app = dom(wrapper);
+        app.setState('test');
+        expect(app.getState())
+            .toBe('test');
     });
 
-    it('should remove all other elements in the target', (done) => {
-        jsdom.env(
-            '<div class="wrapper"><span></span></div>',
-            [],
-            (err, window) => {
-                window.requestAnimationFrame = (f) => setTimeout(f, 0);
-                const wrapper = window.document.querySelector('.wrapper');
-                dom(wrapper, window).use({builder: () => 'a', state: {}});
-                setTimeout(() => {
-                    wrapper.children.length.should.equal(0);
-                    done();
-                }, 0);
-            }
-        );
-    });
+    describe('/blob', () => {
+        describe('draw', () => {
+            it('should render the initial state immediately', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test']);
+                await sleep();
+                expect(wrapper.innerHTML.length)
+                    .toBeGreaterThan(0);
+            });
 
-    it('should add the builder function\s output to the target', (done) => {
-        newWindow(() => ['span'], {}, (wrapper, update) => {
-            wrapper.children[0].tagName.should.equal('SPAN');
-            done();
-        });
-    });
-
-    it('should change its state with setState', (done) => {
-        newWindow((s) => s, 'test', (wrapper, update, app) => {
-            wrapper.innerHTML.should.equal('test');
-            app.setState('test2');
-            setTimeout(() => {
-                wrapper.innerHTML.should.equal('test2');
-                app.setState(() => 'test3');
-                setTimeout(() => {
-                    wrapper.innerHTML.should.equal('test3');
-                    done();
-                });
-            }, 0);
-        });
-    });
-
-    it('should get the current state with getState', (done) => {
-        newWindow(() => 'test', 'state', (wrapper, update, app) => {
-            app.getState().should.equal('state');
-            done();
-        });
-    });
-});
-
-describe('goo-dom default blob', () => {
-    describe('build', () => {
-        it('should create textNodes out of strings', (done) => {
-            newWindow(() => 'test', {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('test');
-                done();
+            it('should remove all other elements in the target', async () => {
+                const app = dom(wrapper);
+                wrapper.innerHTML = '<div></div>';
+                expect(wrapper.querySelectorAll('div'))
+                    .toHaveLength(1);
+                app.setState({});
+                app(() => 'test');
+                await sleep();
+                expect(wrapper.querySelectorAll('div'))
+                    .toHaveLength(0);
             });
         });
 
-        it('should create elements out of arrays', (done) => {
-            newWindow(() => ['span'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<span></span>');
-                done();
+        describe('build', () => {
+            it('should create textNodes out of strings', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+            });
+
+            it('should create elements out of arrays', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['span']);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<span></span>');
+            });
+
+            it('should create nothing when given null', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => null);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('');
+            });
+
+            it('should read the tagName from the first element in the array', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test']);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test></test>');
+            });
+
+            it('should read the attributes from the second element in the array', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test', {id: 'test'}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test id="test"></test>');
+            });
+
+            it('should be possible to append an id to the tagName using #', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test#test']);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test id="test"></test>');
+            });
+
+            it('should be possible to append an classNames to the tagName using .', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test.test.test', {className: 'tt'}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test class="tt test test"></test>');
+            });
+
+            it('should be possible to append styles to the tagName using |', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test|height:2px;', {style: 'width: 2px;'}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test style="width: 2px; height: 2px;"></test>');
+            });
+
+            it('should read the children from the third element in the array', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test', {}, ['test']]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test>test</test>');
+            });
+
+            it('should accept components', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                const component = () => 'test';
+                app(() => [component]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+            });
+
+            it('should pass arguments to components', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                const component = ({a}) => a;
+                app(() => [component, {a: 'test'}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+            });
+
+            it('should pass children to component', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                const component = ({children}) => children[0];
+                app(() => [component, {}, ['test']]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+            });
+
+            it('should support nested components', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                const component3 = ({c}) => c;
+                const component2 = ({b}) => [component3, {c: b}];
+                const component1 = ({a}) => [component2, {b: a}];
+                app(() => [component1, {a: 'test'}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
             });
         });
 
-        it('should create nothing when given null', (done) => {
-            newWindow(() => null, {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('');
-                done();
+        describe('update', () => {
+            it('should rerender the new dom', async () => {
+                const app = dom(wrapper);
+                app((s) => [s, {}, [s]]);
+                app.setState('a');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<a>a</a>');
+                app.setState('b');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<b>b</b>');
             });
-        });
 
-        it('should read the tagName from the first element in the array', (done) => {
-            newWindow(() => ['test'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test></test>');
-                done();
+            it('should not replace elements when the tagName doesn\'t change', async () => {
+                const app = dom(wrapper);
+                app((s) => ['div' + s]);
+                app.setState('');
+                await sleep();
+                const element = wrapper.children[0];
+                app.setState('#id.class|height:0px;');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div id="id" class="class" style="height: 0px;"></div>');
+                expect(wrapper.children[0])
+                    .toBe(element);
             });
-        });
 
-        it('should read the attributes from the second element in the array', (done) => {
-            newWindow(() => ['test', {id: 'test'}], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test id="test"></test>');
-                done();
-            });
-        });
-
-        it('should be possible to append an id to the tagName using #', (done) => {
-            newWindow(() => ['test#test'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test id="test"></test>');
-                done();
-            });
-        });
-
-        it('should be possible to append an classNames to the tagName using .', (done) => {
-            newWindow(() => ['test.test.test', {className: 'tt'}], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test class="tt test test"></test>');
-                done();
-            });
-        });
-
-        it('should be possible to append styles to the tagName using |', (done) => {
-            newWindow(() => ['test|height:2px;', {style: 'width: 2px;'}], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test style="width: 2px; height: 2px;"></test>');
-                done();
-            });
-        });
-
-        it('should read the children from the third element in the array', (done) => {
-            newWindow(() => ['test', {}, ['test']], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<test>test</test>');
-                done();
-            });
-        });
-
-        it('should accept components', (done) => {
-            newWindow(() => [() => 'test'], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('test');
-                done();
-            });
-        });
-
-        it('should pass arguments to components', (done) => {
-            newWindow(() => [({a}) => a, {a: 'test'}], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('test');
-                done();
-            });
-        });
-
-        it('should pass children to component', (done) => {
-            newWindow(() => [({children}) => children[0], {}, ['test']], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('test');
-                done();
-            });
-        });
-
-        it('should support nested components', (done) => {
-            newWindow(() => [({a}) => [({b}) => [({c}) => c, {c: b}], {b: a}], {a: 'test'}], {}, (wrapper, update) => {
-                wrapper.innerHTML.should.equal('test');
-                done();
-            });
-        });
-    });
-
-    describe('update', () => {
-        it('should rerender the new dom', (done) => {
-            newWindow((s) => [s, {}, [s]], 'a', (wrapper, update) => {
-                wrapper.innerHTML.should.equal('<a>a</a>');
-                update('b', () => {
-                    wrapper.innerHTML.should.equal('<b>b</b>');
-                    done();
-                });
-            });
-        });
-
-        it('should not replace elements when the tagName doesn\'t change', (done) => {
-            let element = null;
-            newWindow((s) => ['test' + s], '', (wrapper, update) => {
-                element = wrapper.children[0];
-                update('#id.class|height:0px;', () => {
-                    wrapper.children[0].should.equal(element);
-                    done();
-                });
-            });
-        });
-
-        it('should be able to delete elements', (done) => {
-            newWindow((s) => ['div', {}, s.split('').map((l) => [l])], 'abc', (wrapper, update) => {
-                wrapper.innerHTML.should.equal(
-                    '<div>' +
-                        '<a></a>' +
-                        '<b></b>' +
-                        '<c></c>' +
-                    '</div>'
-                );
-                update('a', () => {
-                    wrapper.innerHTML.should.equal(
+            it('should be able to delete elements', async () => {
+                const app = dom(wrapper);
+                app((s) => ['div', {}, s.split('').map((l) => [l])]);
+                app.setState('abc');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<a></a>' +
+                            '<b></b>' +
+                            '<c></c>' +
+                        '</div>'
+                    );
+                app.setState('a');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
                         '<div>' +
                             '<a></a>' +
                         '</div>'
                     );
-                    update('cd', () => {
-                        wrapper.innerHTML.should.equal(
-                            '<div>' +
-                                '<c></c>' +
-                                '<d></d>' +
-                            '</div>'
-                        );
-                        done();
-                    });
-                });
+                app.setState('cd');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<c></c>' +
+                            '<d></d>' +
+                        '</div>'
+                    );
+            });
+
+            it('should be able to replace all elements', async () => {
+                const app = dom(wrapper);
+                app((s) => s);
+                app.setState('');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('');
+                app.setState('test1');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test1');
+                app.setState('test2');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test2');
+                app.setState(['test3', {}, ['test3']]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test3>test3</test3>');
+                app.setState(['test4', {}, [['test4']]]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test4><test4></test4></test4>');
+                app.setState('');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('');
+                app.setState('test5');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test5');
+            });
+        });
+    });
+
+    describe('use', () => {
+        it('should return an array', () => {
+            const app = dom();
+            expect(app.use({}))
+                .toBeInstanceOf(Array);
+        });
+
+        it('should not accept multiple items per key', () => {
+            const app = dom();
+            expect(() => app.use({name: ['name']}))
+                .toThrow(Error);
+            expect(() => app.use({builder: [() => 'test']}))
+                .toThrow(Error);
+            expect(() => app.use({draw: [() => {}]}))
+                .toThrow(Error);
+            expect(() => app.use({update: [() => {}]}))
+                .toThrow(Error);
+            expect(() => app.use({build: [() => ({text: 'test'})]}))
+                .toThrow(Error);
+            expect(() => app.use({prebuild: [() => 'test']}))
+                .toThrow(Error);
+            expect(() => app.use({postbuild: [() => ({text: 'test'})]}))
+                .toThrow(Error);
+        });
+
+        describe('target', () => {
+            it('should reject malformed targets', () => {
+                const app = dom();
+                app.setState({});
+                app(() => 'test');
+                expect(() => app.use({target: null}))
+                    .toThrow(/target/g);
+            });
+
+            it('should change the render target', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+                const newTarget = document.createElement('div');
+                wrapper.innerHTML = '';
+                wrapper.appendChild(newTarget);
+                expect(wrapper.innerHTML)
+                    .toBe('<div></div>');
+                app.use({target: newTarget});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div>test</div>');
             });
         });
 
-        it('should be able to replace all elements', (done) => {
-            newWindow((s) => s, '', (wrapper, update) => {
-                wrapper.innerHTML.should.equal('');
-                update('test1', () => {
-                    wrapper.innerHTML.should.equal('test1');
-                    update('test2', () => {
-                        wrapper.innerHTML.should.equal('test2');
-                        update(['test3', {}, ['test3']], () => {
-                            wrapper.innerHTML.should.equal('<test3>test3</test3>');
-                            update(['test4', {}, [['test4']]], () => {
-                                wrapper.innerHTML.should.equal('<test4><test4></test4></test4>');
-                                update('', () => {
-                                    wrapper.innerHTML.should.equal('');
-                                    update('test5', () => {
-                                        wrapper.innerHTML.should.equal('test5');
-                                        done();
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
+        describe('builder', () => {
+            it('should reject malformed builders', () => {
+                const app = dom();
+                expect(() => app.use({builder: null}))
+                    .toThrow(/builder/g);
+            });
+
+            it('should change the builder function', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+                app.use({builder: () => 'content'});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('content');
+            });
+        });
+
+        describe('state', () => {
+            it('should reject undefined state', () => {
+                const app = dom();
+                expect(() =>  app.use({state: undefined}))
+                    .toThrow(/state/gi);
+            });
+
+            it('should trigger an update', async () => {
+                const app = dom(wrapper);
+                app.setState('initial');
+                app((s) => s);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('initial');
+                app.use({state: 'changed'});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('changed');
+            });
+        });
+
+        describe('draw', () => {
+            it('should reject malformed draw', () => {
+                const app = dom();
+                expect(() => app.use({draw: {}}))
+                    .toThrow(/draw/g);
+            });
+
+            it('should trigger a redraw', async () => {
+                const app = dom(wrapper);
+                const test = jest.fn();
+                app.setState({});
+                app(() => 'test');
+                app.use({draw: test});
+                await sleep();
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+        });
+
+        describe('update', () => {
+            it('should reject malformed update', () => {
+                const app = dom();
+                expect(() => app.use({update: {}}))
+                    .toThrow(/update/g);
+            });
+        });
+
+        describe('build', () => {
+            it('should reject malformed build', () => {
+                const app = dom();
+                expect(() => app.use({build: {}}))
+                    .toThrow(/build/g);
+            });
+
+            it('should trigger an update', async () => {
+                const app = dom(wrapper);
+                const test = jest.fn();
+                app.setState({});
+                app(() => 'test');
+                app.use({build: test});
+                await sleep();
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should receive the builder\'s output and be able to edit it', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                app.use({build: (element) => {
+                    expect(element)
+                        .toEqual('test');
+                    return {text: 'changed'};
+                }});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('changed');
+            });
+        });
+
+        describe('prebuild', () => {
+            it('should reject malformed prebuild', () => {
+                const app = dom();
+                expect(() => app.use({prebuild: {}}))
+                    .toThrow(/prebuild/g);
+            });
+
+            it('should trigger an update', async () => {
+                const app = dom(wrapper);
+                const test = jest.fn();
+                app.setState({});
+                app(() => 'test');
+                app.use({prebuild: () => {
+                    test();
+                    return 'test';
+                }});
+                await sleep();
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should receive the builder\'s output and be able to edit it', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                app.use({prebuild: (element) => {
+                    expect(element)
+                        .toEqual('test');
+                    return ['div.test'];
+                }});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div class="test"></div>');
+            });
+        });
+
+        describe('postbuild', () => {
+            it('should reject malformed postbuild', () => {
+                const app = dom();
+                expect(() => app.use({postbuild: {}}))
+                    .toThrow(/postbuild/g);
+            });
+
+            it('should trigger an update', async () => {
+                const app = dom(wrapper);
+                const test = jest.fn();
+                app.setState({});
+                app(() => 'test');
+                app.use({postbuild: test});
+                await sleep();
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should receive the built vdom and be able to edit it', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => 'test');
+                app.use({postbuild: (vdom) => {
+                    expect(vdom)
+                        .toEqual({text: 'test'});
+                    return Object.assign({}, vdom, {text: 'changed'});
+                }});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('changed');
             });
         });
     });

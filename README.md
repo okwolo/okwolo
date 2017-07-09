@@ -56,6 +56,11 @@ app.redo();
 ### text element
 
 ````javascript
+let elem = textContent;
+  // textContent: content of the textNode
+````
+
+````javascript
 let elem = 'Hello World!'; // Hello World!
 ````
 
@@ -145,39 +150,25 @@ Goo and its modules all have a `use` function which takes a single object as arg
 
 A blob can have as many unique keys as necessary. Each key will be tested on each module to determine if that module supports it. The value assigned to each key can be a single object, or an array of objects (ex. adding multiple actions at once). This library is purposefully built to handle the addition of blobs in any order and at any time in an application's lifecycle.
 
-Here is an example of a blob that adds two watchers and changes the target.
+Here is an example of a blob that adds two watchers and adds a route.
 
 ````javascript
 app.use({
-    watcher: [
-        (state, actionType, params) => {
-            // ...
-        },
-        (state, actionType, params) => {
-            // ...
-        },
-    ],
-    target: // ...
+    watcher: [myFirstWatcher, mySecondWatcher],
+    route: myRoute
 });
 ````
 
 Named blobs are an extension of regular blobs that ensure that the blob is only ever used once in a single app instance. This can be done by simply adding a "name" key to a blob and using it as before.
 
 ````javascript
-let app = goo(document.body);
-
-app.setState(null);
-
 let myPlugin = {
     name: 'myPluginName',
-    middleware: (next, state, actionType, params) => {
-        // ...
-        next();
-    },
+    middleware: myMiddlware,
 }
 
 app.use(myPlugin);
-app.use(myPlugin); // will not add the watcher again
+app.use(myPlugin); // will not add the middleware again
 ````
 
 Here is the list of the recognized blob keys and the modules that consume them.

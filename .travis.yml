@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - "node"
-after_success: "npm run coverage:coveralls"
+after_success: "npm run coveralls"
 cache:
   directories:
     - "node_modules"

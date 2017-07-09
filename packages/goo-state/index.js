@@ -1,46 +1,13 @@
+'use strict';
+
 const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils')();
 
-// creates an object that acts on a state
 const state = () => {
     const actions = {};
     const middleware = [];
     const watchers = [];
 
     const queue = makeQueue();
-
-    const addAction = (action) => {
-        const {type, handler, target} = action;
-        assert(isString(type), `@goo.state.addAction : action type "${type}" is not a string`, action);
-        assert(isFunction(handler), `@goo.state.addAction : handler for action ${type} is not a function`, handler);
-        assert(isArray(target), `@goo.state.addAction : target of action ${type} is not an array`, target);
-        target.forEach((address) => {
-            assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings ${target}`);
-        });
-        if (actions[type] === undefined) {
-            actions[type] = [action];
-        } else {
-            actions[type].push(action);
-        }
-    };
-
-    const addMiddleware = (handler) => {
-        assert(isFunction(handler), '@goo.state.addMiddleware : middleware is not a function', handler);
-        middleware.push(handler);
-    };
-
-    const addWatcher = (handler) => {
-        assert(isFunction(handler), '@goo.state.addWatcher : watcher is not a function', handler);
-        watchers.push(handler);
-    };
-
-    // supported blobs and their execution
-    const use = (blob) => {
-        return blobHandler({
-            action: addAction,
-            middleware: addMiddleware,
-            watcher: addWatcher,
-        }, blob, queue);
-    };
 
     // exectute an action on the state
     const execute = (state, type, params) => {
@@ -97,6 +64,40 @@ const state = () => {
         queue.add(() => {
             apply(state, type, params);
         });
+    };
+
+    const addAction = (action) => {
+        const {type, handler, target} = action;
+        assert(isString(type), `@goo.state.addAction : action type "${type}" is not a string`, action);
+        assert(isFunction(handler), `@goo.state.addAction : handler for action ${type} is not a function`, handler);
+        assert(isArray(target), `@goo.state.addAction : target of action ${type} is not an array`, target);
+        target.forEach((address) => {
+            assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings ${target}`);
+        });
+        if (actions[type] === undefined) {
+            actions[type] = [action];
+        } else {
+            actions[type].push(action);
+        }
+    };
+
+    const addMiddleware = (handler) => {
+        assert(isFunction(handler), '@goo.state.addMiddleware : middleware is not a function', handler);
+        middleware.push(handler);
+    };
+
+    const addWatcher = (handler) => {
+        assert(isFunction(handler), '@goo.state.addWatcher : watcher is not a function', handler);
+        watchers.push(handler);
+    };
+
+    // supported blobs and their execution
+    const use = (blob) => {
+        return blobHandler({
+            action: addAction,
+            middleware: addMiddleware,
+            watcher: addWatcher,
+        }, blob, queue);
     };
 
     return {act, use};

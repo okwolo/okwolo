@@ -1,3 +1,5 @@
+'use strict';
+
 const dom = require('../goo-dom');
 const state = require('../goo-state');
 const router = require('../goo-router');

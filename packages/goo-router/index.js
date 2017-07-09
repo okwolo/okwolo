@@ -1,3 +1,5 @@
+'use strict';
+
 const pathToRegexp = require('path-to-regexp');
 
 const {assert, isString, isObject, isFunction, blobHandler} = require('../goo-utils')();
@@ -88,7 +90,7 @@ const router = (_window = window) => {
                 the path given to pushState. which means it needs to be removed here */
             _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
         } else {
-            console.log(`goo-router:: path changed to\n>>>${currentPath}`);
+            console.log(`goo-router:: path changed to\n>>> ${currentPath}`);
         }
         return fetch(pathStore)(currentPath, params);
     };

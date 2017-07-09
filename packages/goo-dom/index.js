@@ -1,3 +1,5 @@
+'use strict';
+
 const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('../goo-utils')();
 
 const createDefaultBlob = require('./blob');
@@ -15,7 +17,7 @@ const dom = (_target, _window = window) => {
     let builder = undefined;
     let state = undefined;
 
-    const create = (state)=> {
+    const create = (state) => {
         let temp = builder(state);
         if (prebuild) {
             temp = prebuild(temp);
@@ -35,7 +37,6 @@ const dom = (_target, _window = window) => {
 
     const canDraw = (callback) => {
         if (isDefined(target) && isDefined(builder) && isDefined(state)) {
-            requiredVariablesAreDefined = true;
             callback();
         }
     };
