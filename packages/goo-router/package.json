@@ -1,12 +1,12 @@
 {
   "name": "goo-router",
-  "version": "2.1.1",
+  "version": "2.3.2",
   "repository": {
     "type": "git",
     "url": "http://www.github.com/g-harel/goo.git"
   },
   "dependencies": {
-    "goo-utils": "*",
+    "goo-utils": "^2.3.2",
     "path-to-regexp": "^1.7.0"
   },
   "author": "g-harel",
