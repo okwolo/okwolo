@@ -1,10 +1,10 @@
 'use strict';
 
-const dom = require('../goo-dom');
-const state = require('../goo-state');
-const router = require('../goo-router');
-const history = require('../goo-history')();
-const {isFunction, assert, deepCopy} = require('../goo-utils')();
+const dom = require('goo-dom');
+const state = require('goo-state');
+const router = require('goo-router');
+const history = require('goo-history')();
+const {isFunction, assert, deepCopy} = require('goo-utils')();
 
 const goo = (rootElement, _window = window) => {
     const domHandler = dom(rootElement, _window);

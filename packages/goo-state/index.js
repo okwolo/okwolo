@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('../goo-utils')();
+const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('goo-utils')();
 
 const state = () => {
     const actions = {};

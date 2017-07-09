@@ -4,7 +4,7 @@ const gulp = require('gulp');
 const globby = require('globby');
 const del = require('del');
 
-gulp.task('copy-readme', () => {
+gulp.task('prepublish', () => {
     const readme = gulp.src('./README.md');
     return Promise.all(
         globby.sync('./packages/goo-*')
@@ -12,12 +12,13 @@ gulp.task('copy-readme', () => {
     );
 });
 
-gulp.task('prepublish', ['copy-readme']);
-
 gulp.task('clean', () => {
     return del([
         './packages/goo-*/README.md',
+        './packages/goo-*/node_modules',
+        './packages/goo-*/package-lock.json',
         './coverage',
         './goo.min.js*',
+        './npm-debug.log',
     ]);
 });

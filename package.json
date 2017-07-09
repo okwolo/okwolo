@@ -3,14 +3,8 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "publish:goo-js": "npm publish ./packages/goo-js",
-    "publish:goo-dom": "npm publish ./packages/goo-dom",
-    "publish:goo-state": "npm publish ./packages/goo-state",
-    "publish:goo-utils": "npm publish ./packages/goo-utils",
-    "publish:goo-router": "npm publish ./packages/goo-router",
-    "publish:goo-history": "npm publish ./packages/goo-history",
-    "publish:clean": "del npm-debug.log",
-    "publish": "run-s publish:*",
+    "postinstall": "lerna bootstrap",
+    "publish": "gulp prepublish && lerna publish",
     "test": "run-s test:*",
     "test:eslint": "eslint **/*.js",
     "test:jest": "jest",
@@ -19,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/g-harel/goo"
+    "url": "http://github.com/g-harel/goo.git"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
@@ -28,16 +22,13 @@
     "compression-webpack-plugin": "^0.4.0",
     "coveralls": "^2.13.1",
     "del": "^3.0.0",
-    "emn": "^0.1.2",
     "eslint": "^4.2.0",
     "eslint-config-google": "^0.9.1",
     "globby": "^6.1.0",
     "gulp": "^3.9.1",
     "jest": "^20.0.4",
+    "lerna": "^2.0.0",
     "npm-run-all": "^4.0.2",
     "webpack": "^3.1.0"
-  },
-  "dependencies": {
-    "path-to-regexp": "^1.7.0"
   }
 }

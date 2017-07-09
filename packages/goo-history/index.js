@@ -1,6 +1,6 @@
 'use strict';
 
-const {deepCopy} = require('../goo-utils')();
+const {deepCopy} = require('goo-utils')();
 
 const history = () => {
     let past = [];

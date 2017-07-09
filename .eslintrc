@@ -21,6 +21,7 @@
             "error",
             "always"
         ],
+        "switch-colon-spacing": "off",
         "max-len": "off",
         "no-throw-literal": "off",
         "strict": [
