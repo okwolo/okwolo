@@ -30,6 +30,7 @@
     "emn": "^0.1.2",
     "eslint": "^3.15.0",
     "eslint-config-google": "^0.7.1",
+    "jest": "^20.0.4",
     "npm-run-all": "^4.0.2",
     "webpack": "^2.2.1"
   },
