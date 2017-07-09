@@ -9,7 +9,7 @@ Goo.js is a small framework made to jumpstart projects by solving common web app
 # Top level api
 
 ````javascript
-// creates the app object
+// creates the app
 goo(target[, window]);
   // target: DOM node
   // window: window object can be specified if needed
@@ -428,7 +428,7 @@ let element = (               =>        let vdom = {
 
 ````javascript
 let prebuild = prebuild
-  // prebuild: function to augment the default syntax before elements are passed to build [(element) => ... element]
+  // prebuild: function to manipulate elements before they are passed to build [(element) => ... element]
 ````
 
 Here is an example which wraps the app in a div.

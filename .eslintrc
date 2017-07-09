@@ -3,7 +3,9 @@
         "browser": true,
         "es6": true
     },
-    "ecmaVersion": 8,
+    "parserOptions": {
+        "ecmaVersion": 8
+    },
     "extends": "google",
     "rules": {
         "indent": [

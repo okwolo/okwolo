@@ -276,7 +276,7 @@ describe('goo-utils', () => {
             const queue = makeQueue();
             let callOrder = [];
             let numTests = 2 + Math.floor(Math.random()*8);
-            for(let i = 0; i < numTests; ++i) {
+            for (let i = 0; i < numTests; ++i) {
                 queue.add(() => {
                     setTimeout(() => {
                         callOrder.push(i);

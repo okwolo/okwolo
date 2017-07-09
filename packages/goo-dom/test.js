@@ -60,7 +60,7 @@ describe('goo-dom', () => {
         app.setState((state) => {
             expect(state)
                 .toBe('test1');
-            return 'test2'
+            return 'test2';
         });
         expect(app.getState())
             .toBe('test2');
@@ -394,7 +394,7 @@ describe('goo-dom', () => {
         describe('state', () => {
             it('should reject undefined state', () => {
                 const app = dom();
-                expect(() =>  app.use({state: undefined}))
+                expect(() => app.use({state: undefined}))
                     .toThrow(/state/gi);
             });
 

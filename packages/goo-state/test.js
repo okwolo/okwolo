@@ -220,7 +220,7 @@ describe('goo-state', () => {
                 const app = state();
                 let callOrder = [];
                 let numTests = 2 + Math.floor(Math.random()*8);
-                for(let i = 0; i < numTests; ++i) {
+                for (let i = 0; i < numTests; ++i) {
                     app.use({middleware: (next, state, type, params) => {
                         callOrder.push(i);
                         setTimeout(next, Math.random()*numTests*2);

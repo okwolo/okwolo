@@ -1,3 +1,5 @@
+'use strict';
+
 const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = {

@@ -30,7 +30,7 @@ const utils = () => {
 
     // displays error message
     const err = (message) => {
-        throw(new Error(`gooErr:: ${message}`));
+        throw new Error(`gooErr:: ${message}`);
     };
 
     // throw errors when assertion fails
