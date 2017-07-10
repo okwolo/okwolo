@@ -82,6 +82,30 @@ describe('goo-utils', () => {
         });
     });
 
+    describe('isNull', () => {
+        const isNull = utils().isNull;
+
+        it('should return true when null', () => {
+            expect(isNull(null))
+                .toBe(true);
+        });
+
+        it('should return false for all other values', () => {
+            expect(isNull(undefined))
+                .toBe(false);
+            expect(isNull(0))
+                .toBe(false);
+            expect(isNull('a'))
+                .toBe(false);
+            expect(isNull({}))
+                .toBe(false);
+            expect(isNull([]))
+                .toBe(false);
+            expect(isNull(() => {}))
+                .toBe(false);
+        });
+    });
+
     describe('isArray', () => {
         const isArray = utils().isArray;
 
