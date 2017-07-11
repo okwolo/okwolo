@@ -2,10 +2,6 @@
 
 const dom = require('./');
 
-window.requestAnimationFrame = (f) => setTimeout(f, 0);
-
-let sleep = async (t = 1) => new Promise((resolve) => setTimeout(resolve, t));
-
 let wrapper;
 
 describe('goo-dom', () => {

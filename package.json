@@ -30,5 +30,8 @@
     "lerna": "^2.0.0",
     "npm-run-all": "^4.0.2",
     "webpack": "^3.1.0"
+  },
+  "jest": {
+    "setupTestFrameworkScriptFile": "./test.setup.js"
   }
 }

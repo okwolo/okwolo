@@ -1,11 +1,5 @@
 debug.log
-
 **/node_modules/**
-
 goo.min.js
-
 index.html
-
-.nyc_output
-
 coverage/**
