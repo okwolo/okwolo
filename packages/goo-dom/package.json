@@ -1,12 +1,12 @@
 {
   "name": "goo-dom",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "repository": {
     "type": "git",
     "url": "http://www.github.com/g-harel/goo.git"
   },
   "dependencies": {
-    "goo-utils": "^2.3.2"
+    "goo-utils": "^2.3.3"
   },
   "author": "g-harel",
   "license": "MIT"
