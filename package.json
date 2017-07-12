@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "publish": "gulp prepublish && lerna publish",
+    "publish": "gulp prepublish && lerna publish && gulp clean",
     "test": "run-s test:*",
     "test:eslint": "eslint **/*.js",
     "test:jest": "jest",

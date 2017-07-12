@@ -15,8 +15,6 @@ gulp.task('prepublish', () => {
 gulp.task('clean', () => {
     return del([
         './packages/goo-*/README.md',
-        './packages/goo-*/node_modules',
-        './packages/goo-*/package-lock.json',
         './coverage',
         './goo.min.js*',
         './npm-debug.log',
