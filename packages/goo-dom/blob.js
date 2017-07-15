@@ -148,9 +148,10 @@ const blob = (_window = window) => {
         const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
         assert(isArray(match), '@goo.dom.build : tag property cannot be parsed', tagType);
         let [, tagName, id, className, style] = match;
-        if (!isObject(attributes)) {
+        if (attributes == null) {
             attributes = {};
         }
+        assert(isObject(attributes), '@goo.dom.build : attributes is not an object', attributes);
         if (isDefined(id) && !isDefined(attributes.id)) {
             attributes.id = id.trim();
         }

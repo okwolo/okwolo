@@ -142,8 +142,8 @@ app(() => (fruits) => (
     ['ul.fruit-list', {},
         fruits.map((type) => (
             [FruitItem, {type}]
-        )
-    )]
+        )),
+    ]
 ));
 ````
 

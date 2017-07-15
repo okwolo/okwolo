@@ -278,4 +278,121 @@ describe('goo-js', () => {
                 .toHaveBeenCalled();
         });
     });
+
+    describe('examples', () => {
+        it('should correctly render the fruit example', async () => {
+            const app = goo(wrapper);
+            app.setState(['orange', 'apple', 'pear']);
+            let FruitItem = ({type}) => (
+                ['li.fruit', {}, [
+                    type,
+                ]]
+            );
+            app(() => (fruits) => (
+                ['ul.fruit-list', {},
+                    fruits.map((type) => (
+                        [FruitItem, {type}]
+                    )),
+                ]
+            ));
+            await sleep();
+            expect(wrapper.innerHTML).toMatchSnapshot();
+        });
+
+        it('should correctly render the button example', async () => {
+            const app = goo(wrapper);
+            app.setState([
+                {text: 'abc', count: 0},
+                {text: 'def', count: 0},
+                {text: 'ghi', count: 0},
+            ]);
+            app.use({action: {
+                type: 'INC',
+                target: [],
+                handler: (state, params) => {
+                    state[params].count++;
+                    return state;
+                },
+            }});
+            app(() => (state) => (
+                ['div.buttons', {},
+                    state.map(({text, count}, index) => (
+                        ['button', {onclick: () => app.act('INC', index)}, [
+                            text,
+                            ['span | font-size: 6px;', {}, [
+                                String(count),
+                            ]],
+                        ]]
+                    )),
+                ]
+            ));
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+            wrapper.querySelectorAll('button')[0].click();
+            await sleep();
+            expect(wrapper.innerHTML).toMatchSnapshot();
+            wrapper.querySelectorAll('button')[1].click();
+            wrapper.querySelectorAll('button')[1].click();
+            wrapper.querySelectorAll('button')[1].click();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+            app.undo();
+            app.undo();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+            app.redo();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+        });
+
+        it('should correctly render the router example', async () => {
+            const app = goo(wrapper);
+            app.setState({
+                articles: [
+                    {title: 'title1', content: 'content1'},
+                    {title: 'title2', content: 'content2'},
+                    {title: 'title3', content: 'content3'},
+                ],
+            });
+            app('/articles', () => ({articles}) => (
+                ['div', {},
+                    articles.map(({title}) => (
+                        ['span', {onclick: () => app.redirect(`/article/${title}`)}, [
+                            title,
+                        ]]
+                    )),
+                ]
+            ));
+            app('/article/:title', ({title}) => ({articles}) => (
+                ['div', {}, [
+                    ['button', {onclick: () => app.redirect('/articles')}, [
+                        'home',
+                    ]],
+                    ['br'],
+                    ['h1', {}, [
+                        title,
+                    ]],
+                    ['p', {}, [
+                        articles.find((a) => a.title === title).content,
+                    ]],
+                ]]
+            ));
+            app.redirect('/articles');
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+            wrapper.querySelectorAll('span')[1].click();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+            wrapper.querySelector('button').click();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+        });
+    });
 });

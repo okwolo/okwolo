@@ -254,6 +254,27 @@ describe('goo-dom', () => {
                 expect(wrapper.innerHTML)
                     .toBe('test');
             });
+
+            it('should fail when given malformed tagName', () => {
+                const app = dom(wrapper);
+                app.setState({});
+                expect(() => app.use({builder: () => [{}]}))
+                    .toThrow(/tag/);
+            });
+
+            it('should fail when given malformed attributes', () => {
+                const app = dom(wrapper);
+                app.setState({});
+                expect(() => app.use({builder: () => ['div', 'test']}))
+                    .toThrow(/attribute/);
+            });
+
+            it('should not fail when attributes or children are ommitted', () => {
+                const app = dom(wrapper);
+                app.setState({});
+                expect(() => app.use({builder: () => ['div']}))
+                    .not.toThrow(Error);
+            });
         });
 
         describe('update', () => {

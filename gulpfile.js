@@ -16,7 +16,7 @@ gulp.task('clean', () => {
     return del([
         './packages/goo-*/README.md',
         './coverage',
-        './goo.min.js*',
+        './goo.min.js',
         './npm-debug.log',
     ]);
 });

@@ -27,11 +27,15 @@
     "globby": "^6.1.0",
     "gulp": "^3.9.1",
     "jest": "^20.0.4",
+    "jest-serializer-html-string": "^1.0.1",
     "lerna": "^2.0.0",
     "npm-run-all": "^4.0.2",
     "webpack": "^3.1.0"
   },
   "jest": {
-    "setupTestFrameworkScriptFile": "./test.setup.js"
+    "setupTestFrameworkScriptFile": "./test.setup.js",
+    "snapshotSerializers": [
+      "jest-serializer-html-string"
+    ]
   }
 }
