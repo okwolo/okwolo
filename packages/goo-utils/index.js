@@ -34,16 +34,19 @@ const utils = () => {
     };
 
     // throw errors when assertion fails
-    const assert = (result, message, culprit) => {
+    const assert = (result, message, ...culprits) => {
         const print = (obj) => {
-            return JSON.stringify(obj, (key, value) => {
+            return '\n>>> ' + JSON.stringify(obj, (key, value) => {
                 return (typeof value === 'function')
                     ? value.toString()
                     : value;
-            }, 4);
+            }, 2);
         };
         if (!result) {
-            err(message + (culprit?('\n>>> ' + print(culprit)):'') || 'assertion has failed');
+            if (culprits.length > 0) {
+                message += culprits.map(print).join('');
+            }
+            err(message || 'assertion has failed');
         }
     };
 

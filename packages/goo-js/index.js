@@ -69,7 +69,7 @@ const goo = (rootElement, _window = window) => {
             return;
         }
         use({route: {
-            path: path,
+            path,
             callback: (params) => {
                 use({builder: builder(params)});
             },

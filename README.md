@@ -4,10 +4,6 @@
     <img src="https://i.gyazo.com/0c6379061a007de589d30eebec795c19.png" width="370"/>
 </p>
 
-<p align="center">
-    <a href="https://www.npmjs.com/package/goo-js"><img src="https://nodei.co/npm/goo-js.png?mini=true" /></a>
-</p>
-
 Goo.js is a small framework made to jumpstart projects by solving common web application challenges. The default goo package includes state management, layout and routing functionality. Each of these parts are separate stand-alone modules that are combined together into the final goo function. All modules have a common `.use` function that accepts goo's configuration objects called blobs.
 
 # Top level api
