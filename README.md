@@ -35,6 +35,11 @@ app.redirect(path[, params]);
   // path: string of the new pathname
   // params: object to be passed to the route handler
 
+// renders layout from the new route
+app.show(path[, params]);
+  // path: string of the requested route's path
+  // params: object to be passed to the route handler
+
 // executes an action on the state
 app.act(type[, params]);
   // type: string of the action type

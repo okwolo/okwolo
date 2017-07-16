@@ -8,6 +8,7 @@ describe('goo-js', () => {
     beforeEach(() => {
         wrapper = document.createElement('div');
         document.body.appendChild(wrapper);
+        window.history.pushState({}, '', '/');
     });
 
     afterEach(() => {
@@ -35,6 +36,8 @@ describe('goo-js', () => {
             expect(app.getState)
                 .toBeInstanceOf(Function);
             expect(app.redirect)
+                .toBeInstanceOf(Function);
+            expect(app.show)
                 .toBeInstanceOf(Function);
             expect(app.act)
                 .toBeInstanceOf(Function);
@@ -151,6 +154,35 @@ describe('goo-js', () => {
             app.redirect('/test/xyz');
             expect(window.location.pathname)
                 .toBe('/test/xyz');
+        });
+
+        it('should change the layout', async () => {
+            const app = goo(wrapper);
+            app.setState({});
+            app('/test/:content', ({content}) => () => content);
+            app.redirect('/test/xyz');
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('xyz');
+        });
+    });
+
+    describe('show', () => {
+        it('should change the pathname', () => {
+            const app = goo();
+            app.show('/test/xyz');
+            expect(window.location.pathname)
+                .not.toBe('/test/xyz');
+        });
+
+        it('should change the layout', async () => {
+            const app = goo(wrapper);
+            app.setState({});
+            app('/test/:content', ({content}) => () => content);
+            app.show('/test/xyz');
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('xyz');
         });
     });
 

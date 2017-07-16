@@ -93,6 +93,7 @@ const goo = (rootElement, _window = window) => {
         setState,
         getState,
         redirect: routeHandler.redirect,
+        show: routeHandler.show,
         act,
         use,
         update,

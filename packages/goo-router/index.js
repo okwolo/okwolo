@@ -81,8 +81,8 @@ const router = (_window = window) => {
 
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
-        assert(isString(path), '@goo.router.redirect : redirect path is not a string', path);
-        assert(isObject(params), '@goo.router.redirect : redirect params is not an object', params);
+        assert(isString(path), '@goo.router.redirect : path is not a string', path);
+        assert(isObject(params), '@goo.router.redirect : params is not an object', params);
         currentPath = path;
         if (isHosted) {
             /* edge doesn't care that the file is local and will allow pushState.
@@ -93,6 +93,12 @@ const router = (_window = window) => {
             console.log(`goo-router:: path changed to\n>>> ${currentPath}`);
         }
         return fetch(pathStore)(currentPath, params);
+    };
+
+    const show = (path, params = {}) => {
+        assert(isString(path), '@goo.router.show : path is not a string', path);
+        assert(isObject(params), '@goo.router.show : params is not an object', params);
+        return fetch(pathStore)(path, params);
     };
 
     // replace the base url, adjust the current and try to fetch with the new url
@@ -110,7 +116,7 @@ const router = (_window = window) => {
         }, blob);
     };
 
-    return {redirect, use};
+    return {redirect, show, use};
 };
 
 module.exports = router;

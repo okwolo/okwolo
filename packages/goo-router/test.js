@@ -3,6 +3,10 @@
 const router = require('./');
 
 describe('goo-router', () => {
+    beforeEach(() => {
+        window.history.pushState({}, '', '/');
+    });
+
     it('should return a function', () => {
         expect(router)
             .toBeInstanceOf(Function);
@@ -42,6 +46,35 @@ describe('goo-router', () => {
                 callback: test,
             }});
             app.redirect('/user/123/fetch/name');
+            expect(test)
+                .toHaveBeenCalledWith({id: '123', field: 'name'});
+        });
+    });
+
+    describe('show', () => {
+        it('should reject malformed paths', () => {
+            expect(() => router().show(undefined))
+                .toThrow(/path/);
+        });
+
+        it('should accept no params', () => {
+            router().show('/', undefined);
+        });
+
+        it('should not change the pathname', () => {
+            router().show('/test/xyz');
+            expect(window.location.pathname)
+                .not.toBe('/test/xyz');
+        });
+
+        it('should accumulate params and pass them to the callback', () => {
+            const test = jest.fn();
+            let app = router();
+            app.use({route: {
+                path: '/user/:id/fetch/:field',
+                callback: test,
+            }});
+            app.show('/user/123/fetch/name');
             expect(test)
                 .toHaveBeenCalledWith({id: '123', field: 'name'});
         });
@@ -135,8 +168,8 @@ describe('goo-router', () => {
 
             it('should be applied to the current pathname', () => {
                 const test = jest.fn();
-                let app = router();
                 window.history.pushState({}, '', '/testBase/test');
+                let app = router();
                 app.use({route: {
                     path: '/test',
                     callback: test,
