@@ -38,7 +38,6 @@ app.getState();
 app.redirect(path[, params]);
   // path: string of the new pathname
   // params: object to be passed to the route handler
-  // returns: boolean value showing if path was matched
 
 // executes an action on the state
 app.act(type[, params]);
@@ -196,6 +195,7 @@ Here is the list of the recognized blob keys and the modules that consume them.
 let action = {type, target, handler}
   // type: string which names the action
   // target: array to restrict the scope of an action to a specific "address" in the state
+  //   OR    function which returns the action's target [(state, params) => ... target]
   // handler: function that makes the change on the target [(target, params) => modifiedTarget]
 ````
 

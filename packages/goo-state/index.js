@@ -15,13 +15,21 @@ const state = () => {
         assert(isDefined(actions[type]), `@goo.state.execute : action type '${type}' was not found`);
         actions[type].forEach((currentAction) => {
             let target = deepCopy(newState);
-            if (currentAction.target.length > 0) {
+            let targetAddress = currentAction.target;
+            if (isFunction(targetAddress)) {
+                targetAddress = targetAddress(deepCopy(state), params);
+                assert(isArray(targetAddress), `@goo.state.execute : dynamic target of action ${type} is not an array`, targetAddress);
+                targetAddress.forEach((address) => {
+                    assert(isString(address), `@goo.state.execute : dynamic target of action ${type} is not an array of strings`, targetAddress);
+                });
+            }
+            if (targetAddress.length > 0) {
                 let reference = newState;
-                currentAction.target.forEach((key, i, a) => {
-                    assert(isDefined(target[key]), `@goo.state.execute : target of action ${type} does not exist: @state.${currentAction.target.slice(0, i+1).join('.')}`);
+                targetAddress.forEach((key, i, a) => {
+                    assert(isDefined(target[key]), `@goo.state.execute : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
                     if (i === a.length - 1) {
                         let newValue = currentAction.handler(target[key], params);
-                        assert(isDefined(newValue), `@goo.state.execute : result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
+                        assert(isDefined(newValue), `@goo.state.execute : result of action ${type} on target @state${targetAddress[0]?'.':''}${targetAddress.join('.')} is undefined`);
                         reference[key] = newValue;
                     } else {
                         target = target[key];
@@ -30,7 +38,7 @@ const state = () => {
                 });
             } else {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), `@goo.state.execute : result of action ${type} on target @state${currentAction.target[0]?'.':''}${currentAction.target.join('.')} is undefined`);
+                assert(isDefined(newState), `@goo.state.execute : result of action ${type} on target @state${targetAddress[0]?'.':''}${targetAddress.join('.')} is undefined`);
             }
         });
 
@@ -70,10 +78,13 @@ const state = () => {
         const {type, handler, target} = action;
         assert(isString(type), `@goo.state.addAction : action type "${type}" is not a string`, action);
         assert(isFunction(handler), `@goo.state.addAction : handler for action ${type} is not a function`, handler);
-        assert(isArray(target), `@goo.state.addAction : target of action ${type} is not an array`, target);
-        target.forEach((address) => {
-            assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings ${target}`);
-        });
+        if (isArray(target)) {
+            target.forEach((address) => {
+                assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings`, target);
+            });
+        } else {
+            assert(isFunction(target), `@goo.state.addAction : target of action ${type} is not valid`, target);
+        }
         if (actions[type] === undefined) {
             actions[type] = [action];
         } else {

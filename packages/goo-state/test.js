@@ -290,6 +290,37 @@ describe('goo-state', () => {
                     app.act({a: {b: {c: 'success!'}}}, 'TEST');
                 });
 
+                it('should support dynamic action targets', () => {
+                    const app = state();
+                    app.use({action: {
+                        type: 'TEST',
+                        target: (state, params) => {
+                            expect(state)
+                                .toEqual({a: {b: {c: 'success!'}}});
+                            expect(params)
+                                .toEqual({test: true});
+                            return ['a', 'b', 'c'];
+                        },
+                        handler: (target) => {
+                            expect(target)
+                                .toBe('success!');
+                            return target;
+                        },
+                    }});
+                    app.act({a: {b: {c: 'success!'}}}, 'TEST', {test: true});
+                });
+
+                it('should fail when dynamic targets are invalid', () => {
+                    const app = state();
+                    app.use({action: {
+                        type: 'TEST',
+                        target: () => [{}],
+                        handler: () => {},
+                    }});
+                    expect(() => app.act({}, 'TEST'))
+                        .toThrow(/dynamic[^]*string/);
+                });
+
                 it('should reject unreachable targets', () => {
                     const app = state();
                     app.use(testAction(null, ['a', 'b']));
