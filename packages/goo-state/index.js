@@ -12,24 +12,24 @@ const state = () => {
     // exectute an action on the state
     const execute = (state, type, params) => {
         let newState = deepCopy(state);
-        assert(isDefined(actions[type]), `@goo.state.execute : action type '${type}' was not found`);
+        assert(isDefined(actions[type]), `state.execute : action type '${type}' was not found`);
         actions[type].forEach((currentAction) => {
-            let target = deepCopy(newState);
             let targetAddress = currentAction.target;
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
-                assert(isArray(targetAddress), `@goo.state.execute : dynamic target of action ${type} is not an array`, targetAddress);
+                assert(isArray(targetAddress), `state.execute : dynamic target of action ${type} is not an array`, targetAddress);
                 targetAddress.forEach((address) => {
-                    assert(isString(address), `@goo.state.execute : dynamic target of action ${type} is not an array of strings`, targetAddress);
+                    assert(isString(address), `state.execute : dynamic target of action ${type} is not an array of strings`, targetAddress);
                 });
             }
+            let target = deepCopy(newState);
             if (targetAddress.length > 0) {
                 let reference = newState;
-                targetAddress.forEach((key, i, a) => {
-                    assert(isDefined(target[key]), `@goo.state.execute : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
-                    if (i === a.length - 1) {
+                targetAddress.forEach((key, i) => {
+                    assert(isDefined(target[key]), `state.execute : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
+                    if (i === targetAddress.length - 1) {
                         let newValue = currentAction.handler(target[key], params);
-                        assert(isDefined(newValue), `@goo.state.execute : result of action ${type} on target @state${targetAddress[0]?'.':''}${targetAddress.join('.')} is undefined`);
+                        assert(isDefined(newValue), `state.execute : result of action ${type} on target @state${targetAddress.join('.')} is undefined`);
                         reference[key] = newValue;
                     } else {
                         target = target[key];
@@ -38,7 +38,7 @@ const state = () => {
                 });
             } else {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), `@goo.state.execute : result of action ${type} on target @state${targetAddress[0]?'.':''}${targetAddress.join('.')} is undefined`);
+                assert(isDefined(newState), `state.execute : result of action ${type} on target @state is undefined`);
             }
         });
 
@@ -67,8 +67,8 @@ const state = () => {
 
     // apply wrapper that uses the wait queue
     const act = (state, type, params = {}) => {
-        assert(isDefined(state), '@goo.state.act : cannot call act with undefined state');
-        assert(isDefined(type), '@goo.state.act : cannot call act with undefined type');
+        assert(isString(type), 'state.act : action type is not a string', type);
+        assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
         queue.add(() => {
             apply(state, type, params);
         });
@@ -76,14 +76,14 @@ const state = () => {
 
     const addAction = (action) => {
         const {type, handler, target} = action;
-        assert(isString(type), `@goo.state.addAction : action type "${type}" is not a string`, action);
-        assert(isFunction(handler), `@goo.state.addAction : handler for action ${type} is not a function`, handler);
+        assert(isString(type), 'state.addAction : action\'s type is not a string', action, type);
+        assert(isFunction(handler), `state.addAction : handler for action ${type} is not a function`, action, handler);
         if (isArray(target)) {
             target.forEach((address) => {
-                assert(isString(address), `@goo.state.addAction : target of action type ${type} is not an array of strings`, target);
+                assert(isString(address), `state.addAction : target of action ${type} is not an array of strings`, action, target);
             });
         } else {
-            assert(isFunction(target), `@goo.state.addAction : target of action ${type} is not valid`, target);
+            assert(isFunction(target), `state.addAction : target of action ${type} is not valid`, target);
         }
         if (actions[type] === undefined) {
             actions[type] = [action];
@@ -93,12 +93,12 @@ const state = () => {
     };
 
     const addMiddleware = (handler) => {
-        assert(isFunction(handler), '@goo.state.addMiddleware : middleware is not a function', handler);
+        assert(isFunction(handler), 'state.addMiddleware : middleware is not a function', handler);
         middleware.push(handler);
     };
 
     const addWatcher = (handler) => {
-        assert(isFunction(handler), '@goo.state.addWatcher : watcher is not a function', handler);
+        assert(isFunction(handler), 'state.addWatcher : watcher is not a function', handler);
         watchers.push(handler);
     };
 

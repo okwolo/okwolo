@@ -5,6 +5,8 @@ const pathToRegexp = require('path-to-regexp');
 const {assert, isString, isObject, isFunction, blobHandler} = require('goo-utils')();
 
 const router = (_window = window) => {
+    const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
+
     // store all the registered routes
     const pathStore = [];
 
@@ -13,8 +15,6 @@ const router = (_window = window) => {
 
     // track if a path has matched on page load
     let hasMatched = false;
-
-    let isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     // removes base url from a path
     let removeBaseUrl = (path) => {
@@ -39,10 +39,7 @@ const router = (_window = window) => {
         who's route matches path argument*/
     const fetch = (store) => (path, params) => {
         let found = false;
-        store.forEach((registeredPath) => {
-            if (found) {
-                return;
-            }
+        store.find((registeredPath) => {
             let test = registeredPath.pattern.exec(path);
             if (test === null) {
                 return;
@@ -53,6 +50,7 @@ const router = (_window = window) => {
                 params[key.name] = test[i];
             });
             registeredPath.callback(params);
+            return found;
         });
         return found;
     };
@@ -65,24 +63,21 @@ const router = (_window = window) => {
 
     // register wrapper that runs the current page's url against new routes
     const addRoute = ({path, callback}) => {
-        assert(isString(path), '@goo.router.addRoute : register path is not a string', path);
-        assert(isFunction(callback), `@goo.router.addRoute : callback for path is not a function\n>>>${path}`, callback);
+        assert(isString(path), 'router.addRoute : path is not a string', path);
+        assert(isFunction(callback), 'router.addRoute : callback is not a function', path, callback);
         register(pathStore)(path, callback);
         // checking new path against current pathname
         if (!hasMatched) {
-            const temp = [];
-            register(temp)(path, callback);
-            let found = fetch(temp)(currentPath, _window.history.state || {});
-            if (found) {
-                hasMatched = true;
-            }
+            const tempStore = [];
+            register(tempStore)(path, callback);
+            hasMatched = !!fetch(tempStore)(currentPath, _window.history.state || {});
         }
     };
 
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
-        assert(isString(path), '@goo.router.redirect : path is not a string', path);
-        assert(isObject(params), '@goo.router.redirect : params is not an object', params);
+        assert(isString(path), 'router.redirect : path is not a string', path);
+        assert(isObject(params), 'router.redirect : params is not an object', params);
         currentPath = path;
         if (isHosted) {
             /* edge doesn't care that the file is local and will allow pushState.
@@ -95,15 +90,16 @@ const router = (_window = window) => {
         return fetch(pathStore)(currentPath, params);
     };
 
+    // fetch wrapper which does not change the url
     const show = (path, params = {}) => {
-        assert(isString(path), '@goo.router.show : path is not a string', path);
-        assert(isObject(params), '@goo.router.show : params is not an object', params);
+        assert(isString(path), 'router.show : path is not a string', path);
+        assert(isObject(params), 'router.show : params is not an object', params);
         return fetch(pathStore)(path, params);
     };
 
     // replace the base url, adjust the current and try to fetch with the new url
     const replaceBaseUrl = (base) => {
-        assert(isString(base), '@goo.router.replaceBaseUrl : base url is not a string', base);
+        assert(isString(base), 'router.replaceBaseUrl : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         fetch(pathStore)(currentPath, _window.history.state || {});

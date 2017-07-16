@@ -23,7 +23,7 @@ const blob = (_window = window) => {
 
     // initial draw to container
     const draw = (target, vdom) => {
-        assert(isNode(target), '@goo.dom.draw : target is not a DOM node', target);
+        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
         if (!isDefined(vdom)) {
             vdom = {text: ''};
         }
@@ -49,7 +49,7 @@ const blob = (_window = window) => {
 
     // update vdom and real DOM to new state
     const update = (target, newVdom, vdom) => {
-        assert(isNode(target), '@goo.dom.update : target is not a DOM node', target);
+        assert(isNode(target), 'dom.update : target is not a DOM node', target);
         // using a queue to clean up deleted nodes after diffing finishes
         let queue = makeQueue();
         _window.requestAnimationFrame(() => {
@@ -134,24 +134,24 @@ const blob = (_window = window) => {
         if (isString(element)) {
             return {text: element};
         }
-        assert(isArray(element), '@goo.dom.build : vdom object is not an array or string', element);
+        assert(isArray(element), 'dom.build : vdom object is not an array or string', element);
         if (isFunction(element[0])) {
             let props = element[1] || {};
-            assert(isObject(props), '@goo.dom.build : component\'s props is not an object', props);
+            assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
             let children = element[2] || [];
-            assert(isArray(children), '@goo.dom.build : component\'s children is not an array', children);
+            assert(isArray(children), 'dom.build : component\'s children is not an array', element, children);
             return build(element[0](Object.assign({}, props, {children})));
         }
         let [tagType, attributes, children] = element;
-        assert(isString(tagType), '@goo.dom.build : tag property is not a string', tagType);
+        assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
         // capture groups: tagName, id, className, style
         const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-        assert(isArray(match), '@goo.dom.build : tag property cannot be parsed', tagType);
+        assert(isArray(match), 'dom.build : tag property cannot be parsed', tagType);
         let [, tagName, id, className, style] = match;
         if (attributes == null) {
             attributes = {};
         }
-        assert(isObject(attributes), '@goo.dom.build : attributes is not an object', attributes);
+        assert(isObject(attributes), 'dom.build : attributes is not an object', element, attributes);
         if (isDefined(id) && !isDefined(attributes.id)) {
             attributes.id = id.trim();
         }
@@ -171,7 +171,7 @@ const blob = (_window = window) => {
             }
         }
         if (isDefined(children)) {
-            assert(isArray(children), '@goo.dom.build : children of vdom object is not an array', children);
+            assert(isArray(children), 'dom.build : children of vdom object is not an array', element, children);
         } else {
             children = [];
         }

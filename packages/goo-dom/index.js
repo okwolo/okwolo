@@ -42,30 +42,30 @@ const dom = (_target, _window = window) => {
     };
 
     const replaceDraw = (newDraw) => {
-        assert(isFunction(newDraw), '@goo.dom.replaceDraw : new draw is not a function', newDraw);
+        assert(isFunction(newDraw), 'dom.replaceDraw : new draw is not a function', newDraw);
         draw = newDraw;
         canDraw(drawToTarget);
     };
 
     const replaceUpdate = (newUpdate) => {
-        assert(isFunction(newUpdate), '@goo.dom.replaceUpdate : new target updater is not a function', newUpdate);
+        assert(isFunction(newUpdate), 'dom.replaceUpdate : new target updater is not a function', newUpdate);
         update = newUpdate;
     };
 
     const replaceBuild = (newBuild) => {
-        assert(isFunction(newBuild), '@goo.dom.replaceBuild : new build is not a function', newBuild);
+        assert(isFunction(newBuild), 'dom.replaceBuild : new build is not a function', newBuild);
         build = newBuild;
         canDraw(() => update(target, create(state), vdom));
     };
 
     const replacePrebuild = (newPrebuild) => {
-        assert(isFunction(newPrebuild), '@goo.dom.replacePrebuild : new prebuild is not a function', newPrebuild);
+        assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
         canDraw(() => update(target, create(state), vdom));
     };
 
     const replacePostbuild = (newPostbuild) => {
-        assert(isFunction(newPostbuild), '@goo.dom.replacePostbuild : new postbuild is not a function', newPostbuild);
+        assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
         canDraw(() => update(target, create(state), vdom));
     };
@@ -76,7 +76,7 @@ const dom = (_target, _window = window) => {
     };
 
     const replaceBuilder = (newBuilder) => {
-        assert(isFunction(newBuilder), '@goo.dom.replaceBuilder : builder is not a function', newBuilder);
+        assert(isFunction(newBuilder), 'dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
         canDraw(() => {
             if (!hasDrawn) {
@@ -87,7 +87,7 @@ const dom = (_target, _window = window) => {
     };
 
     const updateState = (newState) => {
-        assert(isDefined(newState), '@goo.dom.updateState : new state is not defined', newState);
+        assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
         canDraw(() => {
             if (!hasDrawn) {
@@ -123,9 +123,11 @@ const dom = (_target, _window = window) => {
     use(createDefaultBlob(_window));
 
     const setState = (_state) => {
-        use({state: isFunction(_state)
-            ? _state(state)
-            : _state});
+        if (isFunction(_state)) {
+            use({state: _state(state)});
+            return;
+        }
+        use({state: _state});
     };
 
     const getState = () => {

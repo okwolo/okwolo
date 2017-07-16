@@ -3,8 +3,10 @@
 const {deepCopy} = require('goo-utils')();
 
 const history = () => {
+    const initial = {};
+
     let past = [];
-    let current = {__unset__: true};
+    let current = initial;
     let future = [];
 
     const historyLength = 20;
@@ -14,7 +16,7 @@ const history = () => {
         type: 'UNDO',
         target: [],
         handler: () => {
-            if (past.length > 0 && (!past[past.length-1] || past[past.length-1].__unset__ !== true)) {
+            if (past.length > 0 && past[past.length-1] !== initial) {
                 future.push(current);
                 return past.pop();
             } else {

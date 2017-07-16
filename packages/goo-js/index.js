@@ -11,17 +11,18 @@ const goo = (rootElement, _window = window) => {
     const stateHandler = state();
     const routeHandler = router(_window);
 
-    let _state = {__unset__: true};
+    const initial = {};
+    let _state = initial;
 
     // forwarding use calls
     const use = (blob) => {
         return [domHandler, stateHandler, routeHandler]
-            .map((g) => g.use(blob));
+            .map((module) => module.use(blob));
     };
 
     // adding blobs
     [history]
-        .forEach((b) => use(b));
+        .forEach((blob) => use(blob));
 
     // add watcher to keep track of current state
     use({watcher:
@@ -46,9 +47,9 @@ const goo = (rootElement, _window = window) => {
 
     // adding currentState and forwarding act calls
     const act = (type, params) => {
-        assert(!(_state && _state.__unset__) || type === '__OVERRIDE__', '@goo.act : cannot act on state before it has been set');
+        assert(_state !== initial || type === '__OVERRIDE__', 'act : cannot act on state before it has been set');
         if (isFunction(type)) {
-            act('__OVERRIDE__', type(deepCopy(_state)));
+            stateHandler.act(_state, '__OVERRIDE__', type(deepCopy(_state)));
             return;
         }
         stateHandler.act(_state, type, params);
@@ -56,16 +57,17 @@ const goo = (rootElement, _window = window) => {
 
     // override state
     const setState = (replacement) => {
-        act('__OVERRIDE__', isFunction(replacement)
-            ? replacement(deepCopy(_state))
-            : replacement);
+        if (isFunction(replacement)) {
+            act('__OVERRIDE__', replacement(deepCopy(_state)));
+            return;
+        }
+        act('__OVERRIDE__', replacement);
     };
 
     // register a route/controller combo
     const register = (path, builder) => {
         if (isFunction(path)) {
-            builder = path();
-            use({builder});
+            use({builder: path()});
             return;
         }
         use({route: {
@@ -85,7 +87,7 @@ const goo = (rootElement, _window = window) => {
     };
 
     const getState = () => {
-        assert(!(_state && _state.__unset__), '@goo.getState : cannot get state before it has been set');
+        assert(_state !== initial, 'getState : cannot get state before it has been set');
         return deepCopy(_state);
     };
 

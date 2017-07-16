@@ -30,19 +30,19 @@ const utils = () => {
 
     // displays error message
     const err = (message) => {
-        throw new Error(`gooErr:: ${message}`);
+        throw new Error(`@goo.${message}`);
     };
 
     // throw errors when assertion fails
-    const assert = (result, message, ...culprits) => {
+    const assert = (assertion, message, ...culprits) => {
         const print = (obj) => {
-            return '\n>>> ' + JSON.stringify(obj, (key, value) => {
+            return '\n>>> ' + String(JSON.stringify(obj, (key, value) => {
                 return (typeof value === 'function')
                     ? value.toString()
                     : value;
-            }, 2);
+            }, 2)).replace(/\n/g, '\n    ');
         };
-        if (!result) {
+        if (!assertion) {
             if (culprits.length > 0) {
                 message += culprits.map(print).join('');
             }
@@ -60,7 +60,7 @@ const utils = () => {
             }
         };
         const add = (func) => {
-            assert(isFunction(func), '@goo.utils.makeQueue.add : added objects must be a function');
+            assert(isFunction(func), 'utils.makeQueue.add : added objects must be a function', func);
             queue.push(func);
             if (queue.length === 1) {
                 run();
@@ -76,9 +76,9 @@ const utils = () => {
     // handle common blob logic
     const blobNames = {};
     const blobHandler = (blobs, blob = {}, queue) => {
-        assert(isObject(blob), '@goo.utils.blobHandler : blob is not an object', blob);
+        assert(isObject(blob), 'utils.blobHandler : blob is not an object', blob);
         if (isDefined(blob.name)) {
-            assert(isString(blob.name), '@goo.utils.blobHandler : a blob name must be a string', blob);
+            assert(isString(blob.name), 'utils.blobHandler : a blob name must be a string', blob, blob.name);
             if (blobNames[blob.name] === true) {
                 return null;
             } else {
@@ -86,10 +86,7 @@ const utils = () => {
             }
         }
         return Object.keys(blob).map((key) => {
-            let blobObject = blob[key];
-            if (!isArray(blobObject)) {
-                blobObject = [blobObject];
-            }
+            let blobObject = [].concat(blob[key]);
             if (!isDefined(blobs[key])) {
                 return blobObject.map(() => null);
             }

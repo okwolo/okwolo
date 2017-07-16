@@ -181,9 +181,9 @@ describe('goo-state', () => {
         it('should require both state and action arguments', () => {
             const app = state();
             expect(() => app.act())
-                .toThrow(/undefined state/);
+                .toThrow(/state/);
             expect(() => app.act({}))
-                .toThrow(/undefined type/);
+                .toThrow(/type/);
         });
 
         it('should return undefined', () => {
@@ -379,7 +379,7 @@ describe('goo-state', () => {
                         next('a', 'TEST', 'b');
                     }});
                     app.use({watcher: test});
-                    app.act(1, 2, 3);
+                    app.act(1, '2', 3);
                     expect(test)
                         .toHaveBeenCalledWith('a', 'TEST', 'b');
                 });
