@@ -1,16 +1,16 @@
 {
   "name": "goo-js",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "repository": {
     "type": "git",
     "url": "http://www.github.com/goo-js/goo-js.git"
   },
   "dependencies": {
-    "goo-dom": "^2.3.4",
-    "goo-history": "^2.3.4",
-    "goo-router": "^2.3.4",
-    "goo-state": "^2.3.4",
-    "goo-utils": "^2.3.4"
+    "goo-dom": "^2.3.5",
+    "goo-history": "^2.3.5",
+    "goo-router": "^2.3.5",
+    "goo-state": "^2.3.5",
+    "goo-utils": "^2.3.5"
   },
   "author": "g-harel",
   "license": "MIT"
