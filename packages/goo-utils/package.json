@@ -3,7 +3,7 @@
   "version": "2.3.4",
   "repository": {
     "type": "git",
-    "url": "http://www.github.com/g-harel/goo.git"
+    "url": "http://www.github.com/goo-js/goo-js.git"
   },
   "author": "g-harel",
   "license": "MIT"

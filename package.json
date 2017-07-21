@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/g-harel/goo.git"
+    "url": "http://github.com/goo-js/goo-js.git"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
