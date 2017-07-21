@@ -8,7 +8,7 @@
     "test": "run-s test:*",
     "test:eslint": "eslint **/*.js --ignore-path .gitignore",
     "test:jest": "jest",
-    "coveralls": "jest --coverage && cat coverage/lcov.info | coveralls",
+    "codecov": "jest --coverage && codecov",
     "build": "webpack"
   },
   "repository": {
@@ -19,8 +19,8 @@
     "babel-core": "^6.22.1",
     "babel-loader": "^7.1.1",
     "babel-preset-es2015": "^6.22.0",
+    "codecov": "^2.2.0",
     "compression-webpack-plugin": "^0.4.0",
-    "coveralls": "^2.13.1",
     "del": "^3.0.0",
     "eslint": "^4.2.0",
     "eslint-config-google": "^0.9.1",
