@@ -1,0 +1,14 @@
+{
+  "name": "@okwolo/router",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "http://www.github.com/okwolo/okwolo.git"
+  },
+  "dependencies": {
+    "@okwolo/utils": "^1.0.0",
+    "path-to-regexp": "^1.7.0"
+  },
+  "author": "g-harel",
+  "license": "MIT"
+}

@@ -1,0 +1,155 @@
+0 silly input []
+1 silly flags { _: [ 'bootstrap' ], args: [] }
+2 verbose rootPath C:\Users\Gabriel\Documents\dev\goo
+3 info version 2.0.0
+4 silly existsSync C:\Users\Gabriel\Documents\dev\goo\VERSION
+5 silly initialize attempt
+6 silly initialize success
+7 silly execute attempt
+8 info Bootstrapping 6 packages
+9 info lifecycle preinstall
+10 silly runScript preinstall @okwolo/dom
+11 silly @okwolo/dom
+12 silly runScript preinstall @okwolo/history
+13 silly @okwolo/history
+14 silly runScript preinstall @okwolo/router
+15 silly @okwolo/router
+16 silly runScript preinstall @okwolo/utils
+17 silly @okwolo/utils
+18 silly runScript preinstall @okwolo/state
+19 silly @okwolo/state
+20 silly runScript preinstall okwolo
+21 silly okwolo
+22 silly hasMatchingDependency @okwolo/state @okwolo/utils
+23 silly hasMatchingDependency okwolo @okwolo/dom
+24 silly hasMatchingDependency okwolo @okwolo/history
+25 silly hasMatchingDependency okwolo @okwolo/router
+26 silly hasDependencyInstalled @okwolo/dom @okwolo/utils
+27 silly dependencyIsSatisfied [ '@okwolo/utils',
+27 silly dependencyIsSatisfied   '^1.0.0',
+27 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom\\node_modules' ]
+28 verbose dependencyIsSatisfied @okwolo/utils false
+29 silly hasDependencyInstalled @okwolo/history @okwolo/utils
+30 silly dependencyIsSatisfied [ '@okwolo/utils',
+30 silly dependencyIsSatisfied   '^1.0.0',
+30 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-history\\node_modules' ]
+31 verbose dependencyIsSatisfied @okwolo/utils false
+32 silly hasDependencyInstalled @okwolo/router @okwolo/utils
+33 silly dependencyIsSatisfied [ '@okwolo/utils',
+33 silly dependencyIsSatisfied   '^1.0.0',
+33 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-router\\node_modules' ]
+34 verbose dependencyIsSatisfied @okwolo/utils false
+35 silly hasDependencyInstalled okwolo @okwolo/utils
+36 silly dependencyIsSatisfied [ '@okwolo/utils',
+36 silly dependencyIsSatisfied   '^1.0.0',
+36 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo\\node_modules' ]
+37 verbose dependencyIsSatisfied @okwolo/utils false
+38 silly hasDependencyInstalled @okwolo/router path-to-regexp
+39 silly dependencyIsSatisfied [ 'path-to-regexp',
+39 silly dependencyIsSatisfied   '^1.7.0',
+39 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-router\\node_modules' ]
+40 verbose dependencyIsSatisfied path-to-regexp true
+41 silly hasDependencyInstalled okwolo @okwolo/state
+42 silly dependencyIsSatisfied [ '@okwolo/state',
+42 silly dependencyIsSatisfied   '^1.0.0',
+42 silly dependencyIsSatisfied   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo\\node_modules' ]
+43 verbose dependencyIsSatisfied @okwolo/state false
+44 silly root dependencies []
+45 silly leaf dependencies {
+45 silly leaf dependencies   "@okwolo/dom": [
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "@okwolo/utils@^1.0.0",
+45 silly leaf dependencies       "isSatisfied": false
+45 silly leaf dependencies     }
+45 silly leaf dependencies   ],
+45 silly leaf dependencies   "@okwolo/history": [
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "@okwolo/utils@^1.0.0",
+45 silly leaf dependencies       "isSatisfied": false
+45 silly leaf dependencies     }
+45 silly leaf dependencies   ],
+45 silly leaf dependencies   "@okwolo/router": [
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "@okwolo/utils@^1.0.0",
+45 silly leaf dependencies       "isSatisfied": false
+45 silly leaf dependencies     },
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "path-to-regexp@^1.7.0",
+45 silly leaf dependencies       "isSatisfied": true
+45 silly leaf dependencies     }
+45 silly leaf dependencies   ],
+45 silly leaf dependencies   "okwolo": [
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "@okwolo/utils@^1.0.0",
+45 silly leaf dependencies       "isSatisfied": false
+45 silly leaf dependencies     },
+45 silly leaf dependencies     {
+45 silly leaf dependencies       "dependency": "@okwolo/state@^1.0.0",
+45 silly leaf dependencies       "isSatisfied": false
+45 silly leaf dependencies     }
+45 silly leaf dependencies   ]
+45 silly leaf dependencies }
+46 info Installing external dependencies
+47 verbose actions 4 actions, concurrency 4
+48 silly installInDir okwolo-dom [ '@okwolo/utils@^1.0.0' ]
+49 silly installInDir backup C:\Users\Gabriel\Documents\dev\goo\packages\okwolo-dom\package.json
+50 silly rename [ 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom\\package.json',
+50 silly rename   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom\\package.json.lerna_backup' ]
+51 silly installInDir okwolo-history [ '@okwolo/utils@^1.0.0' ]
+52 silly installInDir backup C:\Users\Gabriel\Documents\dev\goo\packages\okwolo-history\package.json
+53 silly rename [ 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-history\\package.json',
+53 silly rename   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-history\\package.json.lerna_backup' ]
+54 silly installInDir okwolo-router [ '@okwolo/utils@^1.0.0', 'path-to-regexp@^1.7.0' ]
+55 silly installInDir backup C:\Users\Gabriel\Documents\dev\goo\packages\okwolo-router\package.json
+56 silly rename [ 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-router\\package.json',
+56 silly rename   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-router\\package.json.lerna_backup' ]
+57 silly installInDir okwolo [ '@okwolo/utils@^1.0.0', '@okwolo/state@^1.0.0' ]
+58 silly installInDir backup C:\Users\Gabriel\Documents\dev\goo\packages\okwolo\package.json
+59 silly rename [ 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo\\package.json',
+59 silly rename   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo\\package.json.lerna_backup' ]
+60 silly installInDir writing tempJson { dependencies: { '@okwolo/utils': '^1.0.0' } }
+61 silly installInDir writing tempJson { dependencies: { '@okwolo/utils': '^1.0.0' } }
+62 silly installInDir writing tempJson { dependencies: { '@okwolo/utils': '^1.0.0', '@okwolo/state': '^1.0.0' } }
+63 silly installInDir writing tempJson { dependencies: { '@okwolo/utils': '^1.0.0', 'path-to-regexp': '^1.7.0' } }
+64 silly getExecOpts { cwd: 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom' }
+65 silly installInDir [ 'npm', [ 'install' ] ]
+66 silly getExecOpts { cwd: 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-history' }
+67 silly installInDir [ 'npm', [ 'install' ] ]
+68 silly getExecOpts { cwd: 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo' }
+69 silly installInDir [ 'npm', [ 'install' ] ]
+70 silly getExecOpts { cwd: 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-router' }
+71 silly installInDir [ 'npm', [ 'install' ] ]
+72 silly installInDir cleanup C:\Users\Gabriel\Documents\dev\goo\packages\okwolo-dom\package.json
+73 silly renameSync [ 'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom\\package.json.lerna_backup',
+73 silly renameSync   'C:\\Users\\Gabriel\\Documents\\dev\\goo\\packages\\okwolo-dom\\package.json' ]
+74 verbose installed leaf @okwolo/dom
+75 error execute Error: Command failed: npm install
+75 error execute npm ERR! code E404
+75 error execute npm ERR! 404 Not Found: @okwolo/utils@^1.0.0
+75 error execute
+75 error execute npm ERR! A complete log of this run can be found in:
+75 error execute npm ERR!     C:\Users\Gabriel\AppData\Roaming\npm-cache\_logs\2017-07-28T01_03_55_390Z-debug.log
+75 error execute
+75 error execute     at Promise.all.then.arr (C:\Users\Gabriel\Documents\dev\goo\node_modules\execa\index.js:210:11)
+75 error execute     at <anonymous>
+75 error execute     at process._tickCallback (internal/process/next_tick.js:169:7)
+75 error execute  callback with error
+75 error execute  { Error: Command failed: npm install
+75 error execute npm ERR! code E404
+75 error execute npm ERR! 404 Not Found: @okwolo/utils@^1.0.0
+75 error execute
+75 error execute npm ERR! A complete log of this run can be found in:
+75 error execute npm ERR!     C:\Users\Gabriel\AppData\Roaming\npm-cache\_logs\2017-07-28T01_03_55_390Z-debug.log
+75 error execute
+75 error execute     at Promise.all.then.arr (C:\Users\Gabriel\Documents\dev\goo\node_modules\execa\index.js:210:11)
+75 error execute     at <anonymous>
+75 error execute     at process._tickCallback (internal/process/next_tick.js:169:7)
+75 error execute   stack: 'Error: Command failed: npm install\nnpm ERR! code E404\nnpm ERR! 404 Not Found: @okwolo/utils@^1.0.0\n\nnpm ERR! A complete log of this run can be found in:\nnpm ERR!     C:\\Users\\Gabriel\\AppData\\Roaming\\npm-cache\\_logs\\2017-07-28T01_03_55_390Z-debug.log\n\n    at Promise.all.then.arr (C:\\Users\\Gabriel\\Documents\\dev\\goo\\node_modules\\execa\\index.js:210:11)\n    at <anonymous>\n    at process._tickCallback (internal/process/next_tick.js:169:7)',
+75 error execute   code: 1,
+75 error execute   killed: false,
+75 error execute   stdout: '',
+75 error execute   stderr: 'npm ERR! code E404\nnpm ERR! 404 Not Found: @okwolo/utils@^1.0.0\n\nnpm ERR! A complete log of this run can be found in:\nnpm ERR!     C:\\Users\\Gabriel\\AppData\\Roaming\\npm-cache\\_logs\\2017-07-28T01_03_55_390Z-debug.log\n',
+75 error execute   failed: true,
+75 error execute   signal: null,
+75 error execute   cmd: 'npm install',
+75 error execute   timedOut: false }

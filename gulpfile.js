@@ -7,16 +7,16 @@ const del = require('del');
 gulp.task('prepublish', () => {
     const readme = gulp.src('./README.md');
     return Promise.all(
-        globby.sync('./packages/goo-*')
+        globby.sync('./packages/okwolo*')
             .map((path) => readme.pipe(gulp.dest(path)))
     );
 });
 
 gulp.task('clean', () => {
     return del([
-        './packages/goo-*/README.md',
+        './packages/okwolo-*/README.md',
         './coverage',
-        './goo.min.js',
+        './okwolo.min.js',
         './npm-debug.log',
     ]);
 });

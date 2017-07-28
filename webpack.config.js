@@ -3,10 +3,10 @@
 const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = {
-    entry: './packages/goo-js',
+    entry: './packages/okwolo',
     output: {
         path: __dirname + '/',
-        filename: 'goo.min.js',
+        filename: 'okwolo.min.js',
     },
     module: {
         rules: [
@@ -25,7 +25,7 @@ module.exports = {
     plugins: [
         new CompressionPlugin({
             asset: '[path].gz',
-            test: /goo\.min\.js$/,
+            test: /okwolo\.min\.js$/,
         }),
     ],
 };

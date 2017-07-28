@@ -1,5 +1,5 @@
 {
-  "name": "goo",
+  "name": "okwolo",
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/goo-js/goo-js.git"
+    "url": "http://github.com/okwolo/okwolo.git"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
