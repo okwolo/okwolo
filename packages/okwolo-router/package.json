@@ -1,6 +1,12 @@
 {
   "name": "@okwolo/router",
   "version": "1.0.0",
+  "keywords": [
+    "okwolo",
+    "vdom",
+    "router",
+    "state"
+  ],
   "repository": {
     "type": "git",
     "url": "http://www.github.com/okwolo/okwolo.git"
