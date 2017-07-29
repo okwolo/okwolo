@@ -126,6 +126,24 @@ const blob = (_window = window) => {
         return vdom;
     };
 
+    const classnames = (...args) => {
+        return args
+            .map((arg) => {
+                if (isString(arg)) {
+                    return arg;
+                } else if (isArray(arg)) {
+                    return classnames(...arg);
+                } else if (isObject(arg)) {
+                    return classnames(
+                        Object.keys(arg)
+                            .map((key) => arg[key] && key)
+                    );
+                }
+            })
+            .filter(Boolean)
+            .join(' ');
+    };
+
     // build vdom from builder output
     const build = (element) => {
         if (isNull(element)) {
@@ -155,12 +173,11 @@ const blob = (_window = window) => {
         if (isDefined(id) && !isDefined(attributes.id)) {
             attributes.id = id.trim();
         }
-        if (isDefined(className)) {
-            if (!isDefined(attributes.className)) {
-                attributes.className = '';
-            }
-            attributes.className += className.replace(/\./g, ' ');
-            attributes.className = attributes.className.trim();
+        if (isDefined(attributes.className) || isDefined(className)) {
+            attributes.className = classnames(
+                attributes.className,
+                className,
+            ).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
         }
         if (isDefined(style)) {
             if (!isDefined(attributes.style)) {
@@ -176,9 +193,9 @@ const blob = (_window = window) => {
             children = [];
         }
         return {
-            tagName: tagName,
-            attributes: attributes,
-            children: children.map((c) => build(c)),
+            tagName,
+            attributes,
+            children: children.map(build),
         };
     };
 

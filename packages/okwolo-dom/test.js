@@ -177,6 +177,26 @@ describe('@okwolo/dom', () => {
                     .toBe('<test id="test"></test>');
             });
 
+            it('should implement classnames logic', async () => {
+                const app = dom(wrapper);
+                app.setState({});
+                app(() => ['test', {className: {
+                    test1: true,
+                    test2: undefined,
+                }}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test class="test1"></test>');
+                app(() => ['test.test4', {className: [
+                    'test1',
+                    {test2: false, test3: true},
+                    ['test5', {test6: true}],
+                ]}]);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test class="test1 test3 test5 test6 test4"></test>');
+            });
+
             it('should be possible to append an id to the tagName using #', async () => {
                 const app = dom(wrapper);
                 app.setState({});
