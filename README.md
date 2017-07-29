@@ -103,6 +103,14 @@ let elem = ['div#banner.nav.hidden | font-size: 20px;'];
   // <div id="banner" class="nav hidden" style="font-size: 20px;"></div>"
 ````
 
+Elements can also specify if they should be updated.
+
+````javascript
+let elem = ['div', {shouldUpdate: false}, [
+  // ...
+]]
+````
+
 ### component element
 
 ````javascript
