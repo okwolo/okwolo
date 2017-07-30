@@ -248,7 +248,7 @@ app.use({watcher});
 ````javascript
 let middleware = middleware
   // middleware: function that is given control of an action before it is executed
-  //    [(next, state, actionType, params) => ... next(state[, actionType[, params]])]
+  //    [(next, state, actionType, params) => ... next([state[, actionType[, params]]])]
 ````
 
 This syntax allows middlware to be asynchronous.
