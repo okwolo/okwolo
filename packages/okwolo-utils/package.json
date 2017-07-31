@@ -1,6 +1,6 @@
 {
   "name": "@okwolo/utils",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "light javascript framework to build web applications",
   "main": "index.js",
   "types": "index.d.ts",
