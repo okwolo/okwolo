@@ -53,6 +53,8 @@ type vdom = {
     tagName: string;
     attributes: object;
     children: Array<vdom>
+} | {
+    text: string;
 }
 
 type func = () => string;
