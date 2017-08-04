@@ -14,7 +14,7 @@ app.use({action: {
     },
 }});
 
-app.act('INC');    // 1
+app.act('INC'); // 1
 app.act('INC', 3); // 4
-app.undo();        // 1
-app.redo();        // 4
+app.undo(); // 1
+app.redo(); // 4
