@@ -197,16 +197,6 @@ describe('@okwolo/dom', () => {
                     .toBe('<test class="test1 test3 test5 test6 test4"></test>');
             });
 
-            it('should respect the shouldUpdate attribute', async () => {
-                const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test']);
-                app(() => ['div', {shouldUpdate: false}]);
-                await sleep();
-                expect(wrapper.innerHTML)
-                    .toBe('<test></test>');
-            });
-
             it('should be possible to append an id to the tagName using #', async () => {
                 const app = dom(wrapper);
                 app.setState({});

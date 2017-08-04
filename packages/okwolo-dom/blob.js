@@ -63,10 +63,6 @@ const blob = (_window = window) => {
             if (!isDefined(original) && !isDefined(successor)) {
                 return;
             }
-            const shouldUpdate = successor && successor.attributes && successor.attributes.shouldUpdate;
-            if (shouldUpdate === false) {
-                return;
-            }
             // add
             if (!isDefined(original)) {
                 originalParent.children[parentIndex] = render(successor);
