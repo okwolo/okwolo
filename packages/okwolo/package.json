@@ -1,6 +1,6 @@
 {
   "name": "okwolo",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "light javascript framework to build web applications",
   "main": "index.js",
   "types": "index.d.ts",
@@ -15,7 +15,7 @@
     "url": "http://www.github.com/okwolo/okwolo.git"
   },
   "dependencies": {
-    "@okwolo/dom": "^1.1.0",
+    "@okwolo/dom": "^1.1.1",
     "@okwolo/history": "^1.1.0",
     "@okwolo/router": "^1.1.0",
     "@okwolo/state": "^1.1.0",
