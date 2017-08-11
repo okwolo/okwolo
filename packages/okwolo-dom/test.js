@@ -393,12 +393,6 @@ describe('@okwolo/dom', () => {
     });
 
     describe('use', () => {
-        it('should return an array', () => {
-            const app = dom();
-            expect(app.use({}))
-                .toBeInstanceOf(Array);
-        });
-
         it('should not accept multiple items per key', () => {
             const app = dom();
             expect(() => app.use({name: ['name']}))

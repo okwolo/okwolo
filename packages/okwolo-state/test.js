@@ -25,11 +25,6 @@ describe('@okwolo/state', () => {
     });
 
     describe('use', () => {
-        it('should return an array', () => {
-            expect(state().use({}))
-                .toBeInstanceOf(Array);
-        });
-
         it('should register and use well formed actions', () => {
             const app = state();
             const test = jest.fn();

@@ -73,39 +73,46 @@ const utils = () => {
         return {add, done};
     };
 
-    // handle common blob logic
-    const blobNames = {};
-    const blobHandler = (blobs, blob = {}, queue) => {
-        assert(isObject(blob), 'utils.blobHandler : blob is not an object', blob);
-        if (isDefined(blob.name)) {
-            assert(isString(blob.name), 'utils.blobHandler : a blob name must be a string', blob, blob.name);
-            if (blobNames[blob.name] === true) {
-                return null;
-            } else {
-                blobNames[blob.name] = true;
+    const bus = (queue) => {
+        const handlers = {};
+        const names = {};
+
+        const on = (type, handler) => {
+            assert(isString(type), 'utils.bus : handler type is not a string', type);
+            assert(isFunction(handler), 'utils.bus : handler is not a function', handler);
+            handlers[type] = handler;
+        };
+
+        const handle = (event) => {
+            assert(isObject(event), 'utils.bus : event is not an object', event);
+            const {name} = event;
+            if (isDefined(name)) {
+                assert(isString(name), 'utils.bus : event name is not a string', name);
+                if (isDefined(names[name])) {
+                    return;
+                }
+                names[name] = true;
             }
-        }
-        return Object.keys(blob).map((key) => {
-            let blobObject = [].concat(blob[key]);
-            if (!isDefined(blobs[key])) {
-                return blobObject.map(() => null);
-            }
-            return blobObject.map((drop) => {
-                if (isDefined(queue)) {
+            Object.keys(event).forEach((key) => {
+                if (!isDefined(handlers[key])) {
+                    return;
+                }
+                if (queue) {
                     queue.add(() => {
-                        blobs[key](drop);
+                        handlers[key](event[key]);
                         queue.done();
                     });
-                    return null;
-                } else {
-                    return blobs[key](drop);
+                    return;
                 }
+                handlers[key](event[key]);
             });
-        });
+        };
+
+        return Object.assign(handle, {on});
     };
 
     // public interface
-    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, blobHandler};
+    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, bus};
 };
 
 module.exports = utils;

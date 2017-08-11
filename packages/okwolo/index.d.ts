@@ -57,8 +57,21 @@ type vdom = {
     text: string;
 }
 
-type func = () => string;
-
+type blob = {
+    action?: action | Array<action>;
+    watcher?: watcher | Array<watcher>;
+    middleware?: middleware | Array<middleware>;
+    route?: route | Array<route>;
+    base?: base;
+    target?: target;
+    builder?: builder;
+    state?: state;
+    draw?: draw;
+    update?: update;
+    build?: build;
+    prebuild?: prebuild;
+    postbuild?: postbuild;
+}
 
 declare module "okwolo" {
     function okwolo(target?: any, window?: Window): {
@@ -72,21 +85,7 @@ declare module "okwolo" {
         update: () => void;
         undo: () => void;
         redo: () => void;
-        use(blob: {
-            action?: action | Array<action>;
-            watcher?: watcher | Array<watcher>;
-            middleware?: middleware | Array<middleware>;
-            route?: route | Array<route>;
-            base?: base;
-            target?: target;
-            builder?: builder;
-            state?: state;
-            draw?: draw;
-            update?: update;
-            build?: build;
-            prebuild?: prebuild;
-            postbuild?: postbuild;
-        }): any[][];
+        use(blob: blob): void;
     };
     export = okwolo;
 }

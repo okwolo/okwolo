@@ -4,7 +4,7 @@ const utils = require('./');
 
 describe('@okwolo/utils', () => {
     describe('deepCopy', () => {
-        const deepCopy = utils().deepCopy;
+        const {deepCopy} = utils();
 
         it('should copy an object', () => {
             let obj = {};
@@ -59,7 +59,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isDefined', () => {
-        const isDefined = utils().isDefined;
+        const {isDefined} = utils();
 
         it('should return false when undefined', () => {
             expect(isDefined(undefined))
@@ -83,7 +83,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isNull', () => {
-        const isNull = utils().isNull;
+        const {isNull} = utils();
 
         it('should return true when null', () => {
             expect(isNull(null))
@@ -107,7 +107,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isArray', () => {
-        const isArray = utils().isArray;
+        const {isArray} = utils();
 
         it('should return true when array', () => {
             expect(isArray([]))
@@ -131,7 +131,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isString', () => {
-        const isString = utils().isString;
+        const {isString} = utils();
 
         it('should return true when string', () => {
             expect(isString('a'))
@@ -155,7 +155,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isFunction', () => {
-        const isFunction = utils().isFunction;
+        const {isFunction} = utils();
 
         it('should return true when function', () => {
             expect(isFunction(() => {}))
@@ -179,7 +179,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isObject', () => {
-        const isObject = utils().isObject;
+        const {isObject} = utils();
 
         it('should return true when object', () => {
             expect(isObject({}))
@@ -205,7 +205,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isNode', () => {
-        const isNode = utils().isNode;
+        const {isNode} = utils();
 
         it('should return false for all other values', () => {
             expect(isNode(undefined))
@@ -226,7 +226,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('err', () => {
-        const err = utils().err;
+        const {err} = utils();
 
         it('should throw an error', () => {
             expect(err)
@@ -246,7 +246,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('assert', () => {
-        const assert = utils().assert;
+        const {assert} = utils();
 
         it('should throw an error when false', () => {
             expect(() => assert(false))
@@ -276,7 +276,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('makeQueue', () => {
-        const makeQueue = utils().makeQueue;
+        const {makeQueue} = utils();
 
         it('should immediately call new functions when empty', () => {
             const test = jest.fn();
@@ -318,48 +318,50 @@ describe('@okwolo/utils', () => {
         });
     });
 
-    describe('blobHandler', () => {
-        const blobHandler = utils().blobHandler;
+    describe('bus', () => {
+        let bus;
 
-        it('should reject malformed blobs', () => {
-            expect(() => blobHandler({}, true))
-                .toThrow(/blob/);
+        beforeEach(() => {
+            bus = utils().bus();
         });
 
-        it('should call the function described in the blob', () => {
+        it('should reject malformed events', () => {
+            expect(() => bus(true))
+                .toThrow(/event/);
+        });
+
+        it('should call the function described in the event', () => {
             const test = jest.fn();
-            blobHandler({test}, {test: null});
+            bus.on('test', test);
+            bus({test: null});
             expect(test)
                 .toHaveBeenCalled();
         });
 
-        it('should pass the object to the blob handler function', () => {
+        it('should pass the object to the event handler function', () => {
             const test = jest.fn();
-            blobHandler({test}, {test: {a: 'test123'}});
+            bus.on('test', test);
+            bus({test: {a: 'test123'}});
             expect(test)
                 .toHaveBeenCalledWith({a: 'test123'});
         });
 
-        it('should call the blob handler function multiple times for an array', () => {
-            const test = jest.fn();
-            blobHandler({test}, {test: [null, null]});
-            expect(test)
-                .toHaveBeenCalledTimes(2);
-        });
-
-        it('should call the blob handler for each key in the blob object', () => {
+        it('should call the event handler for each key in the event object', () => {
             const test1 = jest.fn();
             const test2 = jest.fn();
-            blobHandler({test1, test2}, {test1: null, test2: null});
+            bus.on('test1', test1);
+            bus.on('test2', test2);
+            bus({test1: null, test2: null});
             expect(test1)
                 .toHaveBeenCalled();
             expect(test2)
                 .toHaveBeenCalled();
         });
 
-        it('should do nothing if there are no blob handler functions for a key in the blob object', () => {
+        it('should do nothing if there are no event handler functions for a key in the event object', () => {
             const test = jest.fn();
-            expect(() => blobHandler({test}, {differentTest: null}))
+            bus.on('test', test);
+            expect(() => bus({differentTest: null}))
                 .not.toThrow(Error);
             expect(test)
                 .toHaveBeenCalledTimes(0);
@@ -367,9 +369,11 @@ describe('@okwolo/utils', () => {
 
         it('should use a queue if provided', (done) => {
             const test = jest.fn();
-            let queue = utils().makeQueue();
+            const queue = utils().makeQueue();
+            bus = utils().bus(queue);
+            bus.on('test', test);
             queue.add(() => setTimeout(queue.done, 30));
-            blobHandler({test}, {test: null}, queue);
+            bus({test: null});
             queue.add(() => {
                 expect(test)
                     .toHaveBeenCalled();
@@ -379,51 +383,13 @@ describe('@okwolo/utils', () => {
                 .toHaveBeenCalledTimes(0);
         });
 
-        it('should return an array', () => {
-            expect(blobHandler({}, {}))
-                .toBeInstanceOf(Array);
-        });
-
-        it('should return an array for each key in blob', () => {
-            expect(blobHandler({}, {test: ''}))
-                .toHaveLength(1);
-            expect(blobHandler({}, {test: '', test2: ''}))
-                .toHaveLength(2);
-        });
-
-        it('should make each key\'s array the same length as the number of inputs', () => {
-            expect(blobHandler({}, {test: ''})[0])
-                .toHaveLength(1);
-            expect(blobHandler({}, {test: ['', '']})[0])
-                .toHaveLength(2);
-        });
-
-        it('should use null as the default value when there is no handler', () => {
-            expect(blobHandler({}, {test: ''})[0][0])
-                .toBe(null);
-        });
-
-        it('should return the return values of handlers', () => {
-            expect(blobHandler({
-                test: () => true,
-            }, {test: ''})[0][0])
-                .toBe(true);
-        });
-
-        it('should default to a null value for each element when using a queue', () => {
-            let queue = utils().makeQueue();
-            expect(blobHandler({
-                test: () => true,
-            }, {test: ''}, queue)[0][0])
-                .toBe(null);
-        });
-
-        it('should only accept one blob of the same name', () => {
+        it('should only accept one event of the same name', () => {
             const test = jest.fn();
-            blobHandler({test}, {test: 'test', name: 'name'});
+            bus.on('test', test);
+            bus({test: 'test', name: 'name'});
             expect(test)
                 .toHaveBeenCalledTimes(1);
-            blobHandler({test}, {test: 'test', name: 'name'});
+            bus({test: 'test', name: 'name'});
             expect(test)
                 .toHaveBeenCalledTimes(1);
         });

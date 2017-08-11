@@ -16,8 +16,8 @@ const okwolo = (rootElement, _window = window) => {
 
     // forwarding use calls
     const use = (blob) => {
-        return [domHandler, stateHandler, routeHandler]
-            .map((module) => module.use(blob));
+        [domHandler, stateHandler, routeHandler]
+            .forEach((module) => module.use(blob));
     };
 
     // adding blobs

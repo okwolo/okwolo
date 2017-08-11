@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isFunction, deepCopy, blobHandler} = require('@okwolo/utils')();
+const {assert, isDefined, isFunction, deepCopy, bus} = require('@okwolo/utils')();
 
 const createDefaultBlob = require('./blob');
 
@@ -41,41 +41,14 @@ const dom = (_target, _window = window) => {
         }
     };
 
-    const replaceDraw = (newDraw) => {
-        assert(isFunction(newDraw), 'dom.replaceDraw : new draw is not a function', newDraw);
-        draw = newDraw;
-        canDraw(drawToTarget);
-    };
+    const use = bus();
 
-    const replaceUpdate = (newUpdate) => {
-        assert(isFunction(newUpdate), 'dom.replaceUpdate : new target updater is not a function', newUpdate);
-        update = newUpdate;
-    };
-
-    const replaceBuild = (newBuild) => {
-        assert(isFunction(newBuild), 'dom.replaceBuild : new build is not a function', newBuild);
-        build = newBuild;
-        canDraw(() => update(target, create(state), vdom));
-    };
-
-    const replacePrebuild = (newPrebuild) => {
-        assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
-        prebuild = newPrebuild;
-        canDraw(() => update(target, create(state), vdom));
-    };
-
-    const replacePostbuild = (newPostbuild) => {
-        assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
-        postbuild = newPostbuild;
-        canDraw(() => update(target, create(state), vdom));
-    };
-
-    const replaceTarget = (newTarget) => {
+    use.on('target', (newTarget) => {
         target = newTarget;
         canDraw(drawToTarget);
-    };
+    });
 
-    const replaceBuilder = (newBuilder) => {
+    use.on('builder', (newBuilder) => {
         assert(isFunction(newBuilder), 'dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
         canDraw(() => {
@@ -84,9 +57,9 @@ const dom = (_target, _window = window) => {
             }
             vdom = update(target, create(state), vdom);
         });
-    };
+    });
 
-    const updateState = (newState) => {
+    use.on('state', (newState) => {
         assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
         canDraw(() => {
@@ -95,26 +68,36 @@ const dom = (_target, _window = window) => {
             }
             vdom = update(target, create(state), vdom);
         });
-    };
+    });
 
-    const use = (blob) => {
-        // making sure only one value is given to each handler
-        const newBlob = {};
-        Object.keys(blob).map((b) => newBlob[b] = [blob[b]]);
-        if (isDefined(blob.name)) {
-            newBlob.name = blob.name;
-        }
-        return blobHandler({
-            target: replaceTarget,
-            builder: replaceBuilder,
-            state: updateState,
-            draw: replaceDraw,
-            update: replaceUpdate,
-            build: replaceBuild,
-            prebuild: replacePrebuild,
-            postbuild: replacePostbuild,
-        }, newBlob);
-    };
+    use.on('draw', (newDraw) => {
+        assert(isFunction(newDraw), 'dom.replaceDraw : new draw is not a function', newDraw);
+        draw = newDraw;
+        canDraw(drawToTarget);
+    });
+
+    use.on('update', (newUpdate) => {
+        assert(isFunction(newUpdate), 'dom.replaceUpdate : new target updater is not a function', newUpdate);
+        update = newUpdate;
+    });
+
+    use.on('build', (newBuild) => {
+        assert(isFunction(newBuild), 'dom.replaceBuild : new build is not a function', newBuild);
+        build = newBuild;
+        canDraw(() => update(target, create(state), vdom));
+    });
+
+    use.on('prebuild', (newPrebuild) => {
+        assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
+        prebuild = newPrebuild;
+        canDraw(() => update(target, create(state), vdom));
+    });
+
+    use.on('postbuild', (newPostbuild) => {
+        assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
+        postbuild = newPostbuild;
+        canDraw(() => update(target, create(state), vdom));
+    });
 
     if (isDefined(_target)) {
         use({target: _target});
@@ -134,7 +117,10 @@ const dom = (_target, _window = window) => {
         return deepCopy(state);
     };
 
-    return Object.assign(replaceBuilder, {use, setState, getState});
+    return Object.assign(
+        (builder) => use({builder}),
+        {use, setState, getState}
+    );
 };
 
 module.exports = dom;

@@ -16,7 +16,10 @@ declare module "@okwolo/utils" {
         isObject(value: any): boolean;
         isNode(value: any): boolean;
         makeQueue(): queue;
-        blobHandler(blobs: object, blob: object, queue?: queue): any[][];
+        bus(queue?: queue): {
+            (blob: blob): void;
+            on: (type: string, handler: Function) => void;
+        };
     };
     export = utils;
 }

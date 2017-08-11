@@ -81,11 +81,6 @@ describe('@okwolo/router', () => {
     });
 
     describe('use', () => {
-        it('should return an array', () => {
-            expect(router().use({}))
-                .toBeInstanceOf(Array);
-        });
-
         describe('route', () => {
             it('should reject malformed paths', () => {
                 let app = router();

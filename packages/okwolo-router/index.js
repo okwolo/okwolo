@@ -2,7 +2,7 @@
 
 const pathToRegexp = require('path-to-regexp');
 
-const {assert, isString, isObject, isFunction, blobHandler} = require('@okwolo/utils')();
+const {assert, isString, isObject, isFunction, bus} = require('@okwolo/utils')();
 
 const router = (_window = window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
@@ -61,19 +61,6 @@ const router = (_window = window) => {
         fetch(pathStore)(currentPath, _window.history.state || {});
     };
 
-    // register wrapper that runs the current page's url against new routes
-    const addRoute = ({path, callback}) => {
-        assert(isString(path), 'router.addRoute : path is not a string', path);
-        assert(isFunction(callback), 'router.addRoute : callback is not a function', path, callback);
-        register(pathStore)(path, callback);
-        // checking new path against current pathname
-        if (!hasMatched) {
-            const tempStore = [];
-            register(tempStore)(path, callback);
-            hasMatched = !!fetch(tempStore)(currentPath, _window.history.state || {});
-        }
-    };
-
     // fetch wrapper that makes the browser aware of the url change
     const redirect = (path, params = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
@@ -97,20 +84,28 @@ const router = (_window = window) => {
         return fetch(pathStore)(path, params);
     };
 
+    const use = bus();
+
+    // register wrapper that runs the current page's url against new routes
+    use.on('route', ({path, callback}) => {
+        assert(isString(path), 'router.use.route : path is not a string', path);
+        assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
+        register(pathStore)(path, callback);
+        // checking new path against current pathname
+        if (!hasMatched) {
+            const tempStore = [];
+            register(tempStore)(path, callback);
+            hasMatched = !!fetch(tempStore)(currentPath, _window.history.state || {});
+        }
+    });
+
     // replace the base url, adjust the current and try to fetch with the new url
-    const replaceBaseUrl = (base) => {
-        assert(isString(base), 'router.replaceBaseUrl : base url is not a string', base);
+    use.on('base', (base) => {
+        assert(isString(base), 'router.use.base : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         fetch(pathStore)(currentPath, _window.history.state || {});
-    };
-
-    const use = (blob) => {
-        return blobHandler({
-            route: addRoute,
-            base: replaceBaseUrl,
-        }, blob);
-    };
+    });
 
     return {redirect, show, use};
 };

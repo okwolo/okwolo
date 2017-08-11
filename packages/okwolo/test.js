@@ -232,12 +232,6 @@ describe('okwolo', () => {
     });
 
     describe('use', () => {
-        it('should forward use calls to all modules', () => {
-            const app = okwolo();
-            expect(app.use({}))
-                .toHaveLength(3);
-        });
-
         it('should support named blobs', () => {
             const app = okwolo();
             app.setState({});

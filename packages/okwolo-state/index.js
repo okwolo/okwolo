@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, deepCopy, makeQueue, blobHandler, isDefined, isArray, isFunction, isString} = require('@okwolo/utils')();
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString, bus} = require('@okwolo/utils')();
 
 const state = () => {
     const actions = {};
@@ -74,42 +74,41 @@ const state = () => {
         });
     };
 
-    const addAction = (action) => {
-        const {type, handler, target} = action;
-        assert(isString(type), 'state.addAction : action\'s type is not a string', action, type);
-        assert(isFunction(handler), `state.addAction : handler for action ${type} is not a function`, action, handler);
-        if (isArray(target)) {
-            target.forEach((address) => {
-                assert(isString(address), `state.addAction : target of action ${type} is not an array of strings`, action, target);
-            });
-        } else {
-            assert(isFunction(target), `state.addAction : target of action ${type} is not valid`, target);
-        }
-        if (actions[type] === undefined) {
-            actions[type] = [action];
-        } else {
-            actions[type].push(action);
-        }
-    };
+    const use = bus(queue);
 
-    const addMiddleware = (handler) => {
-        assert(isFunction(handler), 'state.addMiddleware : middleware is not a function', handler);
-        middleware.push(handler);
-    };
+    use.on('action', (action) => {
+        [].concat(action).forEach((item) => {
+            const {type, handler, target} = item;
+            assert(isString(type), 'state.use.action : action\'s type is not a string', item, type);
+            assert(isFunction(handler), `state.use.action : handler for action ${type} is not a function`, item, handler);
+            if (isArray(target)) {
+                target.forEach((address) => {
+                    assert(isString(address), `state.use.action : target of action ${type} is not an array of strings`, item, target);
+                });
+            } else {
+                assert(isFunction(target), `state.use.action : target of action ${type} is not valid`, target);
+            }
+            if (actions[type] === undefined) {
+                actions[type] = [item];
+            } else {
+                actions[type].push(item);
+            }
+        });
+    });
 
-    const addWatcher = (handler) => {
-        assert(isFunction(handler), 'state.addWatcher : watcher is not a function', handler);
-        watchers.push(handler);
-    };
+    use.on('middleware', (_middleware) => {
+        [].concat(_middleware).forEach((item) => {
+            assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
+            middleware.push(item);
+        });
+    });
 
-    // supported blobs and their execution
-    const use = (blob) => {
-        return blobHandler({
-            action: addAction,
-            middleware: addMiddleware,
-            watcher: addWatcher,
-        }, blob, queue);
-    };
+    use.on('watcher', (watcher) => {
+        [].concat(watcher).forEach((item) => {
+            assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
+            watchers.push(item);
+        });
+    });
 
     return {act, use};
 };
