@@ -6,7 +6,7 @@ const router = require('@okwolo/router');
 const history = require('@okwolo/history')();
 const {isFunction, assert, deepCopy, isBrowser} = require('@okwolo/utils')();
 
-const okwolo = (rootElement, _window) => {
+const okwolo = (rootElement, _window = window) => {
     const domHandler = dom(rootElement, _window);
     const stateHandler = state();
     const routeHandler = router(_window);

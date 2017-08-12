@@ -18,20 +18,10 @@ const utils = () => {
 
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
     const deepCopy = (obj) => {
-        if (isArray(obj)) {
-            return obj.map((element) => {
-                return deepCopy(element);
-            });
+        if (!isDefined(obj)) {
+            return undefined;
         }
-        if (typeof obj === 'object' && obj) {
-            const keys = Object.keys(obj);
-            const temp = {};
-            keys.forEach((key) => {
-                temp[key] = deepCopy(obj[key]);
-            });
-            return temp;
-        }
-        return obj;
+        return JSON.parse(JSON.stringify(obj));
     };
 
     // displays error message

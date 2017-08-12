@@ -47,7 +47,7 @@ describe('@okwolo/utils', () => {
         it('should not copy functions', () => {
             let func = () => {};
             expect(deepCopy({a: func}).a)
-                .toBe(func);
+                .not.toBe(func);
         });
 
         it('should handle null and undefined', () => {
@@ -55,6 +55,14 @@ describe('@okwolo/utils', () => {
                 .toBe(undefined);
             expect(deepCopy(null))
                 .toBe(null);
+        });
+
+        it('should reject circular structures', () => {
+            const a = {};
+            const b = {a};
+            a.b = b;
+            expect(() => deepCopy(a))
+                .toThrow(/circular/);
         });
     });
 

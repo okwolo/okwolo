@@ -4,7 +4,7 @@ const {assert, isDefined, isFunction, deepCopy, bus} = require('@okwolo/utils')(
 
 const createDefaultBlob = require('./blob');
 
-const dom = (_target, _window) => {
+const dom = (_target, _window = window) => {
     let draw = undefined;
     let update = undefined;
     let build = undefined;
