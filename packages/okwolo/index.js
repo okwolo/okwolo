@@ -4,9 +4,9 @@ const dom = require('@okwolo/dom');
 const state = require('@okwolo/state');
 const router = require('@okwolo/router');
 const history = require('@okwolo/history')();
-const {isFunction, assert, deepCopy} = require('@okwolo/utils')();
+const {isFunction, assert, deepCopy, isBrowser} = require('@okwolo/utils')();
 
-const okwolo = (rootElement, _window = window) => {
+const okwolo = (rootElement, _window) => {
     const domHandler = dom(rootElement, _window);
     const stateHandler = state();
     const routeHandler = router(_window);
@@ -108,6 +108,6 @@ const okwolo = (rootElement, _window = window) => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = okwolo;
 }
-if (typeof window !== 'undefined') {
+if (isBrowser()) {
     window.okwolo = okwolo;
 }

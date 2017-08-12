@@ -10,6 +10,12 @@ const utils = () => {
     const isObject = (value) => (!!value) && (value.constructor === Object);
     const isNode = (value) => !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
 
+    const isBrowser = () => {
+        if (typeof window !== 'undefined') {
+            return true;
+        }
+    };
+
     // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
     const deepCopy = (obj) => {
         if (isArray(obj)) {
@@ -112,7 +118,7 @@ const utils = () => {
     };
 
     // public interface
-    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, makeQueue, bus};
+    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, isBrowser, makeQueue, bus};
 };
 
 module.exports = utils;

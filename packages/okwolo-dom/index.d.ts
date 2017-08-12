@@ -2,6 +2,7 @@ declare module "@okwolo/dom" {
     function dom(target?: any, window?: Window): {
         (builder: builder): void;
         setState(state: any): void;
+        setState(updater: updater);
         getState(): any;
         use(blob: {
             target?: target;
