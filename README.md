@@ -21,7 +21,9 @@
 ````javascript
 let app = okwolo(document.body);
 
-app.setState(['orange', 'apple', 'pear']);
+app.setState({
+    fruits: ['orange', 'apple', 'pear']
+});
 
 let FruitItem = ({type}) => (
     ['li.fruit', {}, [
@@ -29,7 +31,7 @@ let FruitItem = ({type}) => (
     ]]
 );
 
-app(() => (fruits) => (
+app(() => ({fruits}) => (
     ['ul.fruit-list', {},
         fruits.map((type) => (
             [FruitItem, {type}]
@@ -45,3 +47,8 @@ app(() => (fruits) => (
     <li class="fruit">pear</li>
 </ul>
 ````
+
+| CDN | |
+|---|---|
+| ES5 | https://unpkg.com/okwolo |
+| ES5 + minified | https://unpkg.com/okwolo?main=minified |

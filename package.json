@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "publish": "gulp prepublish && lerna publish && gulp clean",
+    "publish": "gulp prepublish && webpack && lerna publish && gulp clean",
     "test": "run-s test:*",
     "test:eslint": "eslint **/*.js --ignore-path .gitignore",
     "test:jest": "jest",
@@ -30,6 +30,7 @@
     "jest-serializer-html-string": "^1.0.1",
     "lerna": "^2.0.0",
     "npm-run-all": "^4.0.2",
+    "uglifyjs-webpack-plugin": "^0.4.6",
     "webpack": "^3.4.1"
   },
   "jest": {

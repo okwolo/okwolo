@@ -15,6 +15,8 @@ gulp.task('prepublish', () => {
 gulp.task('clean', () => {
     return del([
         './packages/okwolo*/README.md',
+        './packages/okwolo/okwolo.js',
+        './packages/okwolo/okwolo.min.js',
         './coverage',
         './okwolo.min.js',
         './npm-debug.log',

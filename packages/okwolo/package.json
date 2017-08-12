@@ -3,6 +3,8 @@
   "version": "1.1.1",
   "description": "light javascript framework to build web applications",
   "main": "index.js",
+  "browser": "okwolo.js",
+  "minified": "okwolo.min.js",
   "types": "index.d.ts",
   "keywords": [
     "okwolo",
