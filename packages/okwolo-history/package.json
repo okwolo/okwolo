@@ -2,8 +2,8 @@
   "name": "@okwolo/history",
   "version": "1.1.0",
   "description": "light javascript framework to build web applications",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "blob.js",
+  "types": "blob.d.ts",
   "keywords": [
     "okwolo",
     "vdom",

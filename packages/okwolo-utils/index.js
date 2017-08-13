@@ -1,7 +1,6 @@
 'use strict';
 
 const utils = () => {
-    // type checks
     const isDefined = (value) => value !== undefined;
     const isNull = (value) => value === null;
     const isArray = (value) => Array.isArray(value);
@@ -16,7 +15,6 @@ const utils = () => {
         }
     };
 
-    // creates a deep copy of an object (can only copy basic objects/arrays/primitives)
     const deepCopy = (obj) => {
         if (!isDefined(obj)) {
             return undefined;
@@ -24,12 +22,6 @@ const utils = () => {
         return JSON.parse(JSON.stringify(obj));
     };
 
-    // displays error message
-    const err = (message) => {
-        throw new Error(`@okwolo.${message}`);
-    };
-
-    // throw errors when assertion fails
     const assert = (assertion, message, ...culprits) => {
         const print = (obj) => {
             return '\n>>> ' + String(JSON.stringify(obj, (key, value) => {
@@ -42,11 +34,10 @@ const utils = () => {
             if (culprits.length > 0) {
                 message += culprits.map(print).join('');
             }
-            err(message || 'assertion has failed');
+            throw new Error(`@okwolo.${message}`);
         }
     };
 
-    // wait queue (ex. async middlware during blob changes)
     const makeQueue = () => {
         const queue = [];
         const run = () => {
@@ -107,8 +98,7 @@ const utils = () => {
         return Object.assign(handle, {on});
     };
 
-    // public interface
-    return {deepCopy, err, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, isBrowser, makeQueue, bus};
+    return {deepCopy, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, isBrowser, makeQueue, bus};
 };
 
 module.exports = utils;

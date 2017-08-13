@@ -1,64 +1,36 @@
 'use strict';
 
-const pathToRegexp = require('path-to-regexp');
-
 const {assert, isString, isObject, isFunction, bus} = require('@okwolo/utils')();
+
+const createDefaultBlob = require('./blob');
 
 const router = (_window = window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
-    // store all the registered routes
-    const pathStore = [];
-
-    // store base url to prepend to all addresses
     let baseUrl = '';
+    let register;
+    let fetch;
 
-    // track if a path has matched on page load
     let hasMatched = false;
 
-    // removes base url from a path
+    const safeFetch = (...args) => {
+        assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
+        fetch(...args);
+    };
+
     let removeBaseUrl = (path) => {
         return path.replace(new RegExp('\^' + baseUrl), '') || '';
     };
 
-    // store initial pathName
     let currentPath = _window.location.pathname;
     if (!isHosted) {
         currentPath = '';
     }
 
-    // add a route/callback combo to the store given as argument
-    const register = (store) => (path, callback) => {
-        store.push({
-            pattern: pathToRegexp(path, [], {strict: true}),
-            callback,
-        });
-    };
-
-    /* call all the callbacks from the store given as argument
-        who's route matches path argument*/
-    const fetch = (store) => (path, params) => {
-        let found = false;
-        store.find((registeredPath) => {
-            let test = registeredPath.pattern.exec(path);
-            if (test === null) {
-                return;
-            }
-            found = true;
-            test.shift();
-            registeredPath.pattern.keys.forEach((key, i) => {
-                params[key.name] = test[i];
-            });
-            registeredPath.callback(params);
-            return found;
-        });
-        return found;
-    };
-
     // handle back/forward events
     _window.onpopstate = () => {
         currentPath = removeBaseUrl(_window.location.pathname);
-        fetch(pathStore)(currentPath, _window.history.state || {});
+        safeFetch(currentPath);
     };
 
     // fetch wrapper that makes the browser aware of the url change
@@ -74,14 +46,14 @@ const router = (_window = window) => {
         } else {
             console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
         }
-        return fetch(pathStore)(currentPath, params);
+        return safeFetch(currentPath, params);
     };
 
     // fetch wrapper which does not change the url
     const show = (path, params = {}) => {
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
-        return fetch(pathStore)(path, params);
+        return safeFetch(path, params);
     };
 
     const use = bus();
@@ -90,12 +62,10 @@ const router = (_window = window) => {
     use.on('route', ({path, callback}) => {
         assert(isString(path), 'router.use.route : path is not a string', path);
         assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
-        register(pathStore)(path, callback);
-        // checking new path against current pathname
+        assert(isFunction(register), 'route.use.route : register is not a function', register);
+        register(path, callback);
         if (!hasMatched) {
-            const tempStore = [];
-            register(tempStore)(path, callback);
-            hasMatched = !!fetch(tempStore)(currentPath, _window.history.state || {});
+            hasMatched = !!safeFetch(currentPath);
         }
     });
 
@@ -104,8 +74,20 @@ const router = (_window = window) => {
         assert(isString(base), 'router.use.base : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
-        fetch(pathStore)(currentPath, _window.history.state || {});
+        safeFetch(currentPath);
     });
+
+    use.on('register', (_register) => {
+        assert(isFunction(_register), 'router.use.register : register is not a function', register);
+        register = _register;
+    });
+
+    use.on('fetch', (_fetch) => {
+        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
+        fetch = _fetch;
+    });
+
+    use(createDefaultBlob(_window));
 
     return {redirect, show, use};
 };

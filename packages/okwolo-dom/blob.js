@@ -199,7 +199,7 @@ const blob = (_window = window) => {
         };
     };
 
-    return {draw, update, build};
+    return {name: '@okwolo/dom', draw, update, build};
 };
 
 module.exports = blob;

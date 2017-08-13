@@ -233,26 +233,6 @@ describe('@okwolo/utils', () => {
         });
     });
 
-    describe('err', () => {
-        const {err} = utils();
-
-        it('should throw an error', () => {
-            expect(err)
-                .toThrow(Error);
-        });
-
-        it('should throw an error that blames okwolo', () => {
-            expect(err)
-                .toThrow(/okwolo/);
-        });
-
-        it('should throw an error that includes the custom message', () => {
-            let message = 'test123';
-            expect(() => err(message))
-                .toThrow(new RegExp(message));
-        });
-    });
-
     describe('assert', () => {
         const {assert} = utils();
 

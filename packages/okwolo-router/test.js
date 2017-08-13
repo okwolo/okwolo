@@ -176,5 +176,46 @@ describe('@okwolo/router', () => {
                     .toHaveBeenCalled();
             });
         });
+
+        describe('register', () => {
+            it('should reject malformed register', () => {
+                let app = router();
+                expect(() => app.use({register: true}))
+                    .toThrow(/register/);
+            });
+
+            it('should be used to register routes', () => {
+                let app = router();
+                let test = jest.fn();
+                app.use({register: test});
+                const callback = () => {};
+                app.use({route: {
+                    path: '/',
+                    callback,
+                }});
+                expect(test)
+                    .toHaveBeenCalledWith('/', callback);
+            });
+        });
+
+        describe('fetch', () => {
+            it('should reject malformed fetch', () => {
+                let app = router();
+                expect(() => app.use({fetch: true}))
+                    .toThrow(/fetch/);
+            });
+
+            it('should be used to fetch routes', () => {
+                let app = router();
+                let test = jest.fn();
+                app.use({fetch: test});
+                app.redirect('/redirect', {redirect: true});
+                app.show('/show', {show: true});
+                expect(test)
+                    .toHaveBeenCalledWith('/redirect', {redirect: true});
+                expect(test)
+                    .toHaveBeenCalledWith('/show', {show: true});
+            });
+        });
     });
 });
