@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isFunction, deepCopy, bus} = require('@okwolo/utils')();
+const {assert, isDefined, isFunction, bus} = require('@okwolo/utils')();
 
 const createDefaultBlob = require('./blob');
 
@@ -41,6 +41,19 @@ const dom = (_target, _window = window) => {
         }
     };
 
+    const exec = bus();
+
+    exec.on('state', (newState) => {
+        assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
+        state = newState;
+        canDraw(() => {
+            if (!hasDrawn) {
+                drawToTarget();
+            }
+            vdom = update(target, create(state), vdom);
+        });
+    });
+
     const use = bus();
 
     use.on('target', (newTarget) => {
@@ -51,17 +64,6 @@ const dom = (_target, _window = window) => {
     use.on('builder', (newBuilder) => {
         assert(isFunction(newBuilder), 'dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
-        canDraw(() => {
-            if (!hasDrawn) {
-                drawToTarget();
-            }
-            vdom = update(target, create(state), vdom);
-        });
-    });
-
-    use.on('state', (newState) => {
-        assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
-        state = newState;
         canDraw(() => {
             if (!hasDrawn) {
                 drawToTarget();
@@ -105,22 +107,7 @@ const dom = (_target, _window = window) => {
 
     use(createDefaultBlob(_window));
 
-    const setState = (_state) => {
-        if (isFunction(_state)) {
-            use({state: _state(state)});
-            return;
-        }
-        use({state: _state});
-    };
-
-    const getState = () => {
-        return deepCopy(state);
-    };
-
-    return Object.assign(
-        (builder) => use({builder}),
-        {use, setState, getState}
-    );
+    return {exec, use};
 };
 
 module.exports = dom;

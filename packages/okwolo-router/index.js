@@ -33,8 +33,10 @@ const router = (_window = window) => {
         safeFetch(currentPath);
     };
 
+    const exec = bus();
+
     // fetch wrapper that makes the browser aware of the url change
-    const redirect = (path, params = {}) => {
+    exec.on('redirect', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
         assert(isObject(params), 'router.redirect : params is not an object', params);
         currentPath = path;
@@ -46,20 +48,20 @@ const router = (_window = window) => {
         } else {
             console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
         }
-        return safeFetch(currentPath, params);
-    };
+        safeFetch(currentPath, params);
+    });
 
     // fetch wrapper which does not change the url
-    const show = (path, params = {}) => {
+    exec.on('show', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
         return safeFetch(path, params);
-    };
+    });
 
     const use = bus();
 
     // register wrapper that runs the current page's url against new routes
-    use.on('route', ({path, callback}) => {
+    use.on('route', ({path, callback} = {}) => {
         assert(isString(path), 'router.use.route : path is not a string', path);
         assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
         assert(isFunction(register), 'route.use.route : register is not a function', register);
@@ -89,7 +91,7 @@ const router = (_window = window) => {
 
     use(createDefaultBlob(_window));
 
-    return {redirect, show, use};
+    return {exec, use};
 };
 
 module.exports = router;

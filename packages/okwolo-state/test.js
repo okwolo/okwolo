@@ -16,11 +16,11 @@ describe('@okwolo/state', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should have an act and use function', () => {
+    it('should have an exec and use function', () => {
         const test = state();
-        expect(test.use)
+        expect(test.exec)
             .toBeInstanceOf(Function);
-        expect(test.act)
+        expect(test.use)
             .toBeInstanceOf(Function);
     });
 
@@ -32,7 +32,7 @@ describe('@okwolo/state', () => {
                 test();
                 return s;
             }));
-            app.act({}, 'TEST');
+            app.exec({act: {state: {}, type: 'TEST'}});
             expect(test)
                 .toHaveBeenCalled();
         });
@@ -76,7 +76,7 @@ describe('@okwolo/state', () => {
         it('should expect action handlers to return a defined value', () => {
             const app = state();
             app.use(testAction((s) => {}));
-            expect(() => app.act({}, 'TEST'))
+            expect(() => app.exec({act: {state: {}, type: 'TEST'}}))
                 .toThrow(/result[^]*undefined/);
         });
 
@@ -92,7 +92,7 @@ describe('@okwolo/state', () => {
                 test2();
                 return s;
             }));
-            app.act({}, 'TEST');
+            app.exec({act: {state: {}, type: 'TEST'}});
             expect(test1)
                 .toHaveBeenCalled();
             expect(test2)
@@ -110,7 +110,7 @@ describe('@okwolo/state', () => {
                     },
                 });
                 app.use(testAction());
-                app.act({}, 'TEST');
+                app.exec({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -134,7 +134,7 @@ describe('@okwolo/state', () => {
                     next();
                 }});
                 app.use(testAction());
-                app.act({}, 'TEST');
+                app.exec({act: {state: {}, type: 'TEST'}});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
@@ -148,7 +148,7 @@ describe('@okwolo/state', () => {
                 const test = jest.fn();
                 app.use({watcher: test});
                 app.use(testAction());
-                app.act({}, 'TEST');
+                app.exec({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -165,7 +165,7 @@ describe('@okwolo/state', () => {
                 app.use({watcher: test});
                 app.use({watcher: test});
                 app.use(testAction());
-                app.act({}, 'TEST');
+                app.exec({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalledTimes(2);
             });
@@ -175,16 +175,16 @@ describe('@okwolo/state', () => {
     describe('act', () => {
         it('should require both state and action arguments', () => {
             const app = state();
-            expect(() => app.act())
+            expect(() => app.exec({act: {}}))
                 .toThrow(/state/);
-            expect(() => app.act({}))
+            expect(() => app.exec({act: {state: {}}}))
                 .toThrow(/type/);
         });
 
         it('should return undefined', () => {
             const app = state();
             app.use(testAction());
-            expect(app.act({}, 'TEST'))
+            expect(app.exec({act: {state: {}, type: 'TEST'}}))
                 .toBe(undefined);
         });
 
@@ -195,7 +195,7 @@ describe('@okwolo/state', () => {
                 test(state + params);
                 return state;
             }));
-            app.act('a', 'TEST', 'b');
+            app.exec({act: {state: 'a', type: 'TEST', params: 'b'}});
             expect(test)
                 .toHaveBeenCalledWith('ab');
         });
@@ -205,7 +205,7 @@ describe('@okwolo/state', () => {
             const test = jest.fn();
             app.use({middleware: () => {}});
             app.use(testAction(test));
-            app.act({}, 'TEST');
+            app.exec({act: {state: {}, type: 'TEST'}});
             expect(test)
                 .toHaveBeenCalledTimes(0);
         });
@@ -228,7 +228,7 @@ describe('@okwolo/state', () => {
                     }
                     done();
                 }));
-                app.act({}, 'TEST');
+                app.exec({act: {state: {}, type: 'TEST'}});
             });
 
             it('should allow middleware to override all params', () => {
@@ -241,7 +241,7 @@ describe('@okwolo/state', () => {
                     test(state, params);
                     return state;
                 }));
-                app.act(0, 'NOT_TEST', 1);
+                app.exec({act: {state: 0, type: 'NOT_TEST', params: 1}});
                 expect(test)
                     .toHaveBeenCalledWith(1, 2);
             });
@@ -254,13 +254,13 @@ describe('@okwolo/state', () => {
                         .not.toBe(originalState);
                 }});
                 app.use(testAction());
-                app.act(originalState, 'TEST');
+                app.exec({act: {state: originalState, type: 'TEST'}});
             });
 
             describe('execute', () => {
                 it('should reject unknown actions', () => {
                     const app = state();
-                    expect(() => app.act({}, 'TEST'))
+                    expect(() => app.exec({act: {state: {}, type: 'TEST'}}))
                         .toThrow(/action[^]*not[^]found/);
                 });
 
@@ -272,7 +272,7 @@ describe('@okwolo/state', () => {
                             .not.toBe(originalState);
                         return state;
                     }));
-                    app.act(originalState, 'TEST');
+                    app.exec({act: {state: originalState, type: 'TEST'}});
                 });
 
                 it('should provide the right target to the action handlers', () => {
@@ -282,7 +282,7 @@ describe('@okwolo/state', () => {
                             .toBe('success!');
                         return target;
                     }, ['a', 'b', 'c']));
-                    app.act({a: {b: {c: 'success!'}}}, 'TEST');
+                    app.exec({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST'}});
                 });
 
                 it('should support dynamic action targets', () => {
@@ -302,7 +302,7 @@ describe('@okwolo/state', () => {
                             return target;
                         },
                     }});
-                    app.act({a: {b: {c: 'success!'}}}, 'TEST', {test: true});
+                    app.exec({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST', params: {test: true}}});
                 });
 
                 it('should fail when dynamic targets are invalid', () => {
@@ -312,21 +312,21 @@ describe('@okwolo/state', () => {
                         target: () => [{}],
                         handler: () => {},
                     }});
-                    expect(() => app.act({}, 'TEST'))
+                    expect(() => app.exec({act: {state: {}, type: 'TEST'}}))
                         .toThrow(/dynamic[^]*string/);
                 });
 
                 it('should reject unreachable targets', () => {
                     const app = state();
                     app.use(testAction(null, ['a', 'b']));
-                    expect(() => app.act({a: {}}, 'TEST'))
+                    expect(() => app.exec({act: {state: {a: {}}, type: 'TEST'}}))
                         .toThrow(/target/);
                 });
 
                 it('should display the path to the unreachable target at the end of the error', () => {
                     const app = state();
                     app.use(testAction(null, ['a', 'b', 'c']));
-                    expect(() => app.act({a: {}}, 'TEST'))
+                    expect(() => app.exec({act: {state: {a: {}}, type: 'TEST'}}))
                         .toThrow(/a\.b$/);
                 });
 
@@ -349,7 +349,7 @@ describe('@okwolo/state', () => {
                             .toHaveBeenCalled();
                         test3();
                     }});
-                    app.act({}, 'TEST');
+                    app.exec({act: {state: {}, type: 'TEST'}});
                     expect(test2)
                         .toHaveBeenCalled();
                     expect(test3)
@@ -361,7 +361,7 @@ describe('@okwolo/state', () => {
                     const test = jest.fn();
                     app.use(testAction());
                     app.use({watcher: test});
-                    app.act(1, 'TEST', 2);
+                    app.exec({act: {state: 1, type: 'TEST', params: 2}});
                     expect(test)
                         .toHaveBeenCalledWith(1, 'TEST', 2);
                 });
@@ -374,7 +374,7 @@ describe('@okwolo/state', () => {
                         next('a', 'TEST', 'b');
                     }});
                     app.use({watcher: test});
-                    app.act(1, '2', 3);
+                    app.exec({act: {state: 1, type: '2', params: 3}});
                     expect(test)
                         .toHaveBeenCalledWith('a', 'TEST', 'b');
                 });
@@ -384,7 +384,7 @@ describe('@okwolo/state', () => {
                     const test = jest.fn();
                     app.use(testAction(() => 0));
                     app.use({watcher: test});
-                    app.act({}, 'TEST', 1);
+                    app.exec({act: {state: {}, type: 'TEST', params: 1}});
                     expect(test)
                         .toHaveBeenCalledWith(0, 'TEST', 1);
                 });
@@ -394,7 +394,7 @@ describe('@okwolo/state', () => {
                     const test = jest.fn();
                     app.use(testAction(() => 0, ['subdirectory']));
                     app.use({watcher: test});
-                    app.act({subdirectory: 1}, 'TEST', 1);
+                    app.exec({act: {state: {subdirectory: 1}, type: 'TEST', params: 1}});
                     expect(test)
                         .toHaveBeenCalledWith({subdirectory: 0}, 'TEST', 1);
                 });

@@ -21,53 +21,19 @@ describe('@okwolo/dom', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should return a function', () => {
-        const app = dom(wrapper);
-        expect(app)
-            .toBeInstanceOf(Function);
-    });
-
     it('should have a use function', () => {
         const app = dom(wrapper);
         expect(app.use)
             .toBeInstanceOf(Function);
     });
 
-    it('should have a setState function', () => {
-        const app = dom(wrapper);
-        expect(app.setState)
-            .toBeInstanceOf(Function);
-    });
-
     it('should add the builder function\'s output to the target', async () => {
         const app = dom(wrapper);
-        app.setState({});
-        app(() => ['span']);
+        app.exec({state: {}});
+        app.use({builder: () => ['span']});
         await sleep();
         expect(wrapper.children[0].tagName)
             .toBe('SPAN');
-    });
-
-    it('should change its state with setState', async () => {
-        const app = dom(wrapper);
-        app((s) => s);
-        app.setState('test1');
-        expect(app.getState())
-            .toBe('test1');
-        app.setState((state) => {
-            expect(state)
-                .toBe('test1');
-            return 'test2';
-        });
-        expect(app.getState())
-            .toBe('test2');
-    });
-
-    it('should get the current state with getState', () => {
-        const app = dom(wrapper);
-        app.setState('test');
-        expect(app.getState())
-            .toBe('test');
     });
 
     describe('/h', () => {
@@ -111,8 +77,8 @@ describe('@okwolo/dom', () => {
         describe('draw', () => {
             it('should render the initial state immediately', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test']);
+                app.exec({state: {}});
+                app.use({builder: () => ['test']});
                 await sleep();
                 expect(wrapper.innerHTML.length)
                     .toBeGreaterThan(0);
@@ -123,8 +89,8 @@ describe('@okwolo/dom', () => {
                 wrapper.innerHTML = '<div></div>';
                 expect(wrapper.querySelectorAll('div'))
                     .toHaveLength(1);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.querySelectorAll('div'))
                     .toHaveLength(0);
@@ -134,8 +100,8 @@ describe('@okwolo/dom', () => {
         describe('build', () => {
             it('should create textNodes out of strings', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -143,8 +109,8 @@ describe('@okwolo/dom', () => {
 
             it('should create elements out of arrays', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['span']);
+                app.exec({state: {}});
+                app.use({builder: () => ['span']});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<span></span>');
@@ -152,8 +118,8 @@ describe('@okwolo/dom', () => {
 
             it('should create nothing when given null', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => null);
+                app.exec({state: {}});
+                app.use({builder: () => null});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('');
@@ -161,8 +127,8 @@ describe('@okwolo/dom', () => {
 
             it('should read the tagName from the first element in the array', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test']);
+                app.exec({state: {}});
+                app.use({builder: () => ['test']});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test></test>');
@@ -170,8 +136,8 @@ describe('@okwolo/dom', () => {
 
             it('should read the attributes from the second element in the array', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test', {id: 'test'}]);
+                app.exec({state: {}});
+                app.use({builder: () => ['test', {id: 'test'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test id="test"></test>');
@@ -179,19 +145,19 @@ describe('@okwolo/dom', () => {
 
             it('should implement classnames logic', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test', {className: {
+                app.exec({state: {}});
+                app.use({builder: () => ['test', {className: {
                     test1: true,
                     test2: undefined,
-                }}]);
+                }}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test class="test1"></test>');
-                app(() => ['test.test4', {className: [
+                app.use({builder: () => ['test.test4', {className: [
                     'test1',
                     {test2: false, test3: true},
                     ['test5', {test6: true}],
-                ]}]);
+                ]}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test class="test1 test3 test5 test6 test4"></test>');
@@ -199,8 +165,8 @@ describe('@okwolo/dom', () => {
 
             it('should be possible to append an id to the tagName using #', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test#test']);
+                app.exec({state: {}});
+                app.use({builder: () => ['test#test']});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test id="test"></test>');
@@ -208,8 +174,8 @@ describe('@okwolo/dom', () => {
 
             it('should be possible to append an classNames to the tagName using .', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test.test.test', {className: 'tt'}]);
+                app.exec({state: {}});
+                app.use({builder: () => ['test.test.test', {className: 'tt'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test class="tt test test"></test>');
@@ -217,8 +183,8 @@ describe('@okwolo/dom', () => {
 
             it('should be possible to append styles to the tagName using |', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test|height:2px;', {style: 'width: 2px;'}]);
+                app.exec({state: {}});
+                app.use({builder: () => ['test|height:2px;', {style: 'width: 2px;'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test style="width: 2px; height: 2px;"></test>');
@@ -226,8 +192,8 @@ describe('@okwolo/dom', () => {
 
             it('should read the children from the third element in the array', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => ['test', {}, ['test']]);
+                app.exec({state: {}});
+                app.use({builder: () => ['test', {}, ['test']]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test>test</test>');
@@ -235,9 +201,9 @@ describe('@okwolo/dom', () => {
 
             it('should accept components', async () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 const component = () => 'test';
-                app(() => [component]);
+                app.use({builder: () => [component]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -245,9 +211,9 @@ describe('@okwolo/dom', () => {
 
             it('should pass arguments to components', async () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 const component = ({a}) => a;
-                app(() => [component, {a: 'test'}]);
+                app.use({builder: () => [component, {a: 'test'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -255,9 +221,9 @@ describe('@okwolo/dom', () => {
 
             it('should pass children to component', async () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 const component = ({children}) => children[0];
-                app(() => [component, {}, ['test']]);
+                app.use({builder: () => [component, {}, ['test']]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -265,11 +231,11 @@ describe('@okwolo/dom', () => {
 
             it('should support nested components', async () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 const component3 = ({c}) => c;
                 const component2 = ({b}) => [component3, {c: b}];
                 const component1 = ({a}) => [component2, {b: a}];
-                app(() => [component1, {a: 'test'}]);
+                app.use({builder: () => [component1, {a: 'test'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -277,21 +243,21 @@ describe('@okwolo/dom', () => {
 
             it('should fail when given malformed tagName', () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 expect(() => app.use({builder: () => [{}]}))
                     .toThrow(/tag/);
             });
 
             it('should fail when given malformed attributes', () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 expect(() => app.use({builder: () => ['div', 'test']}))
                     .toThrow(/attribute/);
             });
 
             it('should not fail when attributes or children are ommitted', () => {
                 const app = dom(wrapper);
-                app.setState({});
+                app.exec({state: {}});
                 expect(() => app.use({builder: () => ['div']}))
                     .not.toThrow(Error);
             });
@@ -300,12 +266,12 @@ describe('@okwolo/dom', () => {
         describe('update', () => {
             it('should rerender the new dom', async () => {
                 const app = dom(wrapper);
-                app((s) => [s, {}, [s]]);
-                app.setState('a');
+                app.use({builder: (s) => [s, {}, [s]]});
+                app.exec({state: 'a'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<a>a</a>');
-                app.setState('b');
+                app.exec({state: 'b'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<b>b</b>');
@@ -313,11 +279,11 @@ describe('@okwolo/dom', () => {
 
             it('should not replace elements when the tagName doesn\'t change', async () => {
                 const app = dom(wrapper);
-                app((s) => ['div' + s]);
-                app.setState('');
+                app.use({builder: (s) => ['div' + s]});
+                app.exec({state: ''});
                 await sleep();
                 const element = wrapper.children[0];
-                app.setState('#id.class|height:0px;');
+                app.exec({state: '#id.class|height:0px;'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div id="id" class="class" style="height: 0px;"></div>');
@@ -327,8 +293,8 @@ describe('@okwolo/dom', () => {
 
             it('should be able to delete elements', async () => {
                 const app = dom(wrapper);
-                app((s) => ['div', {}, s.split('').map((l) => [l])]);
-                app.setState('abc');
+                app.use({builder: (s) => ['div', {}, s.split('').map((l) => [l])]});
+                app.exec({state: 'abc'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -338,7 +304,7 @@ describe('@okwolo/dom', () => {
                             '<c></c>' +
                         '</div>'
                     );
-                app.setState('a');
+                app.exec({state: 'a'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -346,7 +312,7 @@ describe('@okwolo/dom', () => {
                             '<a></a>' +
                         '</div>'
                     );
-                app.setState('cd');
+                app.exec({state: 'cd'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -359,32 +325,32 @@ describe('@okwolo/dom', () => {
 
             it('should be able to replace all elements', async () => {
                 const app = dom(wrapper);
-                app((s) => s);
-                app.setState('');
+                app.use({builder: (s) => s});
+                app.exec({state: ''});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('');
-                app.setState('test1');
+                app.exec({state: 'test1'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test1');
-                app.setState('test2');
+                app.exec({state: 'test2'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test2');
-                app.setState(['test3', {}, ['test3']]);
+                app.exec({state: ['test3', {}, ['test3']]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test3>test3</test3>');
-                app.setState(['test4', {}, [['test4']]]);
+                app.exec({state: ['test4', {}, [['test4']]]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test4><test4></test4></test4>');
-                app.setState('');
+                app.exec({state: ''});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('');
-                app.setState('test5');
+                app.exec({state: 'test5'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test5');
@@ -414,16 +380,16 @@ describe('@okwolo/dom', () => {
         describe('target', () => {
             it('should reject malformed targets', () => {
                 const app = dom();
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 expect(() => app.use({target: null}))
                     .toThrow(/target/g);
             });
 
             it('should change the render target', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -448,8 +414,8 @@ describe('@okwolo/dom', () => {
 
             it('should change the builder function', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -463,18 +429,18 @@ describe('@okwolo/dom', () => {
         describe('state', () => {
             it('should reject undefined state', () => {
                 const app = dom();
-                expect(() => app.use({state: undefined}))
+                expect(() => app.exec({state: undefined}))
                     .toThrow(/state/gi);
             });
 
             it('should trigger an update', async () => {
                 const app = dom(wrapper);
-                app.setState('initial');
-                app((s) => s);
+                app.exec({state: 'initial'});
+                app.use({builder: (s) => s});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('initial');
-                app.use({state: 'changed'});
+                app.exec({state: 'changed'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('changed');
@@ -491,8 +457,8 @@ describe('@okwolo/dom', () => {
             it('should trigger a redraw', async () => {
                 const app = dom(wrapper);
                 const test = jest.fn();
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({draw: test});
                 await sleep();
                 expect(test)
@@ -518,8 +484,8 @@ describe('@okwolo/dom', () => {
             it('should trigger an update', async () => {
                 const app = dom(wrapper);
                 const test = jest.fn();
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({build: test});
                 await sleep();
                 expect(test)
@@ -528,8 +494,8 @@ describe('@okwolo/dom', () => {
 
             it('should receive the builder\'s output and be able to edit it', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({build: (element) => {
                     expect(element)
                         .toEqual('test');
@@ -551,8 +517,8 @@ describe('@okwolo/dom', () => {
             it('should trigger an update', async () => {
                 const app = dom(wrapper);
                 const test = jest.fn();
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({prebuild: () => {
                     test();
                     return 'test';
@@ -564,8 +530,8 @@ describe('@okwolo/dom', () => {
 
             it('should receive the builder\'s output and be able to edit it', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({prebuild: (element) => {
                     expect(element)
                         .toEqual('test');
@@ -587,8 +553,8 @@ describe('@okwolo/dom', () => {
             it('should trigger an update', async () => {
                 const app = dom(wrapper);
                 const test = jest.fn();
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({postbuild: test});
                 await sleep();
                 expect(test)
@@ -597,8 +563,8 @@ describe('@okwolo/dom', () => {
 
             it('should receive the built vdom and be able to edit it', async () => {
                 const app = dom(wrapper);
-                app.setState({});
-                app(() => 'test');
+                app.exec({state: {}});
+                app.use({builder: () => 'test'});
                 app.use({postbuild: (vdom) => {
                     expect(vdom)
                         .toEqual({text: 'test'});

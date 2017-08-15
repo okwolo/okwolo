@@ -9,7 +9,6 @@ const state = () => {
 
     const queue = makeQueue();
 
-    // exectute an action on the state
     const execute = (state, type, params) => {
         let newState = deepCopy(state);
         assert(isDefined(actions[type]), `state.execute : action type '${type}' was not found`);
@@ -49,7 +48,6 @@ const state = () => {
         queue.done();
     };
 
-    // execute wrapper that applies middleware
     const apply = (state, type, params) => {
         const funcs = [(_state = state, _type = type, _params = params) => {
             execute(_state, _type, _params);
@@ -65,14 +63,15 @@ const state = () => {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    // apply wrapper that uses the wait queue
-    const act = (state, type, params = {}) => {
+    const exec = bus();
+
+    exec.on('act', ({state, type, params = {}} = {}) => {
         assert(isString(type), 'state.act : action type is not a string', type);
         assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
         queue.add(() => {
             apply(state, type, params);
         });
-    };
+    });
 
     const use = bus(queue);
 
@@ -110,7 +109,7 @@ const state = () => {
         });
     });
 
-    return {act, use};
+    return {exec, use};
 };
 
 module.exports = state;

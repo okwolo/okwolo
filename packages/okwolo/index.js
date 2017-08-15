@@ -31,7 +31,7 @@ const okwolo = (rootElement, _window = window) => {
 
     // add watcher to update dom
     use({watcher:
-        (newState) => use({state: newState}),
+        (newState) => domHandler.exec({state: newState}),
     });
 
     // add action to override state
@@ -42,17 +42,17 @@ const okwolo = (rootElement, _window = window) => {
     }});
 
     const update = () => {
-        use({state: _state});
+        domHandler.exec({state: _state});
     };
 
     // adding currentState and forwarding act calls
     const act = (type, params) => {
         assert(_state !== initial || type === '__OVERRIDE__', 'act : cannot act on state before it has been set');
         if (isFunction(type)) {
-            stateHandler.act(_state, '__OVERRIDE__', type(deepCopy(_state)));
+            stateHandler.exec({act: {state: _state, type: '__OVERRIDE__', params: type(deepCopy(_state))}});
             return;
         }
-        stateHandler.act(_state, type, params);
+        stateHandler.exec({act: {state: _state, type, params}});
     };
 
     // override state
@@ -94,8 +94,8 @@ const okwolo = (rootElement, _window = window) => {
     return Object.assign(register, {
         setState,
         getState,
-        redirect: routeHandler.redirect,
-        show: routeHandler.show,
+        redirect: (path, params) => routeHandler.exec({redirect: {path, params}}),
+        show: (path, params) => routeHandler.exec({show: {path, params}}),
         act,
         use,
         update,

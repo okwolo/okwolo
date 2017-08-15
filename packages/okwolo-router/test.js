@@ -17,66 +17,68 @@ describe('@okwolo/router', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should have a redirect function', () => {
-        expect(router().redirect)
+    it('should have an exec function', () => {
+        expect(router().exec)
             .toBeInstanceOf(Function);
     });
 
-    describe('redirect', () => {
-        it('should reject malformed paths', () => {
-            expect(() => router().redirect(undefined))
-                .toThrow(/path/);
+    describe('exec', () => {
+        describe('redirect', () => {
+            it('should reject malformed paths', () => {
+                expect(() => router().exec({redirect: undefined}))
+                    .toThrow(/path/);
+            });
+
+            it('should accept no params', () => {
+                router().exec({redirect: {path: '/', params: undefined}});
+            });
+
+            it('should change the pathname', () => {
+                router().exec({redirect: {path: '/test/xyz'}});
+                expect(window.location.pathname)
+                    .toBe('/test/xyz');
+            });
+
+            it('should accumulate params and pass them to the callback', () => {
+                const test = jest.fn();
+                let app = router();
+                app.use({route: {
+                    path: '/user/:id/fetch/:field',
+                    callback: test,
+                }});
+                app.exec({redirect: {path: '/user/123/fetch/name'}});
+                expect(test)
+                    .toHaveBeenCalledWith({id: '123', field: 'name'});
+            });
         });
 
-        it('should accept no params', () => {
-            router().redirect('/', undefined);
-        });
+        describe('show', () => {
+            it('should reject malformed paths', () => {
+                expect(() => router().exec({show: undefined}))
+                    .toThrow(/path/);
+            });
 
-        it('should change the pathname', () => {
-            router().redirect('/test/xyz');
-            expect(window.location.pathname)
-                .toBe('/test/xyz');
-        });
+            it('should accept no params', () => {
+                router().exec({show: {path: '/', params: undefined}});
+            });
 
-        it('should accumulate params and pass them to the callback', () => {
-            const test = jest.fn();
-            let app = router();
-            app.use({route: {
-                path: '/user/:id/fetch/:field',
-                callback: test,
-            }});
-            app.redirect('/user/123/fetch/name');
-            expect(test)
-                .toHaveBeenCalledWith({id: '123', field: 'name'});
-        });
-    });
+            it('should not change the pathname', () => {
+                router().exec({show: {path: '/test/xyz'}});
+                expect(window.location.pathname)
+                    .not.toBe('/test/xyz');
+            });
 
-    describe('show', () => {
-        it('should reject malformed paths', () => {
-            expect(() => router().show(undefined))
-                .toThrow(/path/);
-        });
-
-        it('should accept no params', () => {
-            router().show('/', undefined);
-        });
-
-        it('should not change the pathname', () => {
-            router().show('/test/xyz');
-            expect(window.location.pathname)
-                .not.toBe('/test/xyz');
-        });
-
-        it('should accumulate params and pass them to the callback', () => {
-            const test = jest.fn();
-            let app = router();
-            app.use({route: {
-                path: '/user/:id/fetch/:field',
-                callback: test,
-            }});
-            app.show('/user/123/fetch/name');
-            expect(test)
-                .toHaveBeenCalledWith({id: '123', field: 'name'});
+            it('should accumulate params and pass them to the callback', () => {
+                const test = jest.fn();
+                let app = router();
+                app.use({route: {
+                    path: '/user/:id/fetch/:field',
+                    callback: test,
+                }});
+                app.exec({show: {path: '/user/123/fetch/name'}});
+                expect(test)
+                    .toHaveBeenCalledWith({id: '123', field: 'name'});
+            });
         });
     });
 
@@ -122,7 +124,7 @@ describe('@okwolo/router', () => {
                     path: '/test',
                     callback: test,
                 }});
-                app.redirect('/test');
+                app.exec({redirect: {path: '/test'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -139,7 +141,7 @@ describe('@okwolo/router', () => {
                     path: '/*',
                     callback: test2,
                 }});
-                app.redirect('/test');
+                app.exec({redirect: {path: '/test'}});
                 expect(test1)
                     .toHaveBeenCalled();
             });
@@ -156,7 +158,7 @@ describe('@okwolo/router', () => {
             it('should add the base url to all new pathnames', () => {
                 let app = router();
                 app.use({base: '/testBase'});
-                app.redirect('/test');
+                app.exec({redirect: {path: '/test'}});
                 expect(window.location.pathname)
                     .toBe('/testBase/test');
             });
@@ -209,8 +211,8 @@ describe('@okwolo/router', () => {
                 let app = router();
                 let test = jest.fn();
                 app.use({fetch: test});
-                app.redirect('/redirect', {redirect: true});
-                app.show('/show', {show: true});
+                app.exec({redirect: {path: '/redirect', params: {redirect: true}}});
+                app.exec({show: {path: '/show', params: {show: true}}});
                 expect(test)
                     .toHaveBeenCalledWith('/redirect', {redirect: true});
                 expect(test)
