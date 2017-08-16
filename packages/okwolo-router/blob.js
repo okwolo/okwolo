@@ -2,17 +2,22 @@
 
 const pathToRegexp = require('path-to-regexp');
 
-const blob = (_window = window) => {
-    const store = [];
+const {assert, isArray} = require('@okwolo/utils')();
 
-    const register = (path, callback) => {
+const blob = (_window = window) => {
+    const register = (store = [], path, callback) => {
+        if (!isArray(store)) {
+            store = [];
+        }
         store.push({
             pattern: pathToRegexp(path, [], {strict: true}),
             callback,
         });
+        return store;
     };
 
-    const fetch = (path, params = {}) => {
+    const fetch = (store = [], path, params = {}) => {
+        assert(isArray(store), 'router.fetch : store is not an array', store);
         let found = false;
         store.find((registeredPath) => {
             let test = registeredPath.pattern.exec(path);

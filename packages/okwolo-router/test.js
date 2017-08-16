@@ -196,7 +196,7 @@ describe('@okwolo/router', () => {
                     callback,
                 }});
                 expect(test)
-                    .toHaveBeenCalledWith('/', callback);
+                    .toHaveBeenCalledWith(undefined, '/', callback);
             });
         });
 
@@ -214,9 +214,9 @@ describe('@okwolo/router', () => {
                 app.exec({redirect: {path: '/redirect', params: {redirect: true}}});
                 app.exec({show: {path: '/show', params: {show: true}}});
                 expect(test)
-                    .toHaveBeenCalledWith('/redirect', {redirect: true});
+                    .toHaveBeenCalledWith(undefined, '/redirect', {redirect: true});
                 expect(test)
-                    .toHaveBeenCalledWith('/show', {show: true});
+                    .toHaveBeenCalledWith(undefined, '/show', {show: true});
             });
         });
     });

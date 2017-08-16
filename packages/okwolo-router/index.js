@@ -8,6 +8,8 @@ const router = (_window = window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     let baseUrl = '';
+
+    let store;
     let register;
     let fetch;
 
@@ -15,7 +17,7 @@ const router = (_window = window) => {
 
     const safeFetch = (...args) => {
         assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
-        fetch(...args);
+        fetch(store, ...args);
     };
 
     let removeBaseUrl = (path) => {
@@ -65,7 +67,7 @@ const router = (_window = window) => {
         assert(isString(path), 'router.use.route : path is not a string', path);
         assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
         assert(isFunction(register), 'route.use.route : register is not a function', register);
-        register(path, callback);
+        store = register(store, path, callback);
         if (!hasMatched) {
             hasMatched = !!safeFetch(currentPath);
         }
