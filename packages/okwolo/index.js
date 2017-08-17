@@ -4,25 +4,30 @@ const dom = require('@okwolo/dom');
 const state = require('@okwolo/state');
 const router = require('@okwolo/router');
 const history = require('@okwolo/history')();
-const {isFunction, assert, deepCopy, isBrowser} = require('@okwolo/utils')();
+const {isFunction, isDefined, assert, deepCopy, isBrowser, bus} = require('@okwolo/utils')();
 
-const okwolo = (rootElement, _window = window) => {
-    const domHandler = dom(rootElement, _window);
-    const stateHandler = state();
-    const routeHandler = router(_window);
+const okwolo = (rootElement, _window) => {
+    assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
+
+    if (!isDefined(_window)) {
+        _window = window;
+    }
+
+    const exec = bus();
+    const use = bus();
+
+    dom({exec, use}, _window);
+    state({exec, use});
+    router({exec, use}, _window);
 
     const initial = {};
     let _state = initial;
 
-    // forwarding use calls
-    const use = (blob) => {
-        [domHandler, stateHandler, routeHandler]
-            .forEach((module) => module.use(blob));
-    };
-
     // adding blobs
     [history]
         .forEach((blob) => use(blob));
+
+    use({target: rootElement});
 
     // add watcher to keep track of current state
     use({watcher:
@@ -31,7 +36,7 @@ const okwolo = (rootElement, _window = window) => {
 
     // add watcher to update dom
     use({watcher:
-        (newState) => domHandler.exec({state: newState}),
+        (newState) => exec({state: newState}),
     });
 
     // add action to override state
@@ -42,17 +47,17 @@ const okwolo = (rootElement, _window = window) => {
     }});
 
     const update = () => {
-        domHandler.exec({state: _state});
+        exec({state: _state});
     };
 
     // adding currentState and forwarding act calls
     const act = (type, params) => {
         assert(_state !== initial || type === '__OVERRIDE__', 'act : cannot act on state before it has been set');
         if (isFunction(type)) {
-            stateHandler.exec({act: {state: _state, type: '__OVERRIDE__', params: type(deepCopy(_state))}});
+            exec({act: {state: _state, type: '__OVERRIDE__', params: type(deepCopy(_state))}});
             return;
         }
-        stateHandler.exec({act: {state: _state, type, params}});
+        exec({act: {state: _state, type, params}});
     };
 
     // override state
@@ -94,8 +99,8 @@ const okwolo = (rootElement, _window = window) => {
     return Object.assign(register, {
         setState,
         getState,
-        redirect: (path, params) => routeHandler.exec({redirect: {path, params}}),
-        show: (path, params) => routeHandler.exec({show: {path, params}}),
+        redirect: (path, params) => exec({redirect: {path, params}}),
+        show: (path, params) => exec({show: {path, params}}),
         act,
         use,
         update,

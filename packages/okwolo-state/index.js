@@ -1,8 +1,8 @@
 'use strict';
 
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString, bus} = require('@okwolo/utils')();
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('@okwolo/utils')();
 
-const state = () => {
+const state = ({exec, use}) => {
     const actions = {};
     const middleware = [];
     const watchers = [];
@@ -63,8 +63,6 @@ const state = () => {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    const exec = bus();
-
     exec.on('act', ({state, type, params = {}} = {}) => {
         assert(isString(type), 'state.act : action type is not a string', type);
         assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
@@ -72,8 +70,6 @@ const state = () => {
             apply(state, type, params);
         });
     });
-
-    const use = bus(queue);
 
     use.on('action', (action) => {
         [].concat(action).forEach((item) => {
@@ -108,8 +104,6 @@ const state = () => {
             watchers.push(item);
         });
     });
-
-    return {exec, use};
 };
 
 module.exports = state;

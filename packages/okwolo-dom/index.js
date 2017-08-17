@@ -1,10 +1,10 @@
 'use strict';
 
-const {assert, isDefined, isFunction, bus} = require('@okwolo/utils')();
+const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
 const createDefaultBlob = require('./blob');
 
-const dom = (_target, _window = window) => {
+const dom = ({exec, use}, _window) => {
     let draw;
     let update;
     let build;
@@ -41,8 +41,6 @@ const dom = (_target, _window = window) => {
         }
     };
 
-    const exec = bus();
-
     exec.on('state', (newState) => {
         assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
@@ -53,8 +51,6 @@ const dom = (_target, _window = window) => {
             vdom = update(target, create(state), vdom);
         });
     });
-
-    const use = bus();
 
     use.on('target', (newTarget) => {
         target = newTarget;
@@ -101,13 +97,7 @@ const dom = (_target, _window = window) => {
         canDraw(() => update(target, create(state), vdom));
     });
 
-    if (isDefined(_target)) {
-        use({target: _target});
-    }
-
     use(createDefaultBlob(_window));
-
-    return {exec, use};
 };
 
 module.exports = dom;

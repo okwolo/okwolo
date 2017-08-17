@@ -1,10 +1,10 @@
 'use strict';
 
-const {assert, isString, isObject, isFunction, bus} = require('@okwolo/utils')();
+const {assert, isString, isObject, isFunction} = require('@okwolo/utils')();
 
 const createDefaultBlob = require('./blob');
 
-const router = (_window = window) => {
+const router = ({exec, use}, _window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     let baseUrl = '';
@@ -35,8 +35,6 @@ const router = (_window = window) => {
         safeFetch(currentPath);
     };
 
-    const exec = bus();
-
     // fetch wrapper that makes the browser aware of the url change
     exec.on('redirect', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
@@ -59,8 +57,6 @@ const router = (_window = window) => {
         assert(isObject(params), 'router.show : params is not an object', params);
         return safeFetch(path, params);
     });
-
-    const use = bus();
 
     // register wrapper that runs the current page's url against new routes
     use.on('route', ({path, callback} = {}) => {
@@ -92,8 +88,6 @@ const router = (_window = window) => {
     });
 
     use(createDefaultBlob(_window));
-
-    return {exec, use};
 };
 
 module.exports = router;
