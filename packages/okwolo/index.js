@@ -1,15 +1,16 @@
 'use strict';
 
 const dom = require('@okwolo/dom');
+const domBlob = require('@okwolo/dom/blob');
 const state = require('@okwolo/state');
 const router = require('@okwolo/router');
+const routerBlob = require('@okwolo/router/blob');
 const history = require('@okwolo/history')();
 const {isFunction, isDefined, assert, deepCopy, isBrowser, bus} = require('@okwolo/utils')();
 
 const okwolo = (rootElement, _window) => {
-    assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
-
     if (!isDefined(_window)) {
+        assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
         _window = window;
     }
 
@@ -24,7 +25,7 @@ const okwolo = (rootElement, _window) => {
     let _state = initial;
 
     // adding blobs
-    [history]
+    [history, domBlob(_window), routerBlob(_window)]
         .forEach((blob) => use(blob));
 
     use({target: rootElement});

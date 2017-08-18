@@ -2,8 +2,6 @@
 
 const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
-const createDefaultBlob = require('./blob');
-
 const dom = ({exec, use}, _window) => {
     let draw;
     let update;
@@ -96,8 +94,6 @@ const dom = ({exec, use}, _window) => {
         postbuild = newPostbuild;
         canDraw(() => update(target, create(state), vdom));
     });
-
-    use(createDefaultBlob(_window));
 };
 
 module.exports = dom;

@@ -8,6 +8,7 @@ const dom = (target) => {
     const exec = bus();
     const use = bus();
     require('./')({exec, use}, window);
+    use(require('./blob')(window));
     use({target});
     return {exec, use};
 };

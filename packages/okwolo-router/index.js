@@ -2,8 +2,6 @@
 
 const {assert, isString, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
 
-const createDefaultBlob = require('./blob');
-
 const router = ({exec, use}, _window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
@@ -94,8 +92,6 @@ const router = ({exec, use}, _window) => {
         assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
         fetch = _fetch;
     });
-
-    use(createDefaultBlob(_window));
 };
 
 module.exports = router;

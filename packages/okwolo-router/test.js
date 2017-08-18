@@ -6,6 +6,7 @@ const router = () => {
     const exec = bus();
     const use = bus();
     require('./')({exec, use}, window);
+    use(require('./blob')(window));
     return {exec, use};
 };
 

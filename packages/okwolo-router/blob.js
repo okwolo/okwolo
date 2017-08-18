@@ -4,7 +4,7 @@ const pathToRegexp = require('path-to-regexp');
 
 const {assert, isArray} = require('@okwolo/utils')();
 
-const blob = (_window = window) => {
+const blob = (_window) => {
     const register = (store = [], path, callback) => {
         if (!isArray(store)) {
             store = [];
