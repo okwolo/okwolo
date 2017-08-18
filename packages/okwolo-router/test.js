@@ -35,6 +35,26 @@ describe('@okwolo/router', () => {
                     .toBe('/test/xyz');
             });
 
+            it('should use a queue', () => {
+                const test = jest.fn();
+                const {exec, use} = router();
+                use({route: {
+                    path: '/xxx',
+                    callback: () => {
+                        exec({show: {path: '/test'}});
+                        test();
+                    },
+                }});
+                use({route: {
+                    path: '/test',
+                    callback: () => {
+                        expect(test)
+                            .toHaveBeenCalled();
+                    },
+                }});
+                exec({redirect: {path: '/xxx'}});
+            });
+
             it('should accumulate params and pass them to the callback', () => {
                 const test = jest.fn();
                 const {exec, use} = router();
@@ -65,6 +85,26 @@ describe('@okwolo/router', () => {
                 exec({show: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .not.toBe('/test/xyz');
+            });
+
+            it('should use a queue', () => {
+                const test = jest.fn();
+                const {exec, use} = router();
+                use({route: {
+                    path: '/xxx',
+                    callback: () => {
+                        exec({redirect: {path: '/test'}});
+                        test();
+                    },
+                }});
+                use({route: {
+                    path: '/test',
+                    callback: () => {
+                        expect(test)
+                            .toHaveBeenCalled();
+                    },
+                }});
+                exec({show: {path: '/xxx'}});
             });
 
             it('should accumulate params and pass them to the callback', () => {

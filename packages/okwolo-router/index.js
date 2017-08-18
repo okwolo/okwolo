@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isString, isObject, isFunction} = require('@okwolo/utils')();
+const {assert, isString, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
 
 const createDefaultBlob = require('./blob');
 
@@ -14,6 +14,8 @@ const router = ({exec, use}, _window) => {
     let fetch;
 
     let hasMatched = false;
+
+    const queue = makeQueue();
 
     const safeFetch = (...args) => {
         assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
@@ -39,23 +41,29 @@ const router = ({exec, use}, _window) => {
     exec.on('redirect', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
         assert(isObject(params), 'router.redirect : params is not an object', params);
-        currentPath = path;
-        if (isHosted) {
-            /* edge doesn't care that the file is local and will allow pushState.
-                it also includes "/C:" in the location.pathname, but adds it to
-                the path given to pushState. which means it needs to be removed here */
-            _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
-        } else {
-            console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
-        }
-        safeFetch(currentPath, params);
+        queue.add(() => {
+            currentPath = path;
+            if (isHosted) {
+                /* edge doesn't care that the file is local and will allow pushState.
+                    it also includes "/C:" in the location.pathname, but adds it to
+                    the path given to pushState. which means it needs to be removed here */
+                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
+            } else {
+                console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
+            }
+            safeFetch(currentPath, params);
+            queue.done();
+        });
     });
 
     // fetch wrapper which does not change the url
     exec.on('show', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
-        return safeFetch(path, params);
+        queue.add(() => {
+            safeFetch(path, params);
+            queue.done();
+        });
     });
 
     // register wrapper that runs the current page's url against new routes
