@@ -67,7 +67,10 @@ const utils = () => {
         const on = (type, handler) => {
             assert(isString(type), 'utils.bus : handler type is not a string', type);
             assert(isFunction(handler), 'utils.bus : handler is not a function', handler);
-            handlers[type] = handler;
+            if (!isDefined(handlers[type])) {
+                handlers[type] = [];
+            }
+            handlers[type].push(handler);
         };
 
         const handle = (event) => {
@@ -86,12 +89,12 @@ const utils = () => {
                 }
                 if (queue) {
                     queue.add(() => {
-                        handlers[key](event[key]);
+                        handlers[key].forEach((handler) => handler(event[key]));
                         queue.done();
                     });
                     return;
                 }
-                handlers[key](event[key]);
+                handlers[key].forEach((handler) => handler(event[key]));
             });
         };
 

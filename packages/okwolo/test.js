@@ -201,10 +201,10 @@ describe('okwolo', () => {
                 .not.toThrow(Error);
         });
 
-        it('should add an override action', () => {
+        it('should add an SET_STATE action', () => {
             const app = okwolo();
             app.setState({});
-            expect(() => app.act('__OVERRIDE__'))
+            expect(() => app.act('SET_STATE'))
                 .not.toThrow(Error);
         });
 
@@ -220,14 +220,6 @@ describe('okwolo', () => {
             app.setState({});
             expect(() => app.act('REDO'))
                 .not.toThrow(Error);
-        });
-
-        it('should accept a function', () => {
-            const app = okwolo();
-            app.setState({});
-            app.act(() => ({test: true}));
-            expect(app.getState())
-                .toEqual({test: true});
         });
     });
 

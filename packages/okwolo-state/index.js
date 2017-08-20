@@ -41,6 +41,8 @@ const state = ({exec, use}) => {
             }
         });
 
+        exec({state: deepCopy(newState)});
+
         watchers.forEach((watcher) => {
             watcher(deepCopy(newState), type, params);
         });
