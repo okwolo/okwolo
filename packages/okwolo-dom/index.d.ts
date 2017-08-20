@@ -1,19 +1,17 @@
 declare module "@okwolo/dom" {
-    function dom(target?: any, window?: Window): {
-        (builder: builder): void;
-        setState(state: any): void;
-        setState(updater: updater);
-        getState(): any;
-        use(blob: {
-            target?: target;
-            builder?: builder;
-            state?: state;
-            draw?: draw;
-            update?: update;
-            build?: build;
-            prebuild?: prebuild;
-            postbuild?: postbuild;
-        }): any[];
-    };
+    type queue = {
+        add(func: Function): void;
+        done(): void;
+    }
+
+    type bus = (queue?: queue) => {
+        (event: object): void;
+        on: (type: string, handler: Function) => void;
+    }
+
+    function dom(buses: {
+        exec: bus;
+        use: bus;
+    }): void;
     export = dom;
 }

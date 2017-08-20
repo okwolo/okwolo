@@ -1,11 +1,17 @@
 declare module "@okwolo/state" {
-    function state(): {
-        act(state: any, type: string, params?: object): void;
-        use(blob: {
-            action?: action | Array<action>;
-            watcher?: watcher | Array<watcher>;
-            middleware?: middleware | Array<middleware>;
-        }): any[];
-    };
+    type queue = {
+        add(func: Function): void;
+        done(): void;
+    }
+
+    type bus = (queue?: queue) => {
+        (event: object): void;
+        on: (type: string, handler: Function) => void;
+    }
+
+    function state(buses: {
+        exec: bus;
+        use: bus;
+    }): void;
     export = state;
 }

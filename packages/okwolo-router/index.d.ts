@@ -1,11 +1,17 @@
 declare module "@okwolo/router" {
-    function router(): {
-        redirect(path: string, params?: object): boolean;
-        show(path: string, params?: object): boolean;
-        use(blob: {
-            route?: route | Array<route>;
-            base?: base;
-        }): any[];
-    };
+    type queue = {
+        add(func: Function): void;
+        done(): void;
+    }
+
+    type bus = (queue?: queue) => {
+        (event: object): void;
+        on: (type: string, handler: Function) => void;
+    }
+
+    function router(buses: {
+        exec: bus;
+        use: bus;
+    }): void;
     export = router;
 }
