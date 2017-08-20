@@ -48,7 +48,7 @@ app(() => ({fruits}) => (
 </ul>
 ````
 
-| CDN | |
-|---|---|
-| ES5 | https://unpkg.com/okwolo |
-| ES5 + minified | https://unpkg.com/okwolo?main=minified |
+| CDN | | |
+|---|---|---|
+| ES5 | https://unpkg.com/okwolo | [alt](https://cdn.jsdelivr.net/npm/okwolo)|
+| ES5 + minified | https://unpkg.com/okwolo?main=minified | [alt](https://cdn.jsdelivr.net/npm/okwolo/okwolo.min.js) |
