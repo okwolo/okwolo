@@ -18,7 +18,6 @@ gulp.task('clean', () => {
         './packages/okwolo/okwolo.js',
         './packages/okwolo/okwolo.min.js',
         './coverage',
-        './okwolo.min.js',
         './npm-debug.log',
     ]);
 });

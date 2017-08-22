@@ -3,6 +3,23 @@
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 
+const bundle = (name) => ([
+    {
+        name,
+        entry: `./packages/okwolo/bundles/${name}.js`,
+        output: `dist/${name}.min.js`,
+        minified: true,
+        gzipped: true,
+    },
+    {
+        name,
+        entry: `./packages/okwolo/bundles/${name}.js`,
+        output: `dist/${name}.js`,
+        minified: false,
+        gzipped: false,
+    },
+]);
+
 const bundles = [
     {
         name: 'browser',
@@ -18,13 +35,10 @@ const bundles = [
         minified: true,
         gzipped: false,
     },
-    {
-        name: 'gzip',
-        entry: './packages/okwolo',
-        output: 'okwolo.min.js',
-        minified: true,
-        gzipped: true,
-    },
+    ...bundle('standard'),
+    ...bundle('static'),
+    ...bundle('stateless'),
+    ...bundle('lite'),
 ];
 
 module.exports = bundles.map((options) => {
