@@ -2,7 +2,14 @@
 
 const core = require('../core');
 
-const createPattern = () => /\w*/gi;
+const createPattern = (path) => {
+    const pattern = path
+        // escape special characters
+        .replace(/([^\w:])/g, '\\$1')
+        // replace tags with a matching group
+        .replace(/:(\w+)/g, '([^/]*)');
+    return new RegExp(`^${pattern}$`);
+};
 
 const liteRouter = {
     name: 'okwolo-lite-router',
