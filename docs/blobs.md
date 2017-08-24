@@ -266,8 +266,8 @@ let element = (               =>        let vdom = {
 );                            =>            },
                               =>            children: [
                               =>                {
-                              =>                    text: 'Hello World!'
-                              =>                }
+                              =>                    text: 'Hello World!',
+                              =>                },
                               =>            ],
                               =>        };
 ````

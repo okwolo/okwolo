@@ -206,9 +206,13 @@ module.exports = utils;
 
 var core = __webpack_require__(2);
 
-var createPattern = function createPattern() {
-    return (/\w*/gi
-    );
+var createPattern = function createPattern(path) {
+    var pattern = path
+    // escape special characters
+    .replace(/([^\w:])/g, '\\$1')
+    // replace tags with a matching group
+    .replace(/:(\w+)/g, '([^/]*)');
+    return new RegExp('^' + pattern + '$');
 };
 
 var liteRouter = {

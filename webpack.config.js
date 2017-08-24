@@ -39,6 +39,7 @@ const bundles = [
     ...bundle('static'),
     ...bundle('stateless'),
     ...bundle('lite'),
+    ...bundle('server'),
 ];
 
 module.exports = bundles.map((options) => {
