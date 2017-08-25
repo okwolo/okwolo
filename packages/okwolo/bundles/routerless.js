@@ -12,7 +12,7 @@ module.exports = core({
         require('@okwolo/history/blob'),
     ],
     options: {
-        bundle: 'static',
+        bundle: 'routerless',
         browser: true,
         modules: {
             state: true,

@@ -36,7 +36,7 @@ const bundles = [
         gzipped: false,
     },
     ...bundle('standard'),
-    ...bundle('static'),
+    ...bundle('routerless'),
     ...bundle('stateless'),
     ...bundle('lite'),
     ...bundle('server'),

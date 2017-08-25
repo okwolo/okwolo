@@ -73,7 +73,7 @@ type blob = {
     postbuild?: postbuild;
 }
 
-type updater = (any) => any;
+type updater = (state: any) => any;
 
 declare module "okwolo" {
     function okwolo(target?: any, window?: Window): {
@@ -85,7 +85,7 @@ declare module "okwolo" {
         redirect(path: string, params?: object): boolean;
         show(path: string, params?: object): boolean;
         act(state: any, type: string, params?: object): void;
-        act(updated: updater): void;
+        act(updater: updater): void;
         update: () => void;
         undo: () => void;
         redo: () => void;

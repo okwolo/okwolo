@@ -210,7 +210,7 @@ module.exports = core({
     modules: [__webpack_require__(3), __webpack_require__(4)],
     blobs: [__webpack_require__(5), __webpack_require__(6)],
     options: {
-        bundle: 'static',
+        bundle: 'routerless',
         browser: true,
         modules: {
             state: true,
