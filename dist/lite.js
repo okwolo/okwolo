@@ -212,7 +212,7 @@ var createPattern = function createPattern(path) {
     .replace(/([^\w:])/g, '\\$1')
     // replace tags with a matching group
     .replace(/:(\w+)/g, '([^/]*)');
-    return new RegExp('^' + pattern + '$');
+    return new RegExp('^' + pattern + '(\\?.*)?$');
 };
 
 var liteRouter = {
