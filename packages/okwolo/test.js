@@ -1,10 +1,302 @@
 'use strict';
 
 const okwolo = require('./');
+const core = require('./core');
+
+const merge = require('lodash/merge');
+
+const c = (options, modules = [], blobs = []) => {
+    return core({
+        modules: [].concat(modules),
+        blobs: [].concat(blobs),
+        options: merge({
+            modules: {},
+        }, options),
+    });
+};
 
 let wrapper;
 
-describe('okwolo', () => {
+describe('core', () => {
+    it('should return a function', () => {
+        expect(c())
+            .toBeInstanceOf(Function);
+    });
+
+    it('should add the bundle name to the okwolo function', () => {
+        expect(c({
+            bundle: 'test',
+        }).bundle)
+            .toBe('test');
+    });
+
+    it('should use the modules', () => {
+        const test = jest.fn();
+        c({}, test)();
+        expect(test)
+            .toHaveBeenCalled();
+    });
+
+    it('should use the blobs', () => {
+        const test = jest.fn();
+        const blob = () => {
+            test();
+            return {};
+        };
+        c({}, [], blob)();
+        expect(test)
+            .toHaveBeenCalled();
+    });
+
+    it('should add use to the api', () => {
+        expect(c()().use)
+            .toBeInstanceOf(Function);
+    });
+
+    it('should add use to the api', () => {
+        expect(c()().exec)
+            .toBeInstanceOf(Function);
+    });
+
+    it('should add getState to the api', () => {
+        expect(c()().getState)
+            .toBeInstanceOf(Function);
+    });
+
+    describe('options', () => {
+        describe('bundle', () => {
+            it('should add bundle to the window', () => {
+                c({
+                    bundle: 'test',
+                });
+                expect(window.okwolo.test)
+                    .toBeDefined();
+            });
+        });
+
+        describe('browser', () => {
+            it('should check for a browser environemnt', () => {
+                const _window = global.window;
+                delete global.window;
+                expect(() => c({
+                    browser: true,
+                })())
+                    .toThrow('browser');
+                global.window = _window;
+                expect(() => c({
+                    browser: true,
+                })())
+                    .not.toThrow(Error);
+            });
+        });
+
+        describe('modules', () => {
+            describe('state', () => {
+                it('should add act to the api', () => {
+                    expect(c({
+                        modules: {
+                            state: true,
+                        },
+                    })().act)
+                        .toBeInstanceOf(Function);
+                    expect(c({
+                        modules: {
+                            state: false,
+                        },
+                    })().act)
+                        .toBeFalsy();
+                });
+
+                it('should use an action to setState', () => {
+                    const test = jest.fn();
+                    const app1 = c()();
+                    app1.exec.on('act', test);
+                    app1.setState({});
+                    expect(test)
+                        .not.toHaveBeenCalled();
+                    const app2 = c({
+                        modules: {
+                            state: true,
+                        },
+                    })();
+                    app2.exec.on('act', test);
+                    app2.setState({});
+                    expect(test)
+                        .toHaveBeenCalled();
+                });
+            });
+
+            describe('history', () => {
+                it('should not be added without state', () => {
+                    expect(() => c({
+                        modules: {
+                            history: true,
+                        },
+                    })())
+                        .toThrow('state');
+                    expect(() => c({
+                        modules: {
+                            state: true,
+                            history: true,
+                        },
+                    })())
+                        .not.toThrow(Error);
+                });
+
+                it('should add undo to the api', () => {
+                    expect(c({
+                        modules: {
+                            state: true,
+                            history: true,
+                        },
+                    })().undo)
+                        .toBeInstanceOf(Function);
+                    expect(c({
+                        modules: {
+                            state: true,
+                            history: false,
+                        },
+                    })().undo)
+                        .toBeFalsy();
+                });
+
+                it('should add redo to the api', () => {
+                    expect(c({
+                        modules: {
+                            state: true,
+                            history: true,
+                        },
+                    })().redo)
+                        .toBeInstanceOf(Function);
+                    expect(c({
+                        modules: {
+                            state: true,
+                            history: false,
+                        },
+                    })().redo)
+                        .toBeFalsy();
+                });
+            });
+
+            describe('dom', () => {
+                it('should use the target immediately', () => {
+                    const test = jest.fn();
+                    const target = {};
+                    const _module = ({use}) => {
+                        use.on('target', test);
+                    };
+                    c({}, _module)(target);
+                    expect(test)
+                        .not.toHaveBeenCalledWith(target);
+                    c({
+                        modules: {
+                            dom: true,
+                        },
+                    }, _module)(target);
+                    expect(test)
+                        .toHaveBeenCalledWith(target);
+                });
+
+                it('should add update to the api', () => {
+                    expect(c()().update)
+                        .toBeFalsy();
+                    expect(c({
+                        modules: {
+                            dom: true,
+                        },
+                    })().update)
+                        .toBeInstanceOf(Function);
+                });
+
+                it('should exec the current state when updated', () => {
+                    const test = jest.fn();
+                    const app = c({
+                        modules: {
+                            dom: true,
+                        },
+                    })();
+                    app.exec.on('state', test);
+                    app.update();
+                    expect(test)
+                        .toHaveBeenCalled();
+                });
+            });
+
+            describe('router', () => {
+                it('should add redirect to the api', () => {
+                    expect(c()().redirect)
+                        .toBeFalsy();
+                    expect(c({
+                        modules: {
+                            router: true,
+                        },
+                    })().redirect)
+                        .toBeInstanceOf(Function);
+                });
+
+                it('should exec redirect when redirected', () => {
+                    const test = jest.fn();
+                    const _module = ({exec}) => {
+                        exec.on('redirect', test);
+                    };
+                    const app = c({
+                        modules: {
+                            router: true,
+                        },
+                    }, _module)();
+                    expect(test)
+                        .not.toHaveBeenCalled();
+                    app.redirect();
+                    expect(test)
+                        .toHaveBeenCalled();
+                });
+
+                it('should add show to the api', () => {
+                    expect(c()().show)
+                        .toBeFalsy();
+                    expect(c({
+                        modules: {
+                            router: true,
+                        },
+                    })().show)
+                        .toBeInstanceOf(Function);
+                });
+
+                it('should exec show when showed', () => {
+                    const test = jest.fn();
+                    const _module = ({exec}) => {
+                        exec.on('show', test);
+                    };
+                    const app = c({
+                        modules: {
+                            router: true,
+                        },
+                    }, _module)();
+                    expect(test)
+                        .not.toHaveBeenCalled();
+                    app.show();
+                    expect(test)
+                        .toHaveBeenCalled();
+                });
+
+                it('should allow registering paths', () => {
+                    const app1 = c()();
+                    expect(() => app1('test', () => 0))
+                        .toThrow(Error);
+                    const app2 = c({
+                        modules: {
+                            router: true,
+                        },
+                    })();
+                    expect(() => app2('test', () => 0))
+                        .not.toThrow(Error);
+                });
+            });
+        });
+    });
+});
+
+describe('standard', () => {
     beforeEach(() => {
         wrapper = document.createElement('div');
         document.body.appendChild(wrapper);

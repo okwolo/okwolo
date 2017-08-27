@@ -6,7 +6,7 @@ const core = ({modules, blobs, options}) => {
     const okwolo = (target, _window) => {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
+                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
                 _window = window;
             }
         }
@@ -108,7 +108,6 @@ const core = ({modules, blobs, options}) => {
             };
         } else {
             api.register = (builder) => {
-                assert(isFunction(builder), 'register : builder is not a function', builder);
                 use({builder: path()});
                 return;
             };

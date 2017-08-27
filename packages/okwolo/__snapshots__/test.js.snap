@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`okwolo examples should correctly render the button example 1`] = `
+exports[`standard examples should correctly render the button example 1`] = `
 <div class="buttons">
   <button>abc
     <span style="font-size: 6px;">0</span>
@@ -14,7 +14,7 @@ exports[`okwolo examples should correctly render the button example 1`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the button example 2`] = `
+exports[`standard examples should correctly render the button example 2`] = `
 <div class="buttons">
   <button>abc
     <span style="font-size: 6px;">1</span>
@@ -28,7 +28,7 @@ exports[`okwolo examples should correctly render the button example 2`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the button example 3`] = `
+exports[`standard examples should correctly render the button example 3`] = `
 <div class="buttons">
   <button>abc
     <span style="font-size: 6px;">1</span>
@@ -42,7 +42,7 @@ exports[`okwolo examples should correctly render the button example 3`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the button example 4`] = `
+exports[`standard examples should correctly render the button example 4`] = `
 <div class="buttons">
   <button>abc
     <span style="font-size: 6px;">1</span>
@@ -56,7 +56,7 @@ exports[`okwolo examples should correctly render the button example 4`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the button example 5`] = `
+exports[`standard examples should correctly render the button example 5`] = `
 <div class="buttons">
   <button>abc
     <span style="font-size: 6px;">1</span>
@@ -70,7 +70,7 @@ exports[`okwolo examples should correctly render the button example 5`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the fruit example 1`] = `
+exports[`standard examples should correctly render the fruit example 1`] = `
 <ul class="fruit-list">
   <li class="fruit">orange</li>
   <li class="fruit">apple</li>
@@ -78,7 +78,7 @@ exports[`okwolo examples should correctly render the fruit example 1`] = `
 </ul>
 `;
 
-exports[`okwolo examples should correctly render the router example 1`] = `
+exports[`standard examples should correctly render the router example 1`] = `
 <div>
   <span>title1</span>
   <span>title2</span>
@@ -86,7 +86,7 @@ exports[`okwolo examples should correctly render the router example 1`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the router example 2`] = `
+exports[`standard examples should correctly render the router example 2`] = `
 <div>
   <button>home</button>
   <br>
@@ -95,7 +95,7 @@ exports[`okwolo examples should correctly render the router example 2`] = `
 </div>
 `;
 
-exports[`okwolo examples should correctly render the router example 3`] = `
+exports[`standard examples should correctly render the router example 3`] = `
 <div>
   <span>title1</span>
   <span>title2</span>

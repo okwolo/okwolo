@@ -50,7 +50,7 @@ app(() => ({fruits}) => (
 
 # Bundles
 
-## standard [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
+## `standard` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
 
 > `require('okwolo');` or `require('okwolo/bundles/standard');`
 
@@ -65,7 +65,7 @@ app(() => ({fruits}) => (
 |---|---|---|
 | browser | [dist/standard.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/standard.js) | [dist/standard.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/standard.min.js) |
 
-## lite [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
+## `lite` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
 
 > `require('okwolo/bundles/lite');`
 
@@ -83,7 +83,7 @@ app(() => ({fruits}) => (
 |---|---|---|
 | browser | [dist/lite.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/lite.js) | [dist/lite.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/lite.min.js) |
 
-## server [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
+## `server` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
 
 > `require('okwolo/bundles/server');`
 
@@ -119,7 +119,7 @@ app.use({target: (htmlString) => {
 |---|---|---|
 | browser | [dist/server.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.js) | [dist/server.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.min.js) |
 
-## stateless [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/stateless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/stateless.min.js.gz)
+## `stateless` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/stateless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/stateless.min.js.gz)
 
 > `require('okwolo/bundles/stateless');`
 
@@ -134,7 +134,7 @@ app.use({target: (htmlString) => {
 |---|---|---|
 | browser | [dist/stateless.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/stateless.js) | [dist/stateless.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/stateless.min.js) |
 
-## routerless [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/routerless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/routerless.min.js.gz)
+## `routerless` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/routerless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/routerless.min.js.gz)
 
 > `require('okwolo/bundles/routerless');`
 
