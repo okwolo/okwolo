@@ -1,7 +1,8 @@
 'use strict';
 
-const okwolo = require('./');
 const core = require('./core');
+const standard = require('./');
+const lite = require('./bundles/lite');
 
 const merge = require('lodash/merge');
 
@@ -314,13 +315,13 @@ describe('standard', () => {
     });
 
     it('should return a function', () => {
-        expect(okwolo())
+        expect(standard())
             .toBeInstanceOf(Function);
     });
 
     describe('app', () => {
         it('should expose the top level api', () => {
-            const app = okwolo();
+            const app = standard();
             expect(app.setState)
                 .toBeInstanceOf(Function);
             expect(app.setState)
@@ -346,7 +347,7 @@ describe('standard', () => {
         });
 
         it('should replace the builder when called', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({});
             app(() => () => ['test']);
             await sleep();
@@ -355,14 +356,14 @@ describe('standard', () => {
         });
 
         it('should expect a function that returns a function', () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({});
             expect(() => app(() => ['test']))
                 .toThrow(/builder/);
         });
 
         it('should register builders for specific routes', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({});
             app('/test', () => () => ['test']);
             await sleep();
@@ -375,7 +376,7 @@ describe('standard', () => {
         });
 
         it('should should pas route params to the builder', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             const test = jest.fn();
             app.setState({});
             app('/test/:id/profile', (params) => () => {
@@ -391,20 +392,20 @@ describe('standard', () => {
 
     describe('getState', () => {
         it('should fail when state has not been set', () => {
-            const app = okwolo();
+            const app = standard();
             expect(() => app.getState())
                 .toThrow(/state/);
         });
 
         it('should return the state', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({test: true});
             expect(app.getState())
                 .toEqual({test: true});
         });
 
         it('should return a copy of the state', () => {
-            const app = okwolo();
+            const app = standard();
             const state = {test: true};
             app.setState(state);
             expect(app.getState())
@@ -414,21 +415,21 @@ describe('standard', () => {
 
     describe('setState', () => {
         it('should change the state', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({test: true});
             expect(app.getState())
                 .toEqual({test: true});
         });
 
         it('should accept a function', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState(() => ({test: true}));
             expect(app.getState())
                 .toEqual({test: true});
         });
 
         it('should update okwolo-dom\'s state', () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             const test = jest.fn();
             app(() => (state) => {
                 test(state);
@@ -442,14 +443,14 @@ describe('standard', () => {
 
     describe('redirect', () => {
         it('should change the pathname', () => {
-            const app = okwolo();
+            const app = standard();
             app.redirect('/test/xyz');
             expect(window.location.pathname)
                 .toBe('/test/xyz');
         });
 
         it('should change the layout', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({});
             app('/test/:content', ({content}) => () => content);
             app.redirect('/test/xyz');
@@ -461,14 +462,14 @@ describe('standard', () => {
 
     describe('show', () => {
         it('should change the pathname', () => {
-            const app = okwolo();
+            const app = standard();
             app.show('/test/xyz');
             expect(window.location.pathname)
                 .not.toBe('/test/xyz');
         });
 
         it('should change the layout', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({});
             app('/test/:content', ({content}) => () => content);
             app.show('/test/xyz');
@@ -480,7 +481,7 @@ describe('standard', () => {
 
     describe('act', () => {
         it('should not allow actions before state has been set', () => {
-            const app = okwolo();
+            const app = standard();
             app.use({action: {
                 type: 'TEST',
                 target: [],
@@ -494,21 +495,21 @@ describe('standard', () => {
         });
 
         it('should add an SET_STATE action', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({});
             expect(() => app.act('SET_STATE'))
                 .not.toThrow(Error);
         });
 
         it('should add an UNDO action', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({});
             expect(() => app.act('UNDO'))
                 .not.toThrow(Error);
         });
 
         it('should add a REDO action', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({});
             expect(() => app.act('REDO'))
                 .not.toThrow(Error);
@@ -517,7 +518,7 @@ describe('standard', () => {
 
     describe('use', () => {
         it('should support named blobs', () => {
-            const app = okwolo();
+            const app = standard();
             app.setState({});
             const test = jest.fn();
             const action = {
@@ -538,7 +539,7 @@ describe('standard', () => {
 
     describe('update', () => {
         it('should trigger a rerender', () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             const test = jest.fn();
             app.setState({});
             app(() => () => {
@@ -553,7 +554,7 @@ describe('standard', () => {
 
     describe('undo', () => {
         it('should execute an UNDO action', () => {
-            const app = okwolo();
+            const app = standard();
             const test = jest.fn();
             app.setState({});
             app.use({action: {
@@ -572,7 +573,7 @@ describe('standard', () => {
 
     describe('redo', () => {
         it('should execute a REDO action', () => {
-            const app = okwolo();
+            const app = standard();
             const test = jest.fn();
             app.setState({});
             app.use({action: {
@@ -591,7 +592,7 @@ describe('standard', () => {
 
     describe('examples', () => {
         it('should correctly render the fruit example', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState(['orange', 'apple', 'pear']);
             let FruitItem = ({type}) => (
                 ['li.fruit', {}, [
@@ -610,7 +611,7 @@ describe('standard', () => {
         });
 
         it('should correctly render the button example', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState([
                 {text: 'abc', count: 0},
                 {text: 'def', count: 0},
@@ -660,7 +661,7 @@ describe('standard', () => {
         });
 
         it('should correctly render the router example', async () => {
-            const app = okwolo(wrapper);
+            const app = standard(wrapper);
             app.setState({
                 articles: [
                     {title: 'title1', content: 'content1'},
@@ -704,5 +705,67 @@ describe('standard', () => {
             expect(wrapper.innerHTML)
                 .toMatchSnapshot();
         });
+    });
+});
+
+describe('lite', () => {
+    beforeEach(() => {
+        wrapper = document.createElement('div');
+        document.body.appendChild(wrapper);
+        window.history.pushState({}, '', '/');
+    });
+
+    afterEach(() => {
+        document.body.removeChild(wrapper);
+        wrapper = null;
+    });
+
+    it('should not have state api', () => {
+        const app = lite();
+        expect(app.act)
+            .toBeFalsy();
+        expect(app.undo)
+            .toBeFalsy();
+        expect(app.redo)
+            .toBeFalsy();
+    });
+
+    it('should have the dom api', () => {
+        const app = lite();
+        expect(app.update)
+            .toBeInstanceOf(Function);
+    });
+
+    it('should have the router api', () => {
+        const app = lite();
+        expect(app.show)
+            .toBeInstanceOf(Function);
+        expect(app.redirect)
+            .toBeInstanceOf(Function);
+        expect(() => app('/path', () => () => 'test'))
+            .not.toThrow(Error);
+    });
+
+    it('should support url params', async () => {
+        const app = lite(wrapper);
+        app.setState({});
+        app('/test/:content', ({content}) => () => content);
+        app.redirect('/test/xyz');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('xyz');
+    });
+
+    it('should ignore query strings', async () => {
+        const app = lite(wrapper);
+        app.setState({});
+        app('/test', () => () => 'xyz');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('');
+        app.redirect('/test?q=test');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('xyz');
     });
 });

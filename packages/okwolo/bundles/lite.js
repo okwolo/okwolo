@@ -1,6 +1,7 @@
 'use strict';
 
 const core = require('../core');
+const {isArray} = require('@okwolo/utils')();
 
 const createPattern = (path) => {
     const pattern = path
@@ -11,13 +12,14 @@ const createPattern = (path) => {
     return new RegExp(`^${pattern}(\\?.*)?$`);
 };
 
-const liteRouter = {
+const liteRouter = () => ({
     name: 'okwolo-lite-router',
     register: (store = [], path, callback) => {
         if (!isArray(store)) {
             store = [];
         }
         store.push({
+            string: path,
             pattern: createPattern(path),
             callback,
         });
@@ -32,16 +34,18 @@ const liteRouter = {
             }
             found = true;
             test.shift();
-            const keys = registeredPath.toString().match(/:\w+/g);
-            keys.forEach((key, i) => {
-                params[key.name] = test[i];
-            });
+            const keys = registeredPath.string.match(/:\w+/g);
+            if (isArray(keys)) {
+                keys.forEach((key, i) => {
+                    params[key.replace(/^:/, '')] = test[i];
+                });
+            }
             registeredPath.callback(params);
             return found;
         });
         return found;
     },
-};
+});
 
 module.exports = core({
     modules: [
