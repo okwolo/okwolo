@@ -206,6 +206,9 @@ module.exports = utils;
 
 var core = __webpack_require__(2);
 
+var _require = __webpack_require__(0)(),
+    isArray = _require.isArray;
+
 var createPattern = function createPattern(path) {
     var pattern = path
     // escape special characters
@@ -215,44 +218,49 @@ var createPattern = function createPattern(path) {
     return new RegExp('^' + pattern + '(\\?.*)?$');
 };
 
-var liteRouter = {
-    name: 'okwolo-lite-router',
-    register: function register() {
-        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        var path = arguments[1];
-        var callback = arguments[2];
+var liteRouter = function liteRouter() {
+    return {
+        name: 'okwolo-lite-router',
+        register: function register() {
+            var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+            var path = arguments[1];
+            var callback = arguments[2];
 
-        if (!isArray(store)) {
-            store = [];
-        }
-        store.push({
-            pattern: createPattern(path),
-            callback: callback
-        });
-        return store;
-    },
-    fetch: function fetch() {
-        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        var path = arguments[1];
-        var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
-        var found = false;
-        store.find(function (registeredPath) {
-            var test = registeredPath.pattern.exec(path);
-            if (test === null) {
-                return;
+            if (!isArray(store)) {
+                store = [];
             }
-            found = true;
-            test.shift();
-            var keys = registeredPath.toString().match(/:\w+/g);
-            keys.forEach(function (key, i) {
-                params[key.name] = test[i];
+            store.push({
+                string: path,
+                pattern: createPattern(path),
+                callback: callback
             });
-            registeredPath.callback(params);
+            return store;
+        },
+        fetch: function fetch() {
+            var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+            var path = arguments[1];
+            var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+            var found = false;
+            store.find(function (registeredPath) {
+                var test = registeredPath.pattern.exec(path);
+                if (test === null) {
+                    return;
+                }
+                found = true;
+                test.shift();
+                var keys = registeredPath.string.match(/:\w+/g);
+                if (isArray(keys)) {
+                    keys.forEach(function (key, i) {
+                        params[key.replace(/^:/, '')] = test[i];
+                    });
+                }
+                registeredPath.callback(params);
+                return found;
+            });
             return found;
-        });
-        return found;
-    }
+        }
+    };
 };
 
 module.exports = core({
@@ -293,7 +301,7 @@ var core = function core(_ref) {
     var okwolo = function okwolo(target, _window) {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
+                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
                 _window = window;
             }
         }
@@ -397,8 +405,7 @@ var core = function core(_ref) {
             };
         } else {
             api.register = function (builder) {
-                assert(isFunction(builder), 'register : builder is not a function', builder);
-                use({ builder: path() });
+                use({ builder: builder() });
                 return;
             };
         }
@@ -461,8 +468,8 @@ var dom = function dom(_ref, _window) {
 
     var hasDrawn = false;
     var drawToTarget = function drawToTarget() {
-        hasDrawn = true;
         vdom = draw(target, vdom);
+        hasDrawn = true;
     };
 
     var canDraw = function canDraw(callback) {

@@ -31,9 +31,15 @@ const renderToString = (target, _vdom) => {
         }
         const {tagName, attributes = {}, children = []} = vdom;
         const formattedAttributes = Object.keys(attributes)
-            .map((key) => `${key}="${attributes[key].toString()}"`)
+            .map((key) => {
+                if (key === 'className') {
+                    key = 'class';
+                    attributes.class = attributes.className;
+                }
+                return `${key}="${attributes[key].toString()}"`;
+            })
             .join(' ');
-        if (isDefined(singletons[tagName])) {
+        if (isDefined(singletons[tagName]) && children.length < 1) {
             return [`<${`${tagName} ${formattedAttributes}`.trim()} />`];
         }
         return [
@@ -49,17 +55,18 @@ const renderToString = (target, _vdom) => {
     target(render(_vdom).join('\n'));
 };
 
-const serverRender = {
+const serverRender = () => ({
     name: 'okwolo-server-render',
     draw: renderToString,
     update: renderToString,
-};
+});
 
 module.exports = core({
     modules: [
         require('@okwolo/dom'),
     ],
     blobs: [
+        require('@okwolo/dom/blob'),
         serverRender,
     ],
     options: {

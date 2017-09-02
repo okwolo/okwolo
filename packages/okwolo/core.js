@@ -108,7 +108,7 @@ const core = ({modules, blobs, options}) => {
             };
         } else {
             api.register = (builder) => {
-                use({builder: path()});
+                use({builder: builder()});
                 return;
             };
         }

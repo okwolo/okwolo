@@ -247,9 +247,13 @@ var renderToString = function renderToString(target, _vdom) {
             children = _vdom$children === undefined ? [] : _vdom$children;
 
         var formattedAttributes = Object.keys(attributes).map(function (key) {
+            if (key === 'className') {
+                key = 'class';
+                attributes.class = attributes.className;
+            }
             return key + '="' + attributes[key].toString() + '"';
         }).join(' ');
-        if (isDefined(singletons[tagName])) {
+        if (isDefined(singletons[tagName]) && children.length < 1) {
             return ['<' + (tagName + ' ' + formattedAttributes).trim() + ' />'];
         }
         return ['<' + (tagName + ' ' + formattedAttributes).trim() + '>'].concat(_toConsumableArray(children.reduce(function (acc, child) {
@@ -261,15 +265,17 @@ var renderToString = function renderToString(target, _vdom) {
     target(render(_vdom).join('\n'));
 };
 
-var serverRender = {
-    name: 'okwolo-server-render',
-    draw: renderToString,
-    update: renderToString
+var serverRender = function serverRender() {
+    return {
+        name: 'okwolo-server-render',
+        draw: renderToString,
+        update: renderToString
+    };
 };
 
 module.exports = core({
     modules: [__webpack_require__(3)],
-    blobs: [serverRender],
+    blobs: [__webpack_require__(4), serverRender],
     options: {
         bundle: 'server',
         browser: false,
@@ -305,7 +311,7 @@ var core = function core(_ref) {
     var okwolo = function okwolo(target, _window) {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
+                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
                 _window = window;
             }
         }
@@ -409,8 +415,7 @@ var core = function core(_ref) {
             };
         } else {
             api.register = function (builder) {
-                assert(isFunction(builder), 'register : builder is not a function', builder);
-                use({ builder: path() });
+                use({ builder: builder() });
                 return;
             };
         }
@@ -473,8 +478,8 @@ var dom = function dom(_ref, _window) {
 
     var hasDrawn = false;
     var drawToTarget = function drawToTarget() {
-        hasDrawn = true;
         vdom = draw(target, vdom);
+        hasDrawn = true;
     };
 
     var canDraw = function canDraw(callback) {
@@ -547,6 +552,236 @@ var dom = function dom(_ref, _window) {
 };
 
 module.exports = dom;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    isDefined = _require.isDefined,
+    isNull = _require.isNull,
+    isArray = _require.isArray,
+    isString = _require.isString,
+    isNode = _require.isNode,
+    isObject = _require.isObject,
+    isFunction = _require.isFunction,
+    makeQueue = _require.makeQueue;
+
+var blob = function blob(_window) {
+    // recursively creates DOM elements from vdom object
+    var render = function render(velem) {
+        if (isDefined(velem.text)) {
+            velem.DOM = _window.document.createTextNode(velem.text);
+            return velem;
+        }
+        var element = _window.document.createElement(velem.tagName);
+        Object.keys(velem.attributes).forEach(function (attribute) {
+            element[attribute] = velem.attributes[attribute];
+        });
+        Object.keys(velem.children).forEach(function (key) {
+            velem.children[key] = render(velem.children[key]);
+            element.appendChild(velem.children[key].DOM);
+        });
+        velem.DOM = element;
+        return velem;
+    };
+
+    // initial draw to container
+    var draw = function draw(target, vdom) {
+        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
+        if (!isDefined(vdom)) {
+            vdom = { text: '' };
+        }
+        vdom = render(vdom);
+        _window.requestAnimationFrame(function () {
+            target.innerHTML = '';
+            target.appendChild(vdom.DOM);
+        });
+        return vdom;
+    };
+
+    /* shallow diff of two objects which returns an array of the
+        modified keys (functions always considered different)*/
+    var diff = function diff(original, successor) {
+        return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
+            var valueOriginal = original[key];
+            var valueSuccessor = successor[key];
+            return !(valueOriginal !== Object(valueOriginal) && valueSuccessor !== Object(valueSuccessor) && valueOriginal === valueSuccessor);
+        });
+    };
+
+    // update vdom and real DOM to new state
+    var update = function update(target, newVdom, vdom) {
+        assert(isNode(target), 'dom.update : target is not a DOM node', target);
+        // using a queue to clean up deleted nodes after diffing finishes
+        var queue = makeQueue();
+        _window.requestAnimationFrame(function () {
+            queue.add(function () {
+                _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
+                queue.done();
+            });
+        });
+        // recursive function to update an element according to new state
+        var _update = function _update(original, successor, originalParent, parentIndex) {
+            if (!isDefined(original) && !isDefined(successor)) {
+                return;
+            }
+            // add
+            if (!isDefined(original)) {
+                originalParent.children[parentIndex] = render(successor);
+                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
+                return;
+            }
+            // remove
+            if (!isDefined(successor)) {
+                originalParent.DOM.removeChild(original.DOM);
+                queue.add(function () {
+                    delete originalParent.children[parentIndex];
+                    queue.done();
+                });
+                return;
+            }
+            // replace
+            if (original.tagName !== successor.tagName) {
+                var oldDOM = original.DOM;
+                var newVDOM = render(successor);
+                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                /* need to manually delete to preserve reference to past object */
+                if (isDefined(newVDOM.text)) {
+                    originalParent.children[parentIndex].DOM = newVDOM.DOM;
+                    originalParent.children[parentIndex].text = newVDOM.text;
+                    delete originalParent.children[parentIndex].tagName;
+                    delete originalParent.children[parentIndex].attributes;
+                    delete originalParent.children[parentIndex].children;
+                } else {
+                    originalParent.children[parentIndex].DOM = newVDOM.DOM;
+                    delete originalParent.children[parentIndex].text;
+                    originalParent.children[parentIndex].tagName = newVDOM.tagName;
+                    originalParent.children[parentIndex].attributes = newVDOM.attributes;
+                    originalParent.children[parentIndex].children = newVDOM.children;
+                }
+                return;
+            }
+            // edit
+            if (original.DOM.nodeType === 3) {
+                if (original.text !== successor.text) {
+                    original.DOM.nodeValue = successor.text;
+                    original.text = successor.text;
+                }
+            } else {
+                var attributesDiff = diff(original.attributes, successor.attributes);
+                if (attributesDiff.length !== 0) {
+                    attributesDiff.forEach(function (key) {
+                        original.attributes[key] = successor.attributes[key];
+                        original.DOM[key] = successor.attributes[key];
+                    });
+                }
+            }
+            var keys = Object.keys(original.children || {}).concat(Object.keys(successor.children || {}));
+            var visited = {};
+            keys.forEach(function (key) {
+                if (visited[key] === undefined) {
+                    visited[key] = true;
+                    _update(original.children[key], successor.children[key], original, key);
+                }
+            });
+        };
+        return vdom;
+    };
+
+    var classnames = function classnames() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return args.map(function (arg) {
+            if (isString(arg)) {
+                return arg;
+            } else if (isArray(arg)) {
+                return classnames.apply(undefined, _toConsumableArray(arg));
+            } else if (isObject(arg)) {
+                return classnames(Object.keys(arg).map(function (key) {
+                    return arg[key] && key;
+                }));
+            }
+        }).filter(Boolean).join(' ');
+    };
+
+    // build vdom from builder output
+    var build = function build(element) {
+        if (isNull(element)) {
+            return { text: '' };
+        }
+        if (isString(element)) {
+            return { text: element };
+        }
+        assert(isArray(element), 'dom.build : vdom object is not an array or string', element);
+        if (isFunction(element[0])) {
+            var props = element[1] || {};
+            assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
+            var _children = element[2] || [];
+            assert(isArray(_children), 'dom.build : component\'s children is not an array', element, _children);
+            return build(element[0](Object.assign({}, props, { children: _children })));
+        }
+
+        var _element = _slicedToArray(element, 3),
+            tagType = _element[0],
+            attributes = _element[1],
+            children = _element[2];
+
+        assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
+        // capture groups: tagName, id, className, style
+        var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+        assert(isArray(match), 'dom.build : tag property cannot be parsed', tagType);
+
+        var _match = _slicedToArray(match, 5),
+            tagName = _match[1],
+            id = _match[2],
+            className = _match[3],
+            style = _match[4];
+
+        if (attributes == null) {
+            attributes = {};
+        }
+        assert(isObject(attributes), 'dom.build : attributes is not an object', element, attributes);
+        if (isDefined(id) && !isDefined(attributes.id)) {
+            attributes.id = id.trim();
+        }
+        if (isDefined(attributes.className) || isDefined(className)) {
+            attributes.className = classnames(attributes.className, className).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
+        }
+        if (isDefined(style)) {
+            if (!isDefined(attributes.style)) {
+                attributes.style = style;
+            } else {
+                attributes.style += ';' + style;
+                attributes.style = attributes.style.replace(/;;/g, ';');
+            }
+        }
+        if (isDefined(children)) {
+            assert(isArray(children), 'dom.build : children of vdom object is not an array', element, children);
+        } else {
+            children = [];
+        }
+        return {
+            tagName: tagName,
+            attributes: attributes,
+            children: children.map(build)
+        };
+    };
+
+    return { name: '@okwolo/dom', draw: draw, update: update, build: build };
+};
+
+module.exports = blob;
 
 /***/ })
 /******/ ]);

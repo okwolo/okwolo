@@ -244,7 +244,7 @@ var core = function core(_ref) {
     var okwolo = function okwolo(target, _window) {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : this version of okwolo must be run in a browser environment');
+                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
                 _window = window;
             }
         }
@@ -348,8 +348,7 @@ var core = function core(_ref) {
             };
         } else {
             api.register = function (builder) {
-                assert(isFunction(builder), 'register : builder is not a function', builder);
-                use({ builder: path() });
+                use({ builder: builder() });
                 return;
             };
         }
@@ -412,8 +411,8 @@ var dom = function dom(_ref, _window) {
 
     var hasDrawn = false;
     var drawToTarget = function drawToTarget() {
-        hasDrawn = true;
         vdom = draw(target, vdom);
+        hasDrawn = true;
     };
 
     var canDraw = function canDraw(callback) {

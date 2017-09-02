@@ -29,8 +29,8 @@ const dom = ({exec, use}, _window) => {
 
     let hasDrawn = false;
     const drawToTarget = () => {
-        hasDrawn = true;
         vdom = draw(target, vdom);
+        hasDrawn = true;
     };
 
     const canDraw = (callback) => {
