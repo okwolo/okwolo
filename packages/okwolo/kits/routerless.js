@@ -5,20 +5,20 @@ const core = require('../core');
 module.exports = core({
     modules: [
         require('@okwolo/dom'),
-        require('@okwolo/router'),
+        require('@okwolo/state'),
     ],
     blobs: [
         require('@okwolo/dom/blob'),
-        require('@okwolo/router/blob'),
+        require('@okwolo/history/blob'),
     ],
     options: {
-        bundle: 'stateless',
+        kit: 'routerless',
         browser: true,
         modules: {
-            state: false,
-            history: false,
+            state: true,
+            history: true,
             dom: true,
-            router: true,
+            router: false,
         },
     },
 });

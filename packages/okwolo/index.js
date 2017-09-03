@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./bundles/standard');
+module.exports = require('./kits/standard');

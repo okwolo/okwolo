@@ -57,7 +57,7 @@ module.exports = core({
         liteRouter,
     ],
     options: {
-        bundle: 'lite',
+        kit: 'lite',
         browser: true,
         modules: {
             state: false,

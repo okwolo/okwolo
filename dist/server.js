@@ -277,7 +277,7 @@ module.exports = core({
     modules: [__webpack_require__(3)],
     blobs: [__webpack_require__(4), serverRender],
     options: {
-        bundle: 'server',
+        kit: 'server',
         browser: false,
         modules: {
             state: false,
@@ -311,7 +311,7 @@ var core = function core(_ref) {
     var okwolo = function okwolo(target, _window) {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
+                assert(isBrowser(), 'app : must be run in a browser environment');
                 _window = window;
             }
         }
@@ -424,11 +424,11 @@ var core = function core(_ref) {
     };
 
     if (isBrowser()) {
-        okwolo.bundle = options.bundle;
+        okwolo.kit = options.kit;
         if (!isDefined(window.okwolo)) {
             window.okwolo = okwolo;
         }
-        window.okwolo[options.bundle] = okwolo;
+        window.okwolo[options.kit] = okwolo;
     }
 
     return okwolo;

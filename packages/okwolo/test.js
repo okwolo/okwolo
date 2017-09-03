@@ -2,10 +2,10 @@
 
 const core = require('./core');
 const standard = require('./');
-const lite = require('./bundles/lite');
-const server = require('./bundles/server');
-const routerless = require('./bundles/routerless');
-const stateless = require('./bundles/stateless');
+const lite = require('./kits/lite');
+const server = require('./kits/server');
+const routerless = require('./kits/routerless');
+const stateless = require('./kits/stateless');
 
 const merge = require('lodash/merge');
 
@@ -27,10 +27,10 @@ describe('core', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should add the bundle name to the okwolo function', () => {
+    it('should add the kit name to the okwolo function', () => {
         expect(c({
-            bundle: 'test',
-        }).bundle)
+            kit: 'test',
+        }).kit)
             .toBe('test');
     });
 
@@ -68,10 +68,10 @@ describe('core', () => {
     });
 
     describe('options', () => {
-        describe('bundle', () => {
-            it('should add bundle to the window', () => {
+        describe('kit', () => {
+            it('should add kit to the window', () => {
                 c({
-                    bundle: 'test',
+                    kit: 'test',
                 });
                 expect(window.okwolo.test)
                     .toBeDefined();

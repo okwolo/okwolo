@@ -6,7 +6,7 @@ const core = ({modules, blobs, options}) => {
     const okwolo = (target, _window) => {
         if (options.browser) {
             if (!isDefined(_window)) {
-                assert(isBrowser(), 'app : okwolo bundle must be run in a browser environment');
+                assert(isBrowser(), 'app : must be run in a browser environment');
                 _window = window;
             }
         }
@@ -117,11 +117,11 @@ const core = ({modules, blobs, options}) => {
     };
 
     if (isBrowser()) {
-        okwolo.bundle = options.bundle;
+        okwolo.kit = options.kit;
         if (!isDefined(window.okwolo)) {
             window.okwolo = okwolo;
         }
-        window.okwolo[options.bundle] = okwolo;
+        window.okwolo[options.kit] = okwolo;
     }
 
     return okwolo;

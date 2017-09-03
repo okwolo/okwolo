@@ -70,7 +70,7 @@ module.exports = core({
         serverRender,
     ],
     options: {
-        bundle: 'server',
+        kit: 'server',
         browser: false,
         modules: {
             state: false,
