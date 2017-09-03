@@ -10,7 +10,7 @@ declare module "@okwolo/router" {
     }
 
     function router(buses: {
-        exec: bus;
+        emit: bus;
         use: bus;
     }): void;
     export = router;

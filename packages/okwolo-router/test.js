@@ -3,11 +3,11 @@
 const {bus} = require('@okwolo/utils')();
 
 const router = () => {
-    const exec = bus();
+    const emit = bus();
     const use = bus();
-    require('./')({exec, use}, window);
+    require('./')({emit, use}, window);
     use(require('./blob')(window));
-    return {exec, use};
+    return {emit, use};
 };
 
 describe('@okwolo/router', () => {
@@ -15,34 +15,34 @@ describe('@okwolo/router', () => {
         window.history.pushState({}, '', '/');
     });
 
-    describe('exec', () => {
+    describe('emit', () => {
         describe('redirect', () => {
             it('should reject malformed paths', () => {
-                const {exec} = router();
-                expect(() => exec({redirect: undefined}))
+                const {emit} = router();
+                expect(() => emit({redirect: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {exec} = router();
-                expect(() => exec({redirect: {path: '/', params: undefined}}))
+                const {emit} = router();
+                expect(() => emit({redirect: {path: '/', params: undefined}}))
                     .not.toThrow(Error);
             });
 
             it('should change the pathname', () => {
-                const {exec} = router();
-                exec({redirect: {path: '/test/xyz'}});
+                const {emit} = router();
+                emit({redirect: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .toBe('/test/xyz');
             });
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/xxx',
                     callback: () => {
-                        exec({show: {path: '/test'}});
+                        emit({show: {path: '/test'}});
                         test();
                     },
                 }});
@@ -53,17 +53,17 @@ describe('@okwolo/router', () => {
                             .toHaveBeenCalled();
                     },
                 }});
-                exec({redirect: {path: '/xxx'}});
+                emit({redirect: {path: '/xxx'}});
             });
 
             it('should accumulate params and pass them to the callback', () => {
                 const test = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/user/:id/fetch/:field',
                     callback: test,
                 }});
-                exec({redirect: {path: '/user/123/fetch/name'}});
+                emit({redirect: {path: '/user/123/fetch/name'}});
                 expect(test)
                     .toHaveBeenCalledWith({id: '123', field: 'name'});
             });
@@ -71,30 +71,30 @@ describe('@okwolo/router', () => {
 
         describe('show', () => {
             it('should reject malformed paths', () => {
-                const {exec} = router();
-                expect(() => exec({show: undefined}))
+                const {emit} = router();
+                expect(() => emit({show: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {exec} = router();
-                exec({show: {path: '/', params: undefined}});
+                const {emit} = router();
+                emit({show: {path: '/', params: undefined}});
             });
 
             it('should not change the pathname', () => {
-                const {exec} = router();
-                exec({show: {path: '/test/xyz'}});
+                const {emit} = router();
+                emit({show: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .not.toBe('/test/xyz');
             });
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/xxx',
                     callback: () => {
-                        exec({redirect: {path: '/test'}});
+                        emit({redirect: {path: '/test'}});
                         test();
                     },
                 }});
@@ -105,17 +105,17 @@ describe('@okwolo/router', () => {
                             .toHaveBeenCalled();
                     },
                 }});
-                exec({show: {path: '/xxx'}});
+                emit({show: {path: '/xxx'}});
             });
 
             it('should accumulate params and pass them to the callback', () => {
                 const test = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/user/:id/fetch/:field',
                     callback: test,
                 }});
-                exec({show: {path: '/user/123/fetch/name'}});
+                emit({show: {path: '/user/123/fetch/name'}});
                 expect(test)
                     .toHaveBeenCalledWith({id: '123', field: 'name'});
             });
@@ -160,12 +160,12 @@ describe('@okwolo/router', () => {
 
             it('should save routes for future redirects', () => {
                 const test = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/test',
                     callback: test,
                 }});
-                exec({redirect: {path: '/test'}});
+                emit({redirect: {path: '/test'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -173,7 +173,7 @@ describe('@okwolo/router', () => {
             it('should prioritize the earliest routes', () => {
                 const test1 = jest.fn();
                 const test2 = jest.fn();
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/test',
                     callback: test1,
@@ -182,7 +182,7 @@ describe('@okwolo/router', () => {
                     path: '/*',
                     callback: test2,
                 }});
-                exec({redirect: {path: '/test'}});
+                emit({redirect: {path: '/test'}});
                 expect(test1)
                     .toHaveBeenCalled();
             });
@@ -198,9 +198,9 @@ describe('@okwolo/router', () => {
             });
 
             it('should add the base url to all new pathnames', () => {
-                const {exec, use} = router();
+                const {emit, use} = router();
                 use({base: '/testBase'});
-                exec({redirect: {path: '/test'}});
+                emit({redirect: {path: '/test'}});
                 expect(window.location.pathname)
                     .toBe('/testBase/test');
             });
@@ -250,11 +250,11 @@ describe('@okwolo/router', () => {
             });
 
             it('should be used to fetch routes', () => {
-                const {exec, use} = router();
+                const {emit, use} = router();
                 let test = jest.fn();
                 use({fetch: test});
-                exec({redirect: {path: '/redirect', params: {redirect: true}}});
-                exec({show: {path: '/show', params: {show: true}}});
+                emit({redirect: {path: '/redirect', params: {redirect: true}}});
+                emit({show: {path: '/show', params: {show: true}}});
                 expect(test)
                     .toHaveBeenCalledWith(undefined, '/redirect', {redirect: true});
                 expect(test)

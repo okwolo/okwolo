@@ -2,7 +2,7 @@
 
 const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
-const dom = ({exec, use}, _window) => {
+const dom = ({emit, use}, _window) => {
     let draw;
     let update;
     let build;
@@ -45,7 +45,7 @@ const dom = ({exec, use}, _window) => {
         hasDrawn = true;
     };
 
-    exec.on('state', (newState) => {
+    emit.on('state', (newState) => {
         assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
         drawToTarget();

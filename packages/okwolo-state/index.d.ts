@@ -10,7 +10,7 @@ declare module "@okwolo/state" {
     }
 
     function state(buses: {
-        exec: bus;
+        emit: bus;
         use: bus;
     }): void;
     export = state;

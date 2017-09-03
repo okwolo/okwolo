@@ -2,7 +2,7 @@
 
 const {assert, isString, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
 
-const router = ({exec, use}, _window) => {
+const router = ({emit, use}, _window) => {
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     let baseUrl = '';
@@ -36,7 +36,7 @@ const router = ({exec, use}, _window) => {
     };
 
     // fetch wrapper that makes the browser aware of the url change
-    exec.on('redirect', ({path, params = {}} = {}) => {
+    emit.on('redirect', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
         assert(isObject(params), 'router.redirect : params is not an object', params);
         queue.add(() => {
@@ -55,7 +55,7 @@ const router = ({exec, use}, _window) => {
     });
 
     // fetch wrapper which does not change the url
-    exec.on('show', ({path, params = {}} = {}) => {
+    emit.on('show', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
         queue.add(() => {

@@ -58,7 +58,7 @@ describe('core', () => {
     });
 
     it('should add use to the api', () => {
-        expect(c()().exec)
+        expect(c()().emit)
             .toBeInstanceOf(Function);
     });
 
@@ -114,7 +114,7 @@ describe('core', () => {
                 it('should use an action to setState', () => {
                     const test = jest.fn();
                     const app1 = c()();
-                    app1.exec.on('act', test);
+                    app1.emit.on('act', test);
                     app1.setState({});
                     expect(test)
                         .not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('core', () => {
                             state: true,
                         },
                     })();
-                    app2.exec.on('act', test);
+                    app2.emit.on('act', test);
                     app2.setState({});
                     expect(test)
                         .toHaveBeenCalled();
@@ -212,14 +212,14 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should exec the current state when updated', () => {
+                it('should emit the current state when updated', () => {
                     const test = jest.fn();
                     const app = c({
                         modules: {
                             dom: true,
                         },
                     })();
-                    app.exec.on('state', test);
+                    app.emit.on('state', test);
                     app.update();
                     expect(test)
                         .toHaveBeenCalled();
@@ -238,10 +238,10 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should exec redirect when redirected', () => {
+                it('should emit redirect when redirected', () => {
                     const test = jest.fn();
-                    const _module = ({exec}) => {
-                        exec.on('redirect', test);
+                    const _module = ({emit}) => {
+                        emit.on('redirect', test);
                     };
                     const app = c({
                         modules: {
@@ -266,10 +266,10 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should exec show when showed', () => {
+                it('should emit show when showed', () => {
                     const test = jest.fn();
-                    const _module = ({exec}) => {
-                        exec.on('show', test);
+                    const _module = ({emit}) => {
+                        emit.on('show', test);
                     };
                     const app = c({
                         modules: {

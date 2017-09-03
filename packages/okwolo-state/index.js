@@ -2,7 +2,7 @@
 
 const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('@okwolo/utils')();
 
-const state = ({exec, use}) => {
+const state = ({emit, use}) => {
     const actions = {};
     const middleware = [];
     const watchers = [];
@@ -41,7 +41,7 @@ const state = ({exec, use}) => {
             }
         });
 
-        exec({state: deepCopy(newState)});
+        emit({state: deepCopy(newState)});
 
         watchers.forEach((watcher) => {
             watcher(deepCopy(newState), type, params);
@@ -65,7 +65,7 @@ const state = ({exec, use}) => {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    exec.on('act', ({state, type, params = {}} = {}) => {
+    emit.on('act', ({state, type, params = {}} = {}) => {
         assert(isString(type), 'state.act : action type is not a string', type);
         assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
         queue.add(() => {

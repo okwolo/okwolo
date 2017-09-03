@@ -10,7 +10,7 @@ declare module "@okwolo/dom" {
     }
 
     function dom(buses: {
-        exec: bus;
+        emit: bus;
         use: bus;
     }): void;
     export = dom;

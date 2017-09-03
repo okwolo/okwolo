@@ -306,12 +306,12 @@ var core = function core(_ref) {
             }
         }
 
-        var exec = bus();
+        var emit = bus();
         var use = bus();
-        var api = { exec: exec, use: use };
+        var api = { emit: emit, use: use };
 
         modules.forEach(function (_module) {
-            _module({ exec: exec, use: use }, _window);
+            _module({ emit: emit, use: use }, _window);
         });
 
         blobs.forEach(function (blob) {
@@ -321,7 +321,7 @@ var core = function core(_ref) {
         var initial = {};
         var _state = initial;
 
-        exec.on('state', function (newState) {
+        emit.on('state', function (newState) {
             _state = newState;
         });
 
@@ -332,7 +332,7 @@ var core = function core(_ref) {
 
         if (options.modules.dom) {
             api.update = function () {
-                exec({ state: _state });
+                emit({ state: _state });
             };
 
             if (isDefined(target)) {
@@ -343,7 +343,7 @@ var core = function core(_ref) {
         if (options.modules.state) {
             api.act = function (type, params) {
                 assert(type === 'SET_STATE' || _state !== initial, 'act : cannot act on state before it has been set');
-                exec({ act: { state: _state, type: type, params: params } });
+                emit({ act: { state: _state, type: type, params: params } });
             };
 
             use({ action: {
@@ -375,20 +375,20 @@ var core = function core(_ref) {
             assert(!options.modules.history, 'app : cannot use history blob without the state module', options);
             api.setState = function (replacement) {
                 if (isFunction(replacement)) {
-                    exec({ state: replacement(deepCopy(_state)) });
+                    emit({ state: replacement(deepCopy(_state)) });
                     return;
                 }
-                exec({ state: replacement });
+                emit({ state: replacement });
             };
         }
 
         if (options.modules.router) {
             api.redirect = function (path, params) {
-                exec({ redirect: { path: path, params: params } });
+                emit({ redirect: { path: path, params: params } });
             };
 
             api.show = function (path, params) {
-                exec({ show: { path: path, params: params } });
+                emit({ show: { path: path, params: params } });
             };
 
             api.register = function (path, builder) {
@@ -439,7 +439,7 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction;
 
 var dom = function dom(_ref, _window) {
-    var exec = _ref.exec,
+    var emit = _ref.emit,
         use = _ref.use;
 
     var draw = void 0;
@@ -486,7 +486,7 @@ var dom = function dom(_ref, _window) {
         hasDrawn = true;
     };
 
-    exec.on('state', function (newState) {
+    emit.on('state', function (newState) {
         assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
         drawToTarget();
@@ -551,7 +551,7 @@ var _require = __webpack_require__(0)(),
     makeQueue = _require.makeQueue;
 
 var router = function router(_ref, _window) {
-    var exec = _ref.exec,
+    var emit = _ref.emit,
         use = _ref.use;
 
     var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
@@ -591,7 +591,7 @@ var router = function router(_ref, _window) {
     };
 
     // fetch wrapper that makes the browser aware of the url change
-    exec.on('redirect', function () {
+    emit.on('redirect', function () {
         var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref2.path,
             _ref2$params = _ref2.params,
@@ -615,7 +615,7 @@ var router = function router(_ref, _window) {
     });
 
     // fetch wrapper which does not change the url
-    exec.on('show', function () {
+    emit.on('show', function () {
         var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref3.path,
             _ref3$params = _ref3.params,

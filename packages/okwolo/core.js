@@ -11,12 +11,12 @@ const core = ({modules, blobs, options}) => {
             }
         }
 
-        const exec = bus();
+        const emit = bus();
         const use = bus();
-        const api = {exec, use};
+        const api = {emit, use};
 
         modules.forEach((_module) => {
-            _module({exec, use}, _window);
+            _module({emit, use}, _window);
         });
 
         blobs.forEach((blob) => {
@@ -26,7 +26,7 @@ const core = ({modules, blobs, options}) => {
         const initial = {};
         let _state = initial;
 
-        exec.on('state', (newState) => {
+        emit.on('state', (newState) => {
             _state = newState;
         });
 
@@ -37,7 +37,7 @@ const core = ({modules, blobs, options}) => {
 
         if (options.modules.dom) {
             api.update = () => {
-                exec({state: _state});
+                emit({state: _state});
             };
 
             if (isDefined(target)) {
@@ -48,7 +48,7 @@ const core = ({modules, blobs, options}) => {
         if (options.modules.state) {
             api.act = (type, params) => {
                 assert(type === 'SET_STATE' || _state !== initial, 'act : cannot act on state before it has been set');
-                exec({act: {state: _state, type, params}});
+                emit({act: {state: _state, type, params}});
             };
 
             use({action: {
@@ -78,20 +78,20 @@ const core = ({modules, blobs, options}) => {
             assert(!options.modules.history, 'app : cannot use history blob without the state module', options);
             api.setState = (replacement) => {
                 if (isFunction(replacement)) {
-                    exec({state: replacement(deepCopy(_state))});
+                    emit({state: replacement(deepCopy(_state))});
                     return;
                 }
-                exec({state: replacement});
+                emit({state: replacement});
             };
         }
 
         if (options.modules.router) {
             api.redirect = (path, params) => {
-                exec({redirect: {path, params}});
+                emit({redirect: {path, params}});
             };
 
             api.show = (path, params) => {
-                exec({show: {path, params}});
+                emit({show: {path, params}});
             };
 
             api.register = (path, builder) => {

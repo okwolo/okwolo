@@ -3,10 +3,10 @@
 const {bus} = require('@okwolo/utils')();
 
 const state = () => {
-    const exec = bus();
+    const emit = bus();
     const use = bus();
-    require('./')({exec, use});
-    return {exec, use};
+    require('./')({emit, use});
+    return {emit, use};
 };
 
 const testAction = (handler, target) => {
@@ -18,48 +18,48 @@ const testAction = (handler, target) => {
 };
 
 describe('@okwolo/state', () => {
-    describe('exec', () => {
+    describe('emit', () => {
         describe('act', () => {
             it('should require both state and action arguments', () => {
-                const {exec} = state();
-                expect(() => exec({act: {}}))
+                const {emit} = state();
+                expect(() => emit({act: {}}))
                     .toThrow(/state/);
-                expect(() => exec({act: {state: {}}}))
+                expect(() => emit({act: {state: {}}}))
                     .toThrow(/type/);
             });
 
             it('should return undefined', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 use(testAction());
-                expect(exec({act: {state: {}, type: 'TEST'}}))
+                expect(emit({act: {state: {}, type: 'TEST'}}))
                     .toBe(undefined);
             });
 
             it('should pass params to the action handler', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test = jest.fn();
                 use(testAction((state, params) => {
                     test(state + params);
                     return state;
                 }));
-                exec({act: {state: 'a', type: 'TEST', params: 'b'}});
+                emit({act: {state: 'a', type: 'TEST', params: 'b'}});
                 expect(test)
                     .toHaveBeenCalledWith('ab');
             });
 
             it('should use a queue to prevent blobs from being added while actions are being performed', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test = jest.fn();
                 use({middleware: () => {}});
                 use(testAction(test));
-                exec({act: {state: {}, type: 'TEST'}});
+                emit({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
             });
 
             describe('apply', () => {
                 it('should support async middleware and preserve their order', (done) => {
-                    const {exec, use} = state();
+                    const {emit, use} = state();
                     let callOrder = [];
                     let numTests = 2 + Math.floor(Math.random()*8);
                     for (let i = 0; i < numTests; ++i) {
@@ -75,11 +75,11 @@ describe('@okwolo/state', () => {
                         }
                         done();
                     }));
-                    exec({act: {state: {}, type: 'TEST'}});
+                    emit({act: {state: {}, type: 'TEST'}});
                 });
 
                 it('should allow middleware to override all params', () => {
-                    const {exec, use} = state();
+                    const {emit, use} = state();
                     const test = jest.fn();
                     use({middleware: (next, state, type, params) => {
                         next(++state, 'TEST', ++params);
@@ -88,52 +88,52 @@ describe('@okwolo/state', () => {
                         test(state, params);
                         return state;
                     }));
-                    exec({act: {state: 0, type: 'NOT_TEST', params: 1}});
+                    emit({act: {state: 0, type: 'NOT_TEST', params: 1}});
                     expect(test)
                         .toHaveBeenCalledWith(1, 2);
                 });
 
                 it('should pass a copy of state to middleware', () => {
-                    const {exec, use} = state();
+                    const {emit, use} = state();
                     let originalState = {};
                     use({middleware: (next, state) => {
                         expect(state)
                             .not.toBe(originalState);
                     }});
                     use(testAction());
-                    exec({act: {state: originalState, type: 'TEST'}});
+                    emit({act: {state: originalState, type: 'TEST'}});
                 });
 
-                describe('execute', () => {
+                describe('emitute', () => {
                     it('should reject unknown actions', () => {
-                        const {exec} = state();
-                        expect(() => exec({act: {state: {}, type: 'TEST'}}))
+                        const {emit} = state();
+                        expect(() => emit({act: {state: {}, type: 'TEST'}}))
                             .toThrow(/action[^]*not[^]found/);
                     });
 
                     it('should pass a copy of state to the action handlers', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         let originalState = {};
                         use(testAction((state) => {
                             expect(state)
                                 .not.toBe(originalState);
                             return state;
                         }));
-                        exec({act: {state: originalState, type: 'TEST'}});
+                        emit({act: {state: originalState, type: 'TEST'}});
                     });
 
                     it('should provide the right target to the action handlers', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         use(testAction((target) => {
                             expect(target)
                                 .toBe('success!');
                             return target;
                         }, ['a', 'b', 'c']));
-                        exec({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST'}});
+                        emit({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST'}});
                     });
 
                     it('should support dynamic action targets', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         use({action: {
                             type: 'TEST',
                             target: (state, params) => {
@@ -149,36 +149,36 @@ describe('@okwolo/state', () => {
                                 return target;
                             },
                         }});
-                        exec({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST', params: {test: true}}});
+                        emit({act: {state: {a: {b: {c: 'success!'}}}, type: 'TEST', params: {test: true}}});
                     });
 
                     it('should fail when dynamic targets are invalid', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         use({action: {
                             type: 'TEST',
                             target: () => [{}],
                             handler: () => {},
                         }});
-                        expect(() => exec({act: {state: {}, type: 'TEST'}}))
+                        expect(() => emit({act: {state: {}, type: 'TEST'}}))
                             .toThrow(/dynamic[^]*string/);
                     });
 
                     it('should reject unreachable targets', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         use(testAction(null, ['a', 'b']));
-                        expect(() => exec({act: {state: {a: {}}, type: 'TEST'}}))
+                        expect(() => emit({act: {state: {a: {}}, type: 'TEST'}}))
                             .toThrow(/target/);
                     });
 
                     it('should display the path to the unreachable target at the end of the error', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         use(testAction(null, ['a', 'b', 'c']));
-                        expect(() => exec({act: {state: {a: {}}, type: 'TEST'}}))
+                        expect(() => emit({act: {state: {a: {}}, type: 'TEST'}}))
                             .toThrow(/a\.b$/);
                     });
 
-                    it('should call watchers after executing the action', () => {
-                        const {exec, use} = state();
+                    it('should call watchers after emituting the action', () => {
+                        const {emit, use} = state();
                         const test1 = jest.fn();
                         const test2 = jest.fn();
                         const test3 = jest.fn();
@@ -196,7 +196,7 @@ describe('@okwolo/state', () => {
                                 .toHaveBeenCalled();
                             test3();
                         }});
-                        exec({act: {state: {}, type: 'TEST'}});
+                        emit({act: {state: {}, type: 'TEST'}});
                         expect(test2)
                             .toHaveBeenCalled();
                         expect(test3)
@@ -204,44 +204,44 @@ describe('@okwolo/state', () => {
                     });
 
                     it('should pass the state, action type and params to the watchers', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         const test = jest.fn();
                         use(testAction());
                         use({watcher: test});
-                        exec({act: {state: 1, type: 'TEST', params: 2}});
+                        emit({act: {state: 1, type: 'TEST', params: 2}});
                         expect(test)
                             .toHaveBeenCalledWith(1, 'TEST', 2);
                     });
 
                     it('should pass the final arguments, after being manipulated by middleware', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         const test = jest.fn();
                         use(testAction());
                         use({middleware: (next) => {
                             next('a', 'TEST', 'b');
                         }});
                         use({watcher: test});
-                        exec({act: {state: 1, type: '2', params: 3}});
+                        emit({act: {state: 1, type: '2', params: 3}});
                         expect(test)
                             .toHaveBeenCalledWith('a', 'TEST', 'b');
                     });
 
-                    it('should execute the action on the state', () => {
-                        const {exec, use} = state();
+                    it('should emitute the action on the state', () => {
+                        const {emit, use} = state();
                         const test = jest.fn();
                         use(testAction(() => 0));
                         use({watcher: test});
-                        exec({act: {state: {}, type: 'TEST', params: 1}});
+                        emit({act: {state: {}, type: 'TEST', params: 1}});
                         expect(test)
                             .toHaveBeenCalledWith(0, 'TEST', 1);
                     });
 
                     it('should replace the action\'s target state, not the whole state', () => {
-                        const {exec, use} = state();
+                        const {emit, use} = state();
                         const test = jest.fn();
                         use(testAction(() => 0, ['subdirectory']));
                         use({watcher: test});
-                        exec({act: {state: {subdirectory: 1}, type: 'TEST', params: 1}});
+                        emit({act: {state: {subdirectory: 1}, type: 'TEST', params: 1}});
                         expect(test)
                             .toHaveBeenCalledWith({subdirectory: 0}, 'TEST', 1);
                     });
@@ -252,13 +252,13 @@ describe('@okwolo/state', () => {
 
     describe('use', () => {
         it('should register and use well formed actions', () => {
-            const {exec, use} = state();
+            const {emit, use} = state();
             const test = jest.fn();
             use(testAction((s) => {
                 test();
                 return s;
             }));
-            exec({act: {state: {}, type: 'TEST'}});
+            emit({act: {state: {}, type: 'TEST'}});
             expect(test)
                 .toHaveBeenCalled();
         });
@@ -300,14 +300,14 @@ describe('@okwolo/state', () => {
         });
 
         it('should expect action handlers to return a defined value', () => {
-            const {exec, use} = state();
+            const {emit, use} = state();
             use(testAction((s) => {}));
-            expect(() => exec({act: {state: {}, type: 'TEST'}}))
+            expect(() => emit({act: {state: {}, type: 'TEST'}}))
                 .toThrow(/result[^]*undefined/);
         });
 
         it('should be able to register multiple handlers for each type', () => {
-            const {exec, use} = state();
+            const {emit, use} = state();
             const test1 = jest.fn();
             const test2 = jest.fn();
             use(testAction((s) => {
@@ -318,7 +318,7 @@ describe('@okwolo/state', () => {
                 test2();
                 return s;
             }));
-            exec({act: {state: {}, type: 'TEST'}});
+            emit({act: {state: {}, type: 'TEST'}});
             expect(test1)
                 .toHaveBeenCalled();
             expect(test2)
@@ -327,7 +327,7 @@ describe('@okwolo/state', () => {
 
         describe('middleware', () => {
             it('should register and use well formed middleware', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test = jest.fn();
                 use({
                     middleware: (next, state, type, params) => {
@@ -336,7 +336,7 @@ describe('@okwolo/state', () => {
                     },
                 });
                 use(testAction());
-                exec({act: {state: {}, type: 'TEST'}});
+                emit({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -348,7 +348,7 @@ describe('@okwolo/state', () => {
             });
 
             it('should be able to add and use multiple middleware', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test1 = jest.fn();
                 const test2 = jest.fn();
                 use({middleware: (next, state, type, params) => {
@@ -360,7 +360,7 @@ describe('@okwolo/state', () => {
                     next();
                 }});
                 use(testAction());
-                exec({act: {state: {}, type: 'TEST'}});
+                emit({act: {state: {}, type: 'TEST'}});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
@@ -370,11 +370,11 @@ describe('@okwolo/state', () => {
 
         describe('watcher', () => {
             it('should register and use well formed watcher', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test = jest.fn();
                 use({watcher: test});
                 use(testAction());
-                exec({act: {state: {}, type: 'TEST'}});
+                emit({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -386,12 +386,12 @@ describe('@okwolo/state', () => {
             });
 
             it('should be able to add and use multiple watchers', () => {
-                const {exec, use} = state();
+                const {emit, use} = state();
                 const test = jest.fn();
                 use({watcher: test});
                 use({watcher: test});
                 use(testAction());
-                exec({act: {state: {}, type: 'TEST'}});
+                emit({act: {state: {}, type: 'TEST'}});
                 expect(test)
                     .toHaveBeenCalledTimes(2);
             });

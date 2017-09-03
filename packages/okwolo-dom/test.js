@@ -5,12 +5,12 @@ const {bus} = require('@okwolo/utils')();
 const h = require('./h');
 
 const dom = (target) => {
-    const exec = bus();
+    const emit = bus();
     const use = bus();
-    require('./')({exec, use}, window);
+    require('./')({emit, use}, window);
     use(require('./blob')(window));
     use({target});
-    return {exec, use};
+    return {emit, use};
 };
 
 let wrapper;
@@ -27,8 +27,8 @@ describe('@okwolo/dom', () => {
     });
 
     it('should add the builder function\'s output to the target', async () => {
-        const {exec, use} = dom(wrapper);
-        exec({state: {}});
+        const {emit, use} = dom(wrapper);
+        emit({state: {}});
         use({builder: () => ['span']});
         await sleep();
         expect(wrapper.children[0].tagName)
@@ -75,8 +75,8 @@ describe('@okwolo/dom', () => {
     describe('blob', () => {
         describe('draw', () => {
             it('should render the initial state immediately', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test']});
                 await sleep();
                 expect(wrapper.innerHTML.length)
@@ -84,11 +84,11 @@ describe('@okwolo/dom', () => {
             });
 
             it('should remove all other elements in the target', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 wrapper.innerHTML = '<div></div>';
                 expect(wrapper.querySelectorAll('div'))
                     .toHaveLength(1);
-                exec({state: {}});
+                emit({state: {}});
                 use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.querySelectorAll('div'))
@@ -98,8 +98,8 @@ describe('@okwolo/dom', () => {
 
         describe('build', () => {
             it('should create textNodes out of strings', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -107,8 +107,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should create elements out of arrays', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['span']});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -116,8 +116,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should create nothing when given null', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => null});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -125,8 +125,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should read the tagName from the first element in the array', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test']});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -134,8 +134,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should read the attributes from the second element in the array', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test', {id: 'test'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -143,8 +143,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should implement classnames logic', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test', {className: {
                     test1: true,
                     test2: undefined,
@@ -163,8 +163,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should be possible to append an id to the tagName using #', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test#test']});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -172,8 +172,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should be possible to append an classNames to the tagName using .', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test.test.test', {className: 'tt'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -181,8 +181,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should be possible to append styles to the tagName using |', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test|height:2px;', {style: 'width: 2px;'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -190,8 +190,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should read the children from the third element in the array', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => ['test', {}, ['test']]});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -199,8 +199,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should accept components', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 const component = () => 'test';
                 use({builder: () => [component]});
                 await sleep();
@@ -209,8 +209,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should pass arguments to components', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 const component = ({a}) => a;
                 use({builder: () => [component, {a: 'test'}]});
                 await sleep();
@@ -219,8 +219,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should pass children to component', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 const component = ({children}) => children[0];
                 use({builder: () => [component, {}, ['test']]});
                 await sleep();
@@ -229,8 +229,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should support nested components', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 const component3 = ({c}) => c;
                 const component2 = ({b}) => [component3, {c: b}];
                 const component1 = ({a}) => [component2, {b: a}];
@@ -241,22 +241,22 @@ describe('@okwolo/dom', () => {
             });
 
             it('should fail when given malformed tagName', () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 expect(() => use({builder: () => [{}]}))
                     .toThrow(/tag/);
             });
 
             it('should fail when given malformed attributes', () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 expect(() => use({builder: () => ['div', 'test']}))
                     .toThrow(/attribute/);
             });
 
             it('should not fail when attributes or children are ommitted', () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 expect(() => use({builder: () => ['div']}))
                     .not.toThrow(Error);
             });
@@ -264,25 +264,25 @@ describe('@okwolo/dom', () => {
 
         describe('update', () => {
             it('should rerender the new dom', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 use({builder: (s) => [s, {}, [s]]});
-                exec({state: 'a'});
+                emit({state: 'a'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<a>a</a>');
-                exec({state: 'b'});
+                emit({state: 'b'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<b>b</b>');
             });
 
             it('should not replace elements when the tagName doesn\'t change', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 use({builder: (s) => ['div' + s]});
-                exec({state: ''});
+                emit({state: ''});
                 await sleep();
                 const element = wrapper.children[0];
-                exec({state: '#id.class|height:0px;'});
+                emit({state: '#id.class|height:0px;'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div id="id" class="class" style="height: 0px;"></div>');
@@ -291,9 +291,9 @@ describe('@okwolo/dom', () => {
             });
 
             it('should be able to delete elements', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 use({builder: (s) => ['div', {}, s.split('').map((l) => [l])]});
-                exec({state: 'abc'});
+                emit({state: 'abc'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -303,7 +303,7 @@ describe('@okwolo/dom', () => {
                             '<c></c>' +
                         '</div>'
                     );
-                exec({state: 'a'});
+                emit({state: 'a'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -311,7 +311,7 @@ describe('@okwolo/dom', () => {
                             '<a></a>' +
                         '</div>'
                     );
-                exec({state: 'cd'});
+                emit({state: 'cd'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe(
@@ -323,33 +323,33 @@ describe('@okwolo/dom', () => {
             });
 
             it('should be able to replace all elements', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 use({builder: (s) => s});
-                exec({state: ''});
+                emit({state: ''});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('');
-                exec({state: 'test1'});
+                emit({state: 'test1'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test1');
-                exec({state: 'test2'});
+                emit({state: 'test2'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test2');
-                exec({state: ['test3', {}, ['test3']]});
+                emit({state: ['test3', {}, ['test3']]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test3>test3</test3>');
-                exec({state: ['test4', {}, [['test4']]]});
+                emit({state: ['test4', {}, [['test4']]]});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<test4><test4></test4></test4>');
-                exec({state: ''});
+                emit({state: ''});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('');
-                exec({state: 'test5'});
+                emit({state: 'test5'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test5');
@@ -378,16 +378,16 @@ describe('@okwolo/dom', () => {
 
         describe('target', () => {
             it('should reject malformed targets', () => {
-                const {exec, use} = dom();
-                exec({state: {}});
+                const {emit, use} = dom();
+                emit({state: {}});
                 use({builder: () => 'test'});
                 expect(() => use({target: null}))
                     .toThrow(/target/g);
             });
 
             it('should change the render target', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -412,8 +412,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should change the builder function', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -427,19 +427,19 @@ describe('@okwolo/dom', () => {
 
         describe('state', () => {
             it('should reject undefined state', () => {
-                const {exec} = dom();
-                expect(() => exec({state: undefined}))
+                const {emit} = dom();
+                expect(() => emit({state: undefined}))
                     .toThrow(/state/gi);
             });
 
             it('should trigger an update', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: 'initial'});
+                const {emit, use} = dom(wrapper);
+                emit({state: 'initial'});
                 use({builder: (s) => s});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('initial');
-                exec({state: 'changed'});
+                emit({state: 'changed'});
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('changed');
@@ -454,9 +454,9 @@ describe('@okwolo/dom', () => {
             });
 
             it('should trigger a redraw', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 const test = jest.fn();
-                exec({state: {}});
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({draw: test});
                 await sleep();
@@ -481,9 +481,9 @@ describe('@okwolo/dom', () => {
             });
 
             it('should trigger an update', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 const test = jest.fn();
-                exec({state: {}});
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({build: test});
                 await sleep();
@@ -492,8 +492,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should receive the builder\'s output and be able to edit it', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({build: (element) => {
                     expect(element)
@@ -514,9 +514,9 @@ describe('@okwolo/dom', () => {
             });
 
             it('should trigger an update', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 const test = jest.fn();
-                exec({state: {}});
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({prebuild: () => {
                     test();
@@ -528,8 +528,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should receive the builder\'s output and be able to edit it', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({prebuild: (element) => {
                     expect(element)
@@ -550,9 +550,9 @@ describe('@okwolo/dom', () => {
             });
 
             it('should trigger an update', async () => {
-                const {exec, use} = dom(wrapper);
+                const {emit, use} = dom(wrapper);
                 const test = jest.fn();
-                exec({state: {}});
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({postbuild: test});
                 await sleep();
@@ -561,8 +561,8 @@ describe('@okwolo/dom', () => {
             });
 
             it('should receive the built vdom and be able to edit it', async () => {
-                const {exec, use} = dom(wrapper);
-                exec({state: {}});
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
                 use({builder: () => 'test'});
                 use({postbuild: (vdom) => {
                     expect(vdom)
