@@ -4,22 +4,24 @@ const core = require('./core');
 const standard = require('./');
 const lite = require('./bundles/lite');
 const server = require('./bundles/server');
+const routerless = require('./bundles/routerless');
+const stateless = require('./bundles/stateless');
 
 const merge = require('lodash/merge');
-
-const c = (options, modules = [], blobs = []) => {
-    return core({
-        modules: [].concat(modules),
-        blobs: [].concat(blobs),
-        options: merge({
-            modules: {},
-        }, options),
-    });
-};
 
 let wrapper;
 
 describe('core', () => {
+    const c = (options, modules = [], blobs = []) => {
+        return core({
+            modules: [].concat(modules),
+            blobs: [].concat(blobs),
+            options: merge({
+                modules: {},
+            }, options),
+        });
+    };
+
     it('should return a function', () => {
         expect(c())
             .toBeInstanceOf(Function);
@@ -969,5 +971,29 @@ describe('server', () => {
             ]]
         ));
         app.setState({});
+    });
+});
+
+describe('routerless', () => {
+    it('should not have router api', () => {
+        const app = routerless();
+        expect(app.redirect)
+            .toBeFalsy();
+        expect(app.show)
+            .toBeFalsy();
+        expect(() => app('/', () => () => 'test'))
+            .toThrow(Error);
+    });
+});
+
+describe('stateless', () => {
+    it('should not have state api', () => {
+        const app = stateless();
+        expect(app.act)
+            .toBeFalsy();
+        expect(app.undo)
+            .toBeFalsy();
+        expect(app.redo)
+            .toBeFalsy();
     });
 });
