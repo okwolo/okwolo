@@ -1,8 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`server should correctly render complex structures 1`] = `""`;
-
-exports[`server should correctly render complex structures 2`] = `
+exports[`server should correctly render complex structures 1`] = `
 <span id="body" class="center">
   <center>
     <div id="large" style="height: 200px; margin-top: 90px;">

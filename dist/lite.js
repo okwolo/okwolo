@@ -467,77 +467,70 @@ var dom = function dom(_ref, _window) {
     };
 
     var hasDrawn = false;
+    var canDraw = false;
     var drawToTarget = function drawToTarget() {
-        vdom = draw(target, vdom);
-        hasDrawn = true;
-    };
+        var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : !hasDrawn;
 
-    var canDraw = function canDraw(callback) {
-        if (isDefined(target) && isDefined(builder) && isDefined(state)) {
-            callback();
+        if (!canDraw) {
+            if (isDefined(target) && isDefined(builder) && isDefined(state)) {
+                canDraw = true;
+            } else {
+                return;
+            }
         }
+        if (!force) {
+            vdom = update(target, create(state), vdom);
+            return;
+        }
+        vdom = draw(target, create(state));
+        hasDrawn = true;
     };
 
     exec.on('state', function (newState) {
         assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
         state = newState;
-        canDraw(function () {
-            if (!hasDrawn) {
-                drawToTarget();
-            }
-            vdom = update(target, create(state), vdom);
-        });
+        drawToTarget();
     });
 
     use.on('target', function (newTarget) {
         target = newTarget;
-        canDraw(drawToTarget);
+        drawToTarget(true);
     });
 
     use.on('builder', function (newBuilder) {
         assert(isFunction(newBuilder), 'dom.replaceBuilder : builder is not a function', newBuilder);
         builder = newBuilder;
-        canDraw(function () {
-            if (!hasDrawn) {
-                drawToTarget();
-            }
-            vdom = update(target, create(state), vdom);
-        });
+        drawToTarget();
     });
 
     use.on('draw', function (newDraw) {
         assert(isFunction(newDraw), 'dom.replaceDraw : new draw is not a function', newDraw);
         draw = newDraw;
-        canDraw(drawToTarget);
+        drawToTarget(true);
     });
 
     use.on('update', function (newUpdate) {
         assert(isFunction(newUpdate), 'dom.replaceUpdate : new target updater is not a function', newUpdate);
         update = newUpdate;
+        drawToTarget();
     });
 
     use.on('build', function (newBuild) {
         assert(isFunction(newBuild), 'dom.replaceBuild : new build is not a function', newBuild);
         build = newBuild;
-        canDraw(function () {
-            return update(target, create(state), vdom);
-        });
+        drawToTarget();
     });
 
     use.on('prebuild', function (newPrebuild) {
         assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
-        canDraw(function () {
-            return update(target, create(state), vdom);
-        });
+        drawToTarget();
     });
 
     use.on('postbuild', function (newPostbuild) {
         assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
-        canDraw(function () {
-            return update(target, create(state), vdom);
-        });
+        drawToTarget();
     });
 };
 
