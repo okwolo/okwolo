@@ -61,7 +61,7 @@ type blob = {
     action?: action | Array<action>;
     watcher?: watcher | Array<watcher>;
     middleware?: middleware | Array<middleware>;
-    route?: route | Array<route>;
+    route?: route;
     base?: base;
     target?: target;
     builder?: builder;
@@ -90,6 +90,126 @@ declare module "okwolo" {
         undo: () => void;
         redo: () => void;
         use(blob: blob): void;
+    };
+    export = okwolo;
+}
+
+declare module "okwolo/kits/standard" {
+    function okwolo(target?: any, window?: Window): {
+        (generator: () => builder): void;
+        (path: string, generator: (params: object) => builder): void;
+        setState(state: any): void;
+        setState(updater: updater): void;
+        getState(): any;
+        redirect(path: string, params?: object): boolean;
+        show(path: string, params?: object): boolean;
+        act(state: any, type: string, params?: object): void;
+        act(updater: updater): void;
+        update: () => void;
+        undo: () => void;
+        redo: () => void;
+        use(blob: blob): void;
+    };
+    export = okwolo;
+}
+
+declare module "okwolo/kits/lite" {
+    function okwolo(target?: any, window?: Window): {
+        (generator: () => builder): void;
+        (path: string, generator: (params: object) => builder): void;
+        setState(state: any): void;
+        setState(updater: updater): void;
+        getState(): any;
+        redirect(path: string, params?: object): boolean;
+        show(path: string, params?: object): boolean;
+        update: () => void;
+        use(blob: {
+            route?: route;
+            base?: base;
+            target?: target;
+            builder?: builder;
+            state?: state;
+            draw?: draw;
+            update?: update;
+            build?: build;
+            prebuild?: prebuild;
+            postbuild?: postbuild;
+        }): void;
+    };
+    export = okwolo;
+}
+
+declare module "okwolo/kits/server" {
+    function okwolo(target?: (output: string) => void): {
+        (generator: () => builder): void;
+        setState(state: any): void;
+        setState(updater: updater): void;
+        getState(): any;
+        update: () => void;
+        use(blob: {
+            target?: (output: string) => void;
+            builder?: builder;
+            state?: state;
+            draw?: draw;
+            update?: update;
+            build?: build;
+            prebuild?: prebuild;
+            postbuild?: postbuild;
+        }): void;
+    };
+    export = okwolo;
+}
+
+declare module "okwolo/kits/routerless" {
+    function okwolo(target?: any, window?: Window): {
+        (generator: () => builder): void;
+        setState(state: any): void;
+        setState(updater: updater): void;
+        getState(): any;
+        act(state: any, type: string, params?: object): void;
+        act(updater: updater): void;
+        update: () => void;
+        undo: () => void;
+        redo: () => void;
+        use(blob: blob): {
+            action?: action | Array<action>;
+            watcher?: watcher | Array<watcher>;
+            middleware?: middleware | Array<middleware>;
+            target?: target;
+            builder?: builder;
+            state?: state;
+            draw?: draw;
+            update?: update;
+            build?: build;
+            prebuild?: prebuild;
+            postbuild?: postbuild;
+        };
+    };
+    export = okwolo;
+}
+
+declare module "okwolo/kits/stateless" {
+    function okwolo(target?: any, window?: Window): {
+        (generator: () => builder): void;
+        (path: string, generator: (params: object) => builder): void;
+        setState(state: any): void;
+        setState(updater: updater): void;
+        getState(): any;
+        redirect(path: string, params?: object): boolean;
+        show(path: string, params?: object): boolean;
+        update: () => void;
+        use(blob: blob): {
+            route?: route;
+            base?: base;
+            target?: target;
+            builder?: builder;
+            state?: state;
+            draw?: draw;
+            update?: update;
+            build?: build;
+            prebuild?: prebuild;
+            postbuild?: postbuild;
+        };
     };
     export = okwolo;
 }
