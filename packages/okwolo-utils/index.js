@@ -6,6 +6,8 @@ const utils = () => {
     const isArray = (value) => Array.isArray(value);
     const isFunction = (value) => typeof value === 'function';
     const isString = (value) => typeof value === 'string';
+    const isNumber = (value) => typeof value === 'number';
+    const isBoolean = (value) => typeof value === 'boolean';
     const isObject = (value) => (!!value) && (value.constructor === Object);
     const isNode = (value) => !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
 
@@ -101,7 +103,22 @@ const utils = () => {
         return Object.assign(handle, {on});
     };
 
-    return {deepCopy, assert, isDefined, isNull, isArray, isFunction, isString, isObject, isNode, isBrowser, makeQueue, bus};
+    return {
+        deepCopy,
+        assert,
+        isDefined,
+        isNull,
+        isArray,
+        isFunction,
+        isString,
+        isNumber,
+        isBoolean,
+        isObject,
+        isNode,
+        isBrowser,
+        makeQueue,
+        bus,
+    };
 };
 
 module.exports = utils;

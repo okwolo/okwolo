@@ -124,6 +124,28 @@ describe('@okwolo/dom', () => {
                     .toBe('');
             });
 
+            it('should create nothing when given a boolean', async () => {
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
+                use({builder: () => true});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('');
+                use({builder: () => false});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('');
+            });
+
+            it('should render numbers', async () => {
+                const {emit, use} = dom(wrapper);
+                emit({state: {}});
+                use({builder: () => 123456789});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('123456789');
+            });
+
             it('should read the tagName from the first element in the array', async () => {
                 const {emit, use} = dom(wrapper);
                 emit({state: {}});

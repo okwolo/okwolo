@@ -186,6 +186,66 @@ describe('@okwolo/utils', () => {
         });
     });
 
+    describe('isNumber', () => {
+        const {isNumber} = utils();
+
+        it('should return true when number', () => {
+            expect(isNumber(0))
+                .toBe(true);
+            expect(isNumber(123456789))
+                .toBe(true);
+        });
+
+        it('should return false for all other values', () => {
+            expect(isNumber(undefined))
+                .toBe(false);
+            expect(isNumber(null))
+                .toBe(false);
+            expect(isNumber(true))
+                .toBe(false);
+            expect(isNumber('a'))
+                .toBe(false);
+            expect(isNumber({}))
+                .toBe(false);
+            expect(isNumber([]))
+                .toBe(false);
+            expect(isNumber(() => {}))
+                .toBe(false);
+            expect(isNumber(new Date()))
+                .toBe(false);
+        });
+    });
+
+    describe('isBoolean', () => {
+        const {isBoolean} = utils();
+
+        it('should return true when boolean', () => {
+            expect(isBoolean(true))
+                .toBe(true);
+            expect(isBoolean(false))
+                .toBe(true);
+        });
+
+        it('should return false for all other values', () => {
+            expect(isBoolean(undefined))
+                .toBe(false);
+            expect(isBoolean(null))
+                .toBe(false);
+            expect(isBoolean(0))
+                .toBe(false);
+            expect(isBoolean('a'))
+                .toBe(false);
+            expect(isBoolean({}))
+                .toBe(false);
+            expect(isBoolean([]))
+                .toBe(false);
+            expect(isBoolean(() => {}))
+                .toBe(false);
+            expect(isBoolean(new Date()))
+                .toBe(false);
+        });
+    });
+
     describe('isObject', () => {
         const {isObject} = utils();
 

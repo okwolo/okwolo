@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isNull, isArray, isString, isNode, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
+const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isNode, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
 
 const blob = (_window) => {
     // recursively creates DOM elements from vdom object
@@ -146,13 +146,19 @@ const blob = (_window) => {
 
     // build vdom from builder output
     const build = (element) => {
+        if (isBoolean(element)) {
+            element = null;
+        }
         if (isNull(element)) {
             return {text: ''};
+        }
+        if (isNumber(element)) {
+            element = String(element);
         }
         if (isString(element)) {
             return {text: element};
         }
-        assert(isArray(element), 'dom.build : vdom object is not an array or string', element);
+        assert(isArray(element), 'dom.build : vdom object is not a recognized type', element);
         if (isFunction(element[0])) {
             let props = element[1] || {};
             assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
