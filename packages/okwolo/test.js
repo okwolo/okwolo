@@ -34,6 +34,11 @@ describe('core', () => {
             .toBe('test');
     });
 
+    it('should expose the version', () => {
+        expect(okwolo.version)
+            .toMatch(/^(\d+\.){2}\d+$/g);
+    });
+
     it('should use the modules', () => {
         const test = jest.fn();
         c({}, test)();

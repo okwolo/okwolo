@@ -2,6 +2,8 @@
 
 const {isFunction, isDefined, assert, deepCopy, isBrowser, bus} = require('@okwolo/utils')();
 
+const version = '1.3.0';
+
 const core = ({modules, blobs, options}) => {
     const okwolo = (target, _window) => {
         if (options.browser) {
@@ -118,6 +120,7 @@ const core = ({modules, blobs, options}) => {
 
     if (isBrowser()) {
         okwolo.kit = options.kit;
+        okwolo.version = version;
         if (!isDefined(window.okwolo)) {
             window.okwolo = okwolo;
         }
