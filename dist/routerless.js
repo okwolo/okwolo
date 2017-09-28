@@ -86,6 +86,12 @@ var utils = function utils() {
     var isString = function isString(value) {
         return typeof value === 'string';
     };
+    var isNumber = function isNumber(value) {
+        return typeof value === 'number';
+    };
+    var isBoolean = function isBoolean(value) {
+        return typeof value === 'boolean';
+    };
     var isObject = function isObject(value) {
         return !!value && value.constructor === Object;
     };
@@ -192,7 +198,22 @@ var utils = function utils() {
         return Object.assign(handle, { on: on });
     };
 
-    return { deepCopy: deepCopy, assert: assert, isDefined: isDefined, isNull: isNull, isArray: isArray, isFunction: isFunction, isString: isString, isObject: isObject, isNode: isNode, isBrowser: isBrowser, makeQueue: makeQueue, bus: bus };
+    return {
+        deepCopy: deepCopy,
+        assert: assert,
+        isDefined: isDefined,
+        isNull: isNull,
+        isArray: isArray,
+        isFunction: isFunction,
+        isString: isString,
+        isNumber: isNumber,
+        isBoolean: isBoolean,
+        isObject: isObject,
+        isNode: isNode,
+        isBrowser: isBrowser,
+        makeQueue: makeQueue,
+        bus: bus
+    };
 };
 
 module.exports = utils;
@@ -235,6 +256,8 @@ var _require = __webpack_require__(0)(),
     deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
     bus = _require.bus;
+
+var version = '1.3.0';
 
 var core = function core(_ref) {
     var modules = _ref.modules,
@@ -358,6 +381,7 @@ var core = function core(_ref) {
 
     if (isBrowser()) {
         okwolo.kit = options.kit;
+        okwolo.version = version;
         if (!isDefined(window.okwolo)) {
             window.okwolo = okwolo;
         }
@@ -644,6 +668,8 @@ var _require = __webpack_require__(0)(),
     isNull = _require.isNull,
     isArray = _require.isArray,
     isString = _require.isString,
+    isNumber = _require.isNumber,
+    isBoolean = _require.isBoolean,
     isNode = _require.isNode,
     isObject = _require.isObject,
     isFunction = _require.isFunction,
@@ -791,13 +817,19 @@ var blob = function blob(_window) {
 
     // build vdom from builder output
     var build = function build(element) {
+        if (isBoolean(element)) {
+            element = null;
+        }
         if (isNull(element)) {
             return { text: '' };
+        }
+        if (isNumber(element)) {
+            element = String(element);
         }
         if (isString(element)) {
             return { text: element };
         }
-        assert(isArray(element), 'dom.build : vdom object is not an array or string', element);
+        assert(isArray(element), 'dom.build : vdom object is not a recognized type', element);
         if (isFunction(element[0])) {
             var props = element[1] || {};
             assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
@@ -806,10 +838,11 @@ var blob = function blob(_window) {
             return build(element[0](Object.assign({}, props, { children: _children })));
         }
 
-        var _element = _slicedToArray(element, 3),
-            tagType = _element[0],
-            attributes = _element[1],
-            children = _element[2];
+        var _element = element,
+            _element2 = _slicedToArray(_element, 3),
+            tagType = _element2[0],
+            attributes = _element2[1],
+            children = _element2[2];
 
         assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
         // capture groups: tagName, id, className, style
