@@ -36,8 +36,6 @@ const kits = [
         gzipped: false,
     },
     ...kit('standard'),
-    ...kit('routerless'),
-    ...kit('stateless'),
     ...kit('lite'),
     ...kit('server'),
 ];

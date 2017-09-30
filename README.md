@@ -12,9 +12,9 @@
 
 | Documentation links | |
 |---|---|
-| kits | [`/docs/kits`](https://github.com/okwolo/okwolo/blob/master/docs/kits.md) |
 | top level api | [`/docs/api`](https://github.com/okwolo/okwolo/blob/master/docs/api.md) |
 | element syntax | [`/docs/syntax`](https://github.com/okwolo/okwolo/blob/master/docs/syntax.md) |
+| kits | [`/docs/kits`](https://github.com/okwolo/okwolo/blob/master/docs/kits.md) |
 | blobs | [`/docs/blobs`](https://github.com/okwolo/okwolo/blob/master/docs/blobs.md) |
 
 # Example

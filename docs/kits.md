@@ -70,33 +70,3 @@ app.use({target: (htmlString) => {
 | | transpiled | transpiled + minified |
 |---|---|---|
 | browser | [dist/server.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.js) | [dist/server.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.min.js) |
-
-## `stateless` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/stateless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/stateless.min.js.gz)
-
-> `require('okwolo/kits/stateless');`
-
-```diff
-  okwolo-dom
-  okwolo-router
-- okwolo-state
-- okwolo-history
-```
-
-| | transpiled | transpiled + minified |
-|---|---|---|
-| browser | [dist/stateless.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/stateless.js) | [dist/stateless.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/stateless.min.js) |
-
-## `routerless` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/routerless.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/routerless.min.js.gz)
-
-> `require('okwolo/kits/routerless');`
-
-```diff
-  okwolo-dom
-- okwolo-router
-  okwolo-state
-  okwolo-history
-```
-
-| | transpiled | transpiled + minified |
-|---|---|---|
-| browser | [dist/routerless.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/routerless.js) | [dist/routerless.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/routerless.min.js) |

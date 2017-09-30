@@ -4,8 +4,6 @@ const core = require('./core');
 const standard = require('./');
 const lite = require('./kits/lite');
 const server = require('./kits/server');
-const routerless = require('./kits/routerless');
-const stateless = require('./kits/stateless');
 
 const merge = require('lodash/merge');
 
@@ -976,29 +974,5 @@ describe('server', () => {
             ]]
         ));
         app.setState({});
-    });
-});
-
-describe('routerless', () => {
-    it('should not have router api', () => {
-        const app = routerless();
-        expect(app.redirect)
-            .toBeFalsy();
-        expect(app.show)
-            .toBeFalsy();
-        expect(() => app('/', () => () => 'test'))
-            .toThrow(Error);
-    });
-});
-
-describe('stateless', () => {
-    it('should not have state api', () => {
-        const app = stateless();
-        expect(app.act)
-            .toBeFalsy();
-        expect(app.undo)
-            .toBeFalsy();
-        expect(app.redo)
-            .toBeFalsy();
     });
 });
