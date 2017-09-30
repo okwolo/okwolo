@@ -1,6 +1,6 @@
 # Kits
 
-Kits allow for a customized experience while keeping the familiar api.
+Okwolo is designed to be very modular and flexible in its lower layers. Each module is independant and connects itself to the features it wants to interact with. This means it is easy to simply remove the features that are not being used to save on bandwidth and/or performance. Kits are use this to exist as differnet configurations of okwolo with a variety of modifications, but always using the same api wrapper. For example, the lite kit totally drops the advanced state management and uses a simplified pathname matcher in the router.
 
 ## `standard` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
 
