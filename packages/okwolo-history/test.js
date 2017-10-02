@@ -105,7 +105,7 @@ describe('@okwolo/history', () => {
             .toBe(undefined);
     });
 
-    it('should store 20 past states', () => {
+    it('should store at least 20 past states', () => {
         let n = 20;
         const state = newState(null);
         for (let i = 0; i <= n; ++i) {
