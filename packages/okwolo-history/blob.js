@@ -71,6 +71,9 @@ const history = () => {
                 past.shift();
             }
         }
+        // objects stored into current will be moved to the past/future stacks.
+        // it is assumed that the value given to this watcher is a copy of the
+        // current state who's reference is not exposed enywhere else.
         current = state;
     };
 

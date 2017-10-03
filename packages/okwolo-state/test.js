@@ -104,7 +104,7 @@ describe('@okwolo/state', () => {
                     emit({act: {state: originalState, type: 'TEST'}});
                 });
 
-                describe('emitute', () => {
+                describe('emit', () => {
                     it('should reject unknown actions', () => {
                         const {emit} = state();
                         expect(() => emit({act: {state: {}, type: 'TEST'}}))
@@ -226,7 +226,7 @@ describe('@okwolo/state', () => {
                             .toHaveBeenCalledWith('a', 'TEST', 'b');
                     });
 
-                    it('should emitute the action on the state', () => {
+                    it('should emit the action on the state', () => {
                         const {emit, use} = state();
                         const test = jest.fn();
                         use(testAction(() => 0));
