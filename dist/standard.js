@@ -523,54 +523,79 @@ var state = function state(_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
+    // actions is a map where actions are stored in an array at their type key.
     var actions = {};
     var middleware = [];
     var watchers = [];
 
+    // this queue is used to ensure that an action, the middleware and the
+    // watchers all get called before a second action can be done. this is
+    // relevant in the case where an action is called from within a watcher.
+    // it does not however support waiting for any async code.
     var queue = makeQueue();
 
     var execute = function execute(state, type, params) {
+        // this value will represent the state after executing the action(s).
+        // it must be copied since all the middleware functions can still
+        // potentially have access to it.
         var newState = deepCopy(state);
         assert(isDefined(actions[type]), 'state.execute : action type \'' + type + '\' was not found');
+        // action types with multiple actions are executed in the order they are added.
         actions[type].forEach(function (currentAction) {
             var targetAddress = currentAction.target;
+            // if the target is a function, it is executed with the current state.
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
+                // since the typechecks cannot be ran when the action is added,
+                // they need to be done during the action.
                 assert(isArray(targetAddress), 'state.execute : dynamic target of action ' + type + ' is not an array', targetAddress);
                 targetAddress.forEach(function (address) {
                     assert(isString(address), 'state.execute : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
                 });
             }
+            // the target is the object being passed to the action handler.
+            // it must be copied since any previous actions can still access it.
             var target = deepCopy(newState);
-            if (targetAddress.length > 0) {
-                var reference = newState;
-                targetAddress.forEach(function (key, i) {
-                    assert(isDefined(target[key]), 'state.execute : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
-                    if (i === targetAddress.length - 1) {
-                        var newValue = currentAction.handler(target[key], params);
-                        assert(isDefined(newValue), 'state.execute : result of action ' + type + ' on target @state' + targetAddress.join('.') + ' is undefined');
-                        reference[key] = newValue;
-                    } else {
-                        target = target[key];
-                        reference = reference[key];
-                    }
-                });
-            } else {
+            // an empty array means the entire state object is the target.
+            if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
                 assert(isDefined(newState), 'state.execute : result of action ' + type + ' on target @state is undefined');
             }
+            // reference will be the variable which keeps track of the current
+            // layer at which the address is. it is initially equal to the new
+            // state since that is the value that needs to be modified.
+            var reference = newState;
+            targetAddress.forEach(function (key, i) {
+                assert(isDefined(target[key]), 'state.execute : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
+                if (i < targetAddress.length - 1) {
+                    // both the reference to the "actual" state and the target
+                    // dummy copy are traversed at the same time.
+                    target = target[key];
+                    reference = reference[key];
+                    return;
+                }
+                // when the end of the address array is reached, the target
+                // has been found and can be used by the handler.
+                var newValue = currentAction.handler(target[key], params);
+                assert(isDefined(newValue), 'state.execute : result of action ' + type + ' on target @state' + targetAddress.join('.') + ' is undefined');
+                reference[key] = newValue;
+            });
         });
 
+        // other modules can listen for the state event to be updated when
+        // it changes (ex. the rendering process).
         emit({ state: deepCopy(newState) });
 
         watchers.forEach(function (watcher) {
             watcher(deepCopy(newState), type, params);
         });
 
+        // this will signal the queue that the next action can be started.
         queue.done();
     };
 
     var apply = function apply(state, type, params) {
+        // base function executes the action after all middleware has been used.
         var funcs = [function () {
             var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
 
@@ -580,6 +605,10 @@ var state = function state(_ref) {
 
             execute(_state, _type, _params);
         }];
+        // this code will create an array where all elements are funtions which
+        // call the closest function with a lower index. the returned values for
+        // the state, action type and params are also passed down to the next
+        // function in the chain.
         middleware.reverse().forEach(function (currentMiddleware, index) {
             funcs[index + 1] = function () {
                 var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
@@ -588,12 +617,16 @@ var state = function state(_ref) {
 
                 var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
 
+                // arguments are updated with the output of previous middleware.
                 state = _state;
                 type = _type;
                 params = _params;
                 currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
             };
         });
+        // the funcs array is initialized with an extra element which makes it
+        // one longer than middleware. therefore, using the length of middleware
+        // is looking for the last element in the array of functions.
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
@@ -606,13 +639,16 @@ var state = function state(_ref) {
 
         assert(isString(type), 'state.act : action type is not a string', type);
         assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
+        // the queue will make all actions wait to be ran sequentially.
         queue.add(function () {
             apply(state, type, params);
         });
     });
 
+    // actions can be added in batches by using an array.
     use.on('action', function (action) {
-        [].concat(action).forEach(function (item) {
+        [].concat(action).forEach(function () {
+            var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
             var type = item.type,
                 handler = item.handler,
                 target = item.target;
@@ -628,12 +664,13 @@ var state = function state(_ref) {
             }
             if (actions[type] === undefined) {
                 actions[type] = [item];
-            } else {
-                actions[type].push(item);
+                return;
             }
+            actions[type].push(item);
         });
     });
 
+    // middleware can be added in batches by using an array.
     use.on('middleware', function (_middleware) {
         [].concat(_middleware).forEach(function (item) {
             assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
@@ -641,6 +678,7 @@ var state = function state(_ref) {
         });
     });
 
+    // watchers can be added in batches by using an array.
     use.on('watcher', function (watcher) {
         [].concat(watcher).forEach(function (item) {
             assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
@@ -1524,23 +1562,28 @@ module.exports = Array.isArray || function (arr) {
 "use strict";
 
 
-var _require = __webpack_require__(0)(),
-    deepCopy = _require.deepCopy;
-
 var history = function history() {
+    // reference to the initial value is kept in order to be able to check if the
+    // state has been changes using triple-equals comparison.
     var initial = {};
 
     var past = [];
     var current = initial;
     var future = [];
 
+    // used to enforce the maximum number of past states that can be returned to.
     var historyLength = 20;
+
+    // action types which begin with * will not be registered in the history. this
+    // can be useful for trivial interactions which should not be replayed.
     var ignorePrefix = '*';
 
     var undoAction = {
         type: 'UNDO',
         target: [],
         handler: function handler() {
+            // can only undo if there is at least one previous state which
+            // isin't the initial one.
             if (past.length > 0 && past[past.length - 1] !== initial) {
                 future.push(current);
                 return past.pop();
@@ -1563,6 +1606,8 @@ var history = function history() {
         }
     };
 
+    // reset action can be used to wipe history when, for example, an application
+    // changes to a different page with a different state structure.
     var resetAction = {
         type: '__RESET__',
         target: [],
@@ -1573,23 +1618,30 @@ var history = function history() {
         }
     };
 
-    var updateState = function updateState(state, type) {
+    // this watcher will monitor state changes and update what is stored within
+    // this function.
+    var updateWatcher = function updateWatcher(state, type) {
         if (type === '__RESET__' || type[0] === ignorePrefix) {
             return;
         }
         if (type !== 'UNDO' && type !== 'REDO') {
+            // adding an action to the stack invalidates anything in the "future".
             future = [];
             past.push(current);
+            // state history must be kept within the desired maximum length.
             if (past.length > historyLength + 1) {
                 past.shift();
             }
         }
-        current = deepCopy(state);
+        // objects stored into current will be moved to the past/future stacks.
+        // it is assumed that the value given to this watcher is a copy of the
+        // current state who's reference is not exposed enywhere else.
+        current = state;
     };
 
     return {
         action: [undoAction, redoAction, resetAction],
-        watcher: updateState
+        watcher: updateWatcher
     };
 };
 
