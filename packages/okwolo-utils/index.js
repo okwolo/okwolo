@@ -10,6 +10,7 @@ const utils = () => {
     const isBoolean = (value) => typeof value === 'boolean';
     const isObject = (value) => (!!value) && (value.constructor === Object);
     const isNode = (value) => !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
+    const isRegExp = (value) => value instanceof RegExp;
 
     const isBrowser = () => {
         if (typeof window !== 'undefined') {
@@ -115,6 +116,7 @@ const utils = () => {
         isBoolean,
         isObject,
         isNode,
+        isRegExp,
         isBrowser,
         makeQueue,
         bus,

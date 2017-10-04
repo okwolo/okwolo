@@ -293,6 +293,32 @@ describe('@okwolo/utils', () => {
         });
     });
 
+    describe('isRegExp', () => {
+        const {isRegExp} = utils();
+
+        it('should return true when RegExp', () => {
+            expect(isRegExp(/.*/g))
+                .toBe(true);
+        });
+
+        it('should return false for all other values', () => {
+            expect(isRegExp(undefined))
+                .toBe(false);
+            expect(isRegExp(null))
+                .toBe(false);
+            expect(isRegExp(0))
+                .toBe(false);
+            expect(isRegExp('a'))
+                .toBe(false);
+            expect(isRegExp([]))
+                .toBe(false);
+            expect(isRegExp({}))
+                .toBe(false);
+            expect(isRegExp(() => {}))
+                .toBe(false);
+        });
+    });
+
     describe('assert', () => {
         const {assert} = utils();
 
