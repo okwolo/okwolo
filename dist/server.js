@@ -71,6 +71,7 @@
 
 
 var utils = function utils() {
+    // all typechecks must always return a boolean value.
     var isDefined = function isDefined(value) {
         return value !== undefined;
     };
@@ -98,46 +99,65 @@ var utils = function utils() {
     var isNode = function isNode(value) {
         return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
     };
+    var isRegExp = function isRegExp(value) {
+        return value instanceof RegExp;
+    };
 
+    // there cannot be any assumptions about the environment globals so
+    // node's process should not be used.
     var isBrowser = function isBrowser() {
-        if (typeof window !== 'undefined') {
-            return true;
-        }
+        return typeof window !== 'undefined';
     };
 
     var deepCopy = function deepCopy(obj) {
+        // undefined value would otherwise throw an error at parsing time.
         if (!isDefined(obj)) {
             return undefined;
         }
         return JSON.parse(JSON.stringify(obj));
     };
 
+    // will throw an error containing the message and the culprits if the
+    // assertion is falsy. the message is expected to contain information
+    // about the location of the error followed by a meaningful error message.
+    // (ex. "router.redirect : url is not a string")
     var assert = function assert(assertion, message) {
         for (var _len = arguments.length, culprits = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
             culprits[_key - 2] = arguments[_key];
         }
 
         var print = function print(obj) {
+            // formatted printing of any culript value. it uses a custom
+            // replacer function to handle functions and print them instead
+            // of ignoring them. the output is also formatted and indented
+            // to four spaces from the left.
             return '\n>>> ' + String(JSON.stringify(obj, function (key, value) {
                 return typeof value === 'function' ? value.toString() : value;
             }, 2)).replace(/\n/g, '\n    ');
         };
         if (!assertion) {
-            if (culprits.length > 0) {
-                message += culprits.map(print).join('');
-            }
-            throw new Error('@okwolo.' + message);
+            throw new Error('@okwolo.' + message + culprits.map(print).join(''));
         }
     };
 
+    // this function will create a queue object which can be used to defer
+    // the execution of functions.
     var makeQueue = function makeQueue() {
         var queue = [];
+
+        // runs the first function in the queue if it exists. this specifically
+        // does not call done or remove the function from the queue since there
+        // is no knowledge about whether or not the function has completed. this
+        // means that the queue will wait for a done signal before running any
+        // other element.
         var run = function run() {
             var func = queue[0];
             if (isDefined(func)) {
                 func();
             }
         };
+
+        // adds a function to the queue and calls run if the queue was empty.
         var add = function add(func) {
             assert(isFunction(func), 'utils.makeQueue.add : added objects must be a function', func);
             queue.push(func);
@@ -145,17 +165,28 @@ var utils = function utils() {
                 run();
             }
         };
+
+        // removes the first element from the queue and calls run. note that
+        // it is not possible to pre-call done in order to have multiple
+        // functions execute immediately.
         var done = function done() {
+            // calling shift on an empty array does nothing.
             queue.shift();
             run();
         };
+
         return { add: add, done: done };
     };
 
-    var bus = function bus(queue) {
+    // a bus construct created by this function is exposed by the use interface.
+    // in this context, the term event is used instead of blob.
+    var makeBus = function makeBus() {
+        // stores arrays of handlers for each event key.
         var handlers = {};
+        // stores names from named events to enforce uniqueness.
         var names = {};
 
+        // attaches a handler to a specific event key.
         var on = function on(type, handler) {
             assert(isString(type), 'utils.bus : handler type is not a string', type);
             assert(isFunction(handler), 'utils.bus : handler is not a function', handler);
@@ -165,12 +196,14 @@ var utils = function utils() {
             handlers[type].push(handler);
         };
 
+        // accepts events and invokes the appropriate handlers for each key.
         var handle = function handle(event) {
             assert(isObject(event), 'utils.bus : event is not an object', event);
             var name = event.name;
 
             if (isDefined(name)) {
                 assert(isString(name), 'utils.bus : event name is not a string', name);
+                // early return if the name has been used before.
                 if (isDefined(names[name])) {
                     return;
                 }
@@ -178,15 +211,6 @@ var utils = function utils() {
             }
             Object.keys(event).forEach(function (key) {
                 if (!isDefined(handlers[key])) {
-                    return;
-                }
-                if (queue) {
-                    queue.add(function () {
-                        handlers[key].forEach(function (handler) {
-                            return handler(event[key]);
-                        });
-                        queue.done();
-                    });
                     return;
                 }
                 handlers[key].forEach(function (handler) {
@@ -210,9 +234,10 @@ var utils = function utils() {
         isBoolean: isBoolean,
         isObject: isObject,
         isNode: isNode,
+        isRegExp: isRegExp,
         isBrowser: isBrowser,
         makeQueue: makeQueue,
-        bus: bus
+        makeBus: makeBus
     };
 };
 
@@ -351,7 +376,7 @@ var _require = __webpack_require__(0)(),
     assert = _require.assert,
     deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
-    bus = _require.bus;
+    makeBus = _require.makeBus;
 
 var version = '1.3.0';
 
@@ -368,8 +393,8 @@ var core = function core(_ref) {
             }
         }
 
-        var emit = bus();
-        var use = bus();
+        var emit = makeBus();
+        var use = makeBus();
         var api = { emit: emit, use: use };
 
         modules.forEach(function (_module) {

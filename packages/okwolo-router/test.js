@@ -1,10 +1,10 @@
 'use strict';
 
-const {bus} = require('@okwolo/utils')();
+const {makeBus} = require('@okwolo/utils')();
 
 const router = () => {
-    const emit = bus();
-    const use = bus();
+    const emit = makeBus();
+    const use = makeBus();
     require('./')({emit, use}, window);
     use(require('./blob')(window));
     return {emit, use};

@@ -16,7 +16,7 @@ declare module "@okwolo/utils" {
         isObject(value: any): boolean;
         isNode(value: any): boolean;
         makeQueue(): queue;
-        bus(queue?: queue): {
+        makeBus(queue?: queue): {
             (event: object): void;
             on: (type: string, handler: Function) => void;
         };

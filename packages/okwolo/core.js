@@ -1,6 +1,6 @@
 'use strict';
 
-const {isFunction, isDefined, assert, deepCopy, isBrowser, bus} = require('@okwolo/utils')();
+const {isFunction, isDefined, assert, deepCopy, isBrowser, makeBus} = require('@okwolo/utils')();
 
 const version = '1.3.0';
 
@@ -13,8 +13,8 @@ const core = ({modules, blobs, options}) => {
             }
         }
 
-        const emit = bus();
-        const use = bus();
+        const emit = makeBus();
+        const use = makeBus();
         const api = {emit, use};
 
         modules.forEach((_module) => {

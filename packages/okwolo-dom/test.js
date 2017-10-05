@@ -1,12 +1,12 @@
 'use strict';
 
-const {bus} = require('@okwolo/utils')();
+const {makeBus} = require('@okwolo/utils')();
 
 const h = require('./h');
 
 const dom = (target) => {
-    const emit = bus();
-    const use = bus();
+    const emit = makeBus();
+    const use = makeBus();
     require('./')({emit, use}, window);
     use(require('./blob')(window));
     use({target});

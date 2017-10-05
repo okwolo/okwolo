@@ -392,11 +392,11 @@ describe('@okwolo/utils', () => {
         });
     });
 
-    describe('bus', () => {
+    describe('makeBus', () => {
         let bus;
 
         beforeEach(() => {
-            bus = utils().bus();
+            bus = utils().makeBus();
         });
 
         it('should reject malformed events', () => {
@@ -437,22 +437,6 @@ describe('@okwolo/utils', () => {
             bus.on('test', test);
             expect(() => bus({differentTest: null}))
                 .not.toThrow(Error);
-            expect(test)
-                .toHaveBeenCalledTimes(0);
-        });
-
-        it('should use a queue if provided', (done) => {
-            const test = jest.fn();
-            const queue = utils().makeQueue();
-            bus = utils().bus(queue);
-            bus.on('test', test);
-            queue.add(() => setTimeout(queue.done, 30));
-            bus({test: null});
-            queue.add(() => {
-                expect(test)
-                    .toHaveBeenCalled();
-                done();
-            });
             expect(test)
                 .toHaveBeenCalledTimes(0);
         });

@@ -1,10 +1,10 @@
 'use strict';
 
-const {bus} = require('@okwolo/utils')();
+const {makeBus} = require('@okwolo/utils')();
 
 const state = () => {
-    const emit = bus();
-    const use = bus();
+    const emit = makeBus();
+    const use = makeBus();
     require('./')({emit, use});
     return {emit, use};
 };
