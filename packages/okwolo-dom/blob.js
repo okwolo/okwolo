@@ -24,9 +24,6 @@ const blob = (_window) => {
     // initial draw to container
     const draw = (target, vdom) => {
         assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        if (!isDefined(vdom)) {
-            vdom = {text: ''};
-        }
         vdom = render(vdom);
         _window.requestAnimationFrame(() => {
             target.innerHTML = '';

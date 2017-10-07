@@ -754,7 +754,7 @@ describe('lite', () => {
 
     it('should support url params', async () => {
         const app = lite(wrapper);
-        app.setState({});
+        app.setState(() => ({}));
         app('/test/:content', ({content}) => () => content);
         app.redirect('/test/xyz');
         await sleep();
@@ -773,6 +773,10 @@ describe('lite', () => {
         await sleep();
         expect(wrapper.innerHTML)
             .toBe('xyz');
+    });
+
+    it('should be protected against invalid path stores', () => {
+
     });
 });
 

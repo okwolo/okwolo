@@ -1,7 +1,6 @@
 'use strict';
 
 const core = require('../core');
-const {isArray, isString, isObject, isFunction, isRegExp} = require('@okwolo/utils')();
 
 // creates a regex pattern from an input path string. all tags are replaced by a
 // capture group and special characters are escaped.
@@ -18,14 +17,8 @@ const createPattern = (path) => {
 const liteRouter = () => ({
     name: 'okwolo-lite-router',
     // the type of store is not enforced by the okwolo-router module. this means
-    // that it will need to be created when the first path is registered. it is
-    // also good practice to check the type of this value since a different blob
-    // handler might have been using a different technique to write paths to the
-    // store before this register handler is added/used.
+    // that it needs to be created when the first path is registered.
     register: (store = [], path, callback) => {
-        if (!isArray(store)) {
-            store = [];
-        }
         // the keys are extracted from the path string and stored to properly
         // assign the url's values to the right keys in the params.
         let keys = (path.match(/:\w+/g) || [])
@@ -37,24 +30,12 @@ const liteRouter = () => ({
         });
         return store;
     },
-    // the store's default value is undefined. this is the value that should
-    // be expected before a path is registered by the register handler. there
-    // should also be typechecks for the structure of this store for the same
-    // reasons as above. this function should also be the one doing the action
-    // defined in the route since it's return value is expected to be a boolean.
+    // the store's initial value is undefined so it needs to be defaulted
+    // to an empty array. this function should be the one doing the action
+    // defined in the route since it doesn't return it.
     fetch: (store = [], path, params = {}) => {
-        if (!isArray(store)) {
-            return false;
-        }
         let found = false;
         store.find((registeredPath) => {
-            const isRegisteredPathValid = isObject(registeredPath)
-                && isArray(registeredPath.keys)
-                && isRegExp(registeredPath.pattern)
-                && isFunction(registeredPath.callback);
-            if (!isRegisteredPathValid) {
-                return;
-            }
             let test = registeredPath.pattern.exec(path);
             if (test === null) {
                 return;
@@ -70,9 +51,7 @@ const liteRouter = () => ({
             // same and their index is now shared. note that there is no protection
             // against param values being overwritten or tags to share the same key.
             registeredPath.keys.forEach((key, i) => {
-                if (isString(key)) {
-                    params[key] = test[i];
-                }
+                params[key] = test[i];
             });
             registeredPath.callback(params);
             return found;
