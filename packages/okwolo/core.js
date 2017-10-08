@@ -103,7 +103,7 @@ const core = ({modules, blobs, options}) => {
                 }
                 use({route: {
                     path,
-                    callback: (params) => {
+                    handler: (params) => {
                         use({builder: builder(params)});
                     },
                 }});

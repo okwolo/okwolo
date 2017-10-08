@@ -78,6 +78,7 @@ const history = () => {
     };
 
     return {
+        name: '@okwolo/history',
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher,
     };

@@ -41,14 +41,14 @@ describe('@okwolo/router', () => {
                 const {emit, use} = router();
                 use({route: {
                     path: '/xxx',
-                    callback: () => {
+                    handler: () => {
                         emit({show: {path: '/test'}});
                         test();
                     },
                 }});
                 use({route: {
                     path: '/test',
-                    callback: () => {
+                    handler: () => {
                         expect(test)
                             .toHaveBeenCalled();
                     },
@@ -56,12 +56,12 @@ describe('@okwolo/router', () => {
                 emit({redirect: {path: '/xxx'}});
             });
 
-            it('should accumulate params and pass them to the callback', () => {
+            it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
                 const {emit, use} = router();
                 use({route: {
                     path: '/user/:id/fetch/:field',
-                    callback: test,
+                    handler: test,
                 }});
                 emit({redirect: {path: '/user/123/fetch/name'}});
                 expect(test)
@@ -93,14 +93,14 @@ describe('@okwolo/router', () => {
                 const {emit, use} = router();
                 use({route: {
                     path: '/xxx',
-                    callback: () => {
+                    handler: () => {
                         emit({redirect: {path: '/test'}});
                         test();
                     },
                 }});
                 use({route: {
                     path: '/test',
-                    callback: () => {
+                    handler: () => {
                         expect(test)
                             .toHaveBeenCalled();
                     },
@@ -108,12 +108,12 @@ describe('@okwolo/router', () => {
                 emit({show: {path: '/xxx'}});
             });
 
-            it('should accumulate params and pass them to the callback', () => {
+            it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
                 const {emit, use} = router();
                 use({route: {
                     path: '/user/:id/fetch/:field',
-                    callback: test,
+                    handler: test,
                 }});
                 emit({show: {path: '/user/123/fetch/name'}});
                 expect(test)
@@ -129,21 +129,21 @@ describe('@okwolo/router', () => {
                 expect(() => {
                     use({route: {
                         path: {},
-                        callback: () => {},
+                        handler: () => {},
                     }});
                 })
                     .toThrow(/path/);
             });
 
-            it('should reject malformed callback', () => {
+            it('should reject malformed handler', () => {
                 const {use} = router();
                 expect(() => {
                     use({route: {
                         path: '',
-                        callback: '',
+                        handler: '',
                     }});
                 })
-                    .toThrow(/callback/);
+                    .toThrow(/handler/);
             });
 
             it('should check the current pathname against new routes', () => {
@@ -152,7 +152,7 @@ describe('@okwolo/router', () => {
                 const {use} = router();
                 use({route: {
                     path: '/test',
-                    callback: test,
+                    handler: test,
                 }});
                 expect(test)
                     .toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe('@okwolo/router', () => {
                 const {emit, use} = router();
                 use({route: {
                     path: '/test',
-                    callback: test,
+                    handler: test,
                 }});
                 emit({redirect: {path: '/test'}});
                 expect(test)
@@ -176,11 +176,11 @@ describe('@okwolo/router', () => {
                 const {emit, use} = router();
                 use({route: {
                     path: '/test',
-                    callback: test1,
+                    handler: test1,
                 }});
                 use({route: {
                     path: '/*',
-                    callback: test2,
+                    handler: test2,
                 }});
                 emit({redirect: {path: '/test'}});
                 expect(test1)
@@ -211,13 +211,28 @@ describe('@okwolo/router', () => {
                 const {use} = router();
                 use({route: {
                     path: '/test',
-                    callback: test,
+                    handler: test,
                 }});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
                 use({base: '/testBase'});
                 expect(test)
                     .toHaveBeenCalled();
+            });
+
+            it('should not accept regex patterns', () => {
+                const test = jest.fn();
+                const {use, emit} = router();
+                use({route: {
+                    path: '/test',
+                    handler: test,
+                }});
+                expect(test)
+                    .toHaveBeenCalledTimes(0);
+                emit({redirect: {path: '/abcdef/test'}});
+                use({base: '/.[^/]*'});
+                expect(test)
+                    .toHaveBeenCalledTimes(0);
             });
         });
 
@@ -232,13 +247,13 @@ describe('@okwolo/router', () => {
                 const {use} = router();
                 let test = jest.fn();
                 use({register: test});
-                const callback = () => {};
+                const handler = () => {};
                 use({route: {
                     path: '/',
-                    callback,
+                    handler,
                 }});
                 expect(test)
-                    .toHaveBeenCalledWith(undefined, '/', callback);
+                    .toHaveBeenCalledWith(undefined, '/', handler);
             });
         });
 

@@ -485,7 +485,7 @@ var core = function core(_ref) {
                 }
                 use({ route: {
                         path: path,
-                        callback: function callback(params) {
+                        handler: function handler(params) {
                             use({ builder: builder(params) });
                         }
                     } });
@@ -670,9 +670,6 @@ var blob = function blob(_window) {
     // initial draw to container
     var draw = function draw(target, vdom) {
         assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        if (!isDefined(vdom)) {
-            vdom = { text: '' };
-        }
         vdom = render(vdom);
         _window.requestAnimationFrame(function () {
             target.innerHTML = '';

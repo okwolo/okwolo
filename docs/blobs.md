@@ -110,15 +110,15 @@ app.use({middleware});
 ### `route`
 
 ````javascript
-let route = {path, callback}
+let route = {path, handler}
   // path: string pattern to match paths (using express' syntax)
-  // callback: function that is called with the route params as argument [(routeParams) => ...]
+  // handler: function that is called with the route params as argument [(routeParams) => ...]
 ````
 
 ````javascript
 let route = {
     path: '/user/:uid/profile',
-    callback: ({uid}) => {
+    handler: ({uid}) => {
         // ...
     },
 };

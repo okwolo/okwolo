@@ -32,7 +32,7 @@ const router = ({emit, use}, _window) => {
     let removeBaseUrl = (path) => {
         // escapes characters that may cause unintended behavior when converted
         // from a string to a regular expression.
-        const escapedBaseUrl = baseUrl.replace(/([^\w:])/g, '\\$1');
+        const escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
         return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
     };
 
@@ -82,7 +82,7 @@ const router = ({emit, use}, _window) => {
 
     use.on('route', ({path, handler} = {}) => {
         assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(handler), 'router.use.route : callback is not a function', path, handler);
+        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
         assert(isFunction(register), 'route.use.route : register is not a function', register);
         store = register(store, path, handler);
         if (!hasMatched) {

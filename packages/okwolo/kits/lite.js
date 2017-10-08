@@ -18,7 +18,7 @@ const liteRouter = () => ({
     name: 'okwolo-lite-router',
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
-    register: (store = [], path, callback) => {
+    register: (store = [], path, handler) => {
         // the keys are extracted from the path string and stored to properly
         // assign the url's values to the right keys in the params.
         let keys = (path.match(/:\w+/g) || [])
@@ -26,7 +26,7 @@ const liteRouter = () => ({
         store.push({
             keys,
             pattern: createPattern(path),
-            callback,
+            handler,
         });
         return store;
     },
@@ -53,7 +53,7 @@ const liteRouter = () => ({
             registeredPath.keys.forEach((key, i) => {
                 params[key] = test[i];
             });
-            registeredPath.callback(params);
+            registeredPath.handler(params);
             return found;
         });
         return found;

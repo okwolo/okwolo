@@ -252,17 +252,8 @@ module.exports = utils;
 
 var core = __webpack_require__(2);
 
-var _require = __webpack_require__(0)(),
-    isArray = _require.isArray,
-    isString = _require.isString,
-    isObject = _require.isObject,
-    isFunction = _require.isFunction,
-    isRegExp = _require.isRegExp;
-
 // creates a regex pattern from an input path string. all tags are replaced by a
 // capture group and special characters are escaped.
-
-
 var createPattern = function createPattern(path) {
     var pattern = path
     // the colon character is not escaped since it is used to denote tags.
@@ -276,18 +267,12 @@ var liteRouter = function liteRouter() {
     return {
         name: 'okwolo-lite-router',
         // the type of store is not enforced by the okwolo-router module. this means
-        // that it will need to be created when the first path is registered. it is
-        // also good practice to check the type of this value since a different blob
-        // handler might have been using a different technique to write paths to the
-        // store before this register handler is added/used.
+        // that it needs to be created when the first path is registered.
         register: function register() {
             var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
             var path = arguments[1];
-            var callback = arguments[2];
+            var handler = arguments[2];
 
-            if (!isArray(store)) {
-                store = [];
-            }
             // the keys are extracted from the path string and stored to properly
             // assign the url's values to the right keys in the params.
             var keys = (path.match(/:\w+/g) || []).map(function (key) {
@@ -296,29 +281,20 @@ var liteRouter = function liteRouter() {
             store.push({
                 keys: keys,
                 pattern: createPattern(path),
-                callback: callback
+                handler: handler
             });
             return store;
         },
-        // the store's default value is undefined. this is the value that should
-        // be expected before a path is registered by the register handler. there
-        // should also be typechecks for the structure of this store for the same
-        // reasons as above. this function should also be the one doing the action
-        // defined in the route since it's return value is expected to be a boolean.
+        // the store's initial value is undefined so it needs to be defaulted
+        // to an empty array. this function should be the one doing the action
+        // defined in the route since it doesn't return it.
         fetch: function fetch() {
             var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
             var path = arguments[1];
             var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-            if (!isArray(store)) {
-                return false;
-            }
             var found = false;
             store.find(function (registeredPath) {
-                var isRegisteredPathValid = isObject(registeredPath) && isArray(registeredPath.keys) && isRegExp(registeredPath.pattern) && isFunction(registeredPath.callback);
-                if (!isRegisteredPathValid) {
-                    return;
-                }
                 var test = registeredPath.pattern.exec(path);
                 if (test === null) {
                     return;
@@ -334,11 +310,9 @@ var liteRouter = function liteRouter() {
                 // same and their index is now shared. note that there is no protection
                 // against param values being overwritten or tags to share the same key.
                 registeredPath.keys.forEach(function (key, i) {
-                    if (isString(key)) {
-                        params[key] = test[i];
-                    }
+                    params[key] = test[i];
                 });
-                registeredPath.callback(params);
+                registeredPath.handler(params);
                 return found;
             });
             return found;
@@ -483,7 +457,7 @@ var core = function core(_ref) {
                 }
                 use({ route: {
                         path: path,
-                        callback: function callback(params) {
+                        handler: function handler(params) {
                             use({ builder: builder(params) });
                         }
                     } });
@@ -640,14 +614,23 @@ var router = function router(_ref, _window) {
     var emit = _ref.emit,
         use = _ref.use;
 
+    // will check is the code is being ran from the filesystem or is hosted.
+    // this information is used to correctly displaying routes in the former case.
     var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     var baseUrl = '';
 
+    // keeps track of all the registered routes. the format/type of this variable
+    // is not enforced by this module and it is left to the regisiter and fetch
+    // to validate the values.
     var store = void 0;
+
     var register = void 0;
     var fetch = void 0;
 
+    // if the router has not yet found a match, every new path might be the
+    // the current location and needs to be called. however, after this initial
+    // match, any new routes do not need to be verified against the current url.
     var hasMatched = false;
 
     var queue = makeQueue();
@@ -662,7 +645,10 @@ var router = function router(_ref, _window) {
     };
 
     var removeBaseUrl = function removeBaseUrl(path) {
-        return path.replace(new RegExp('\^' + baseUrl), '') || '';
+        // escapes characters that may cause unintended behavior when converted
+        // from a string to a regular expression.
+        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
+        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
     };
 
     var currentPath = _window.location.pathname;
@@ -685,12 +671,14 @@ var router = function router(_ref, _window) {
 
         assert(isString(path), 'router.redirect : path is not a string', path);
         assert(isObject(params), 'router.redirect : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
         queue.add(function () {
             currentPath = path;
             if (isHosted) {
-                /* edge doesn't care that the file is local and will allow pushState.
-                    it also includes "/C:" in the location.pathname, but adds it to
-                    the path given to pushState. which means it needs to be removed here */
+                // edge doesn't care that the file is local and will allow pushState.
+                // it also includes "/C:" in the location.pathname, but adds it to
+                // the path given to pushState. which means it needs to be removed here.
                 _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
                 console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
@@ -700,7 +688,7 @@ var router = function router(_ref, _window) {
         });
     });
 
-    // fetch wrapper which does not change the url
+    // this will act like a redirect, but will not change the browser's url.
     emit.on('show', function () {
         var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref3.path,
@@ -709,28 +697,28 @@ var router = function router(_ref, _window) {
 
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
         queue.add(function () {
             safeFetch(path, params);
             queue.done();
         });
     });
 
-    // register wrapper that runs the current page's url against new routes
     use.on('route', function () {
         var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref4.path,
-            callback = _ref4.callback;
+            handler = _ref4.handler;
 
         assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
+        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
         assert(isFunction(register), 'route.use.route : register is not a function', register);
-        store = register(store, path, callback);
+        store = register(store, path, handler);
         if (!hasMatched) {
             hasMatched = !!safeFetch(currentPath);
         }
     });
 
-    // replace the base url, adjust the current and try to fetch with the new url
     use.on('base', function (base) {
         assert(isString(base), 'router.use.base : base url is not a string', base);
         baseUrl = base;
@@ -797,9 +785,6 @@ var blob = function blob(_window) {
     // initial draw to container
     var draw = function draw(target, vdom) {
         assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        if (!isDefined(vdom)) {
-            vdom = { text: '' };
-        }
         vdom = render(vdom);
         _window.requestAnimationFrame(function () {
             target.innerHTML = '';

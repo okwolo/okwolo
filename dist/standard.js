@@ -389,7 +389,7 @@ var core = function core(_ref) {
                 }
                 use({ route: {
                         path: path,
-                        callback: function callback(params) {
+                        handler: function handler(params) {
                             use({ builder: builder(params) });
                         }
                     } });
@@ -732,14 +732,23 @@ var router = function router(_ref, _window) {
     var emit = _ref.emit,
         use = _ref.use;
 
+    // will check is the code is being ran from the filesystem or is hosted.
+    // this information is used to correctly displaying routes in the former case.
     var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
 
     var baseUrl = '';
 
+    // keeps track of all the registered routes. the format/type of this variable
+    // is not enforced by this module and it is left to the regisiter and fetch
+    // to validate the values.
     var store = void 0;
+
     var register = void 0;
     var fetch = void 0;
 
+    // if the router has not yet found a match, every new path might be the
+    // the current location and needs to be called. however, after this initial
+    // match, any new routes do not need to be verified against the current url.
     var hasMatched = false;
 
     var queue = makeQueue();
@@ -754,7 +763,10 @@ var router = function router(_ref, _window) {
     };
 
     var removeBaseUrl = function removeBaseUrl(path) {
-        return path.replace(new RegExp('\^' + baseUrl), '') || '';
+        // escapes characters that may cause unintended behavior when converted
+        // from a string to a regular expression.
+        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
+        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
     };
 
     var currentPath = _window.location.pathname;
@@ -777,12 +789,14 @@ var router = function router(_ref, _window) {
 
         assert(isString(path), 'router.redirect : path is not a string', path);
         assert(isObject(params), 'router.redirect : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
         queue.add(function () {
             currentPath = path;
             if (isHosted) {
-                /* edge doesn't care that the file is local and will allow pushState.
-                    it also includes "/C:" in the location.pathname, but adds it to
-                    the path given to pushState. which means it needs to be removed here */
+                // edge doesn't care that the file is local and will allow pushState.
+                // it also includes "/C:" in the location.pathname, but adds it to
+                // the path given to pushState. which means it needs to be removed here.
                 _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
                 console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
@@ -792,7 +806,7 @@ var router = function router(_ref, _window) {
         });
     });
 
-    // fetch wrapper which does not change the url
+    // this will act like a redirect, but will not change the browser's url.
     emit.on('show', function () {
         var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref3.path,
@@ -801,28 +815,28 @@ var router = function router(_ref, _window) {
 
         assert(isString(path), 'router.show : path is not a string', path);
         assert(isObject(params), 'router.show : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
         queue.add(function () {
             safeFetch(path, params);
             queue.done();
         });
     });
 
-    // register wrapper that runs the current page's url against new routes
     use.on('route', function () {
         var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref4.path,
-            callback = _ref4.callback;
+            handler = _ref4.handler;
 
         assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(callback), 'router.use.route : callback is not a function', path, callback);
+        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
         assert(isFunction(register), 'route.use.route : register is not a function', register);
-        store = register(store, path, callback);
+        store = register(store, path, handler);
         if (!hasMatched) {
             hasMatched = !!safeFetch(currentPath);
         }
     });
 
-    // replace the base url, adjust the current and try to fetch with the new url
     use.on('base', function (base) {
         assert(isString(base), 'router.use.base : base url is not a string', base);
         baseUrl = base;
@@ -889,9 +903,6 @@ var blob = function blob(_window) {
     // initial draw to container
     var draw = function draw(target, vdom) {
         assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        if (!isDefined(vdom)) {
-            vdom = { text: '' };
-        }
         vdom = render(vdom);
         _window.requestAnimationFrame(function () {
             target.innerHTML = '';
@@ -1089,46 +1100,53 @@ module.exports = blob;
 "use strict";
 
 
+// this is the same library that is used in by express to match routes.
+
 var pathToRegexp = __webpack_require__(8);
 
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    isArray = _require.isArray;
-
 var blob = function blob(_window) {
+    // the type of store is not enforced by the okwolo-router module. this means
+    // that it needs to be created when the first path is registered.
     var register = function register() {
         var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
         var path = arguments[1];
-        var callback = arguments[2];
+        var handler = arguments[2];
 
-        if (!isArray(store)) {
-            store = [];
-        }
         store.push({
             pattern: pathToRegexp(path, [], { strict: true }),
-            callback: callback
+            handler: handler
         });
         return store;
     };
 
+    // the store's initial value is undefined so it needs to be defaulted
+    // to an empty array. this function should be the one doing the action
+    // defined in the route since it doesn't return it.
     var fetch = function fetch() {
         var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
         var path = arguments[1];
         var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-        assert(isArray(store), 'router.fetch : store is not an array', store);
         var found = false;
         store.find(function (registeredPath) {
             var test = registeredPath.pattern.exec(path);
             if (test === null) {
                 return;
             }
+            // a non null value on the result of executing the query on the path
+            // is considered a successful hit.
             found = true;
+            // the first element of the result array is the entire matched string.
+            // this value is not useful and the following capture group results
+            // are more relevant.
             test.shift();
+            // the order of the keys and their values in the matched result is the
+            // same and their index is now shared. note that there is no protection
+            // against param values being overwritten or tags to share the same key.
             registeredPath.pattern.keys.forEach(function (key, i) {
                 params[key.name] = test[i];
             });
-            registeredPath.callback(params);
+            registeredPath.handler(params);
             return found;
         });
         return found;
@@ -1665,6 +1683,7 @@ var history = function history() {
     };
 
     return {
+        name: '@okwolo/history',
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher
     };

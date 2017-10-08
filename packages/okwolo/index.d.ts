@@ -17,7 +17,7 @@ type middleware = (
 // @okwolo/router
 type route = {
     path: string;
-    callback: (params: object) => void;
+    handler: (params: object) => void;
 };
 
 type base = string;
