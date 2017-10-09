@@ -35,6 +35,43 @@ describe('@okwolo/dom', () => {
             .toBe('SPAN');
     });
 
+    it('should not attempt to draw before it can', () => {
+        const init = (events) => {
+            const emit = makeBus();
+            const use = makeBus();
+            require('./')({emit, use}, window);
+            expect(() => {
+                use(events);
+                emit(events);
+            })
+                .not.toThrow(Error);
+        };
+        // missing build
+        init({
+            target: wrapper,
+            builder: () => 'test',
+            state: () => 'test',
+        });
+        // missing target
+        init({
+            build: () => 'test',
+            builder: () => 'test',
+            state: () => 'test',
+        });
+        // missing builder
+        init({
+            build: () => 'test',
+            target: wrapper,
+            state: () => 'test',
+        });
+        // missing state
+        init({
+            build: () => 'test',
+            target: wrapper,
+            builder: () => 'test',
+        });
+    });
+
     describe('h', () => {
         it('should read the tagName from the first argument', () => {
             expect(h('div')[0])

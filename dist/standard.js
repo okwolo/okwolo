@@ -282,6 +282,9 @@ var _require = __webpack_require__(0)(),
     isBrowser = _require.isBrowser,
     makeBus = _require.makeBus;
 
+// version cannot be taken from package.json because environment is not guaranteed.
+
+
 var version = '1.3.0';
 
 var core = function core(_ref) {
@@ -289,7 +292,11 @@ var core = function core(_ref) {
         blobs = _ref.blobs,
         options = _ref.options;
 
+    // if it is needed to define the window but not yet add a target, the first
+    // argument can be set to undefined.
     var okwolo = function okwolo(target, _window) {
+        // if the kit requires the browser api, there must be a window object in
+        // scope or a window object must be injected as argument.
         if (options.browser) {
             if (!isDefined(_window)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
@@ -299,19 +306,26 @@ var core = function core(_ref) {
 
         var emit = makeBus();
         var use = makeBus();
+
+        // the api object will contain all the exposed functions/variables.
         var api = { emit: emit, use: use };
 
+        // each module is instantiated.
         modules.forEach(function (_module) {
             _module({ emit: emit, use: use }, _window);
         });
 
+        // each blob is used.
         blobs.forEach(function (blob) {
             use(blob(_window));
         });
 
+        // reference to initial state is kept to be able to track whether it
+        // has changed using strict equality.
         var initial = {};
         var _state = initial;
 
+        // current state is monitored and stored.
         emit.on('state', function (newState) {
             _state = newState;
         });
@@ -321,11 +335,15 @@ var core = function core(_ref) {
             return deepCopy(_state);
         };
 
+        // the only functionality from the dom module that is directly exposed
+        // is the update event.
         if (options.modules.dom) {
             api.update = function () {
                 emit({ state: _state });
             };
 
+            // target is used if it is defined, but this step can be deferred
+            // if it is not convenient to pass the target on app creation.
             if (isDefined(target)) {
                 use({ target: target });
             }
@@ -333,10 +351,14 @@ var core = function core(_ref) {
 
         if (options.modules.state) {
             api.act = function (type, params) {
-                assert(type === 'SET_STATE' || _state !== initial, 'act : cannot act on state before it has been set');
+                // the only action that does not need the state to have already
+                // been changed is SET_STATE
+                assert(_state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
                 emit({ act: { state: _state, type: type, params: params } });
             };
 
+            // action is used to override state in order to give visibility to
+            // watchers and middleware.
             use({ action: {
                     type: 'SET_STATE',
                     target: [],
@@ -347,29 +369,32 @@ var core = function core(_ref) {
 
             api.setState = function (replacement) {
                 if (isFunction(replacement)) {
-                    api.act('SET_STATE', replacement(deepCopy(_state)));
+                    api.act('SET_STATE', replacement(_state));
                     return;
                 }
                 api.act('SET_STATE', replacement);
             };
-
-            if (options.modules.history) {
-                api.undo = function () {
-                    api.act('UNDO');
-                };
-
-                api.redo = function () {
-                    api.act('REDO');
-                };
-            }
         } else {
-            assert(!options.modules.history, 'app : cannot use history blob without the state module', options);
+            // new state is emitted directly instead of giving that responsibility
+            // to the state module.
             api.setState = function (replacement) {
                 if (isFunction(replacement)) {
                     emit({ state: replacement(deepCopy(_state)) });
                     return;
                 }
                 emit({ state: replacement });
+            };
+        }
+
+        if (options.modules.history) {
+            assert(options.modules.state, 'app : cannot use history blob without the state module', options);
+
+            api.undo = function () {
+                api.act('UNDO');
+            };
+
+            api.redo = function () {
+                api.act('REDO');
             };
         }
 
@@ -382,6 +407,8 @@ var core = function core(_ref) {
                 emit({ show: { path: path, params: params } });
             };
 
+            // first argument can be a path string to register a route handler
+            // or a function to directly use a builder.
             api.register = function (path, builder) {
                 if (isFunction(path)) {
                     use({ builder: path() });
@@ -401,9 +428,14 @@ var core = function core(_ref) {
             };
         }
 
+        // the returned object contains all the keys added to the api object
+        // but is also the register function.
         return Object.assign(api.register, api);
     };
 
+    // okwolo attempts to define itself globally and includes information about
+    // the version number and kit name. note that different kits can coexist,
+    // but not two kits with the same name and different versions.
     if (isBrowser()) {
         okwolo.kit = options.kit;
         okwolo.version = version;
@@ -434,18 +466,27 @@ var dom = function dom(_ref, _window) {
     var emit = _ref.emit,
         use = _ref.use;
 
-    var draw = void 0;
-    var update = void 0;
-    var build = void 0;
-
-    var prebuild = void 0;
-    var postbuild = void 0;
-
-    var vdom = void 0;
     var target = void 0;
     var builder = void 0;
+    var build = void 0;
+    var prebuild = void 0;
+    var postbuild = void 0;
+    var draw = void 0;
+    var update = void 0;
+
+    // stores an object returned by the draw and update functions. Since it is
+    // also passed as an argument to update, it is convenient to store some
+    // information about the current application's view in this variable.
+    var view = void 0;
+
+    // a copy of the state must be kept so that the view can be re-computed as
+    // soon as any part of the rendering pipeline is modified.
     var state = void 0;
 
+    // generates an object representing the view from the output of the builder.
+    // note that it requires both the builder and the build functions to be
+    // defined in order to complete successfully. they must be checked before
+    // calling this function.
     var create = function create(state) {
         var temp = builder(state);
         if (prebuild) {
@@ -458,58 +499,70 @@ var dom = function dom(_ref, _window) {
         return temp;
     };
 
+    // tracks whether the app has been drawn. this information is used to
+    // determing if the update or draw function should be called.
     var hasDrawn = false;
+
+    // tracks whether there are enough pieces of the rendering pipeline to
+    // succesfully create and render.
     var canDraw = false;
+
+    // if the view has already been drawn, it is assumed that it can be updated
+    // instead of redrawing again. the force argument can override this assumption
+    // and require a redraw.
     var drawToTarget = function drawToTarget() {
         var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : !hasDrawn;
 
+        // canDraw is saved to avoid doing the four checks on every update/draw.
+        // it is assumed that once all four variables are set the first time, they
+        // will never again be invalid. this should be enforced by the bus listeners.
         if (!canDraw) {
-            if (isDefined(target) && isDefined(builder) && isDefined(state)) {
+            if (isDefined(target) && isDefined(builder) && isDefined(state) && isDefined(build)) {
                 canDraw = true;
             } else {
                 return;
             }
         }
         if (!force) {
-            vdom = update(target, create(state), vdom);
+            view = update(target, create(state), view);
             return;
         }
-        vdom = draw(target, create(state));
+        view = draw(target, create(state));
         hasDrawn = true;
     };
 
-    emit.on('state', function (newState) {
-        assert(isDefined(newState), 'dom.updateState : new state is not defined', newState);
-        state = newState;
+    emit.on('state', function (_state) {
+        assert(isDefined(_state), 'dom.updateState : new state is not defined', _state);
+        state = _state;
         drawToTarget();
     });
 
-    use.on('target', function (newTarget) {
-        target = newTarget;
+    use.on('target', function (_target) {
+        target = _target;
         drawToTarget(true);
     });
 
-    use.on('builder', function (newBuilder) {
-        assert(isFunction(newBuilder), 'dom.replaceBuilder : builder is not a function', newBuilder);
-        builder = newBuilder;
+    use.on('builder', function (_builder) {
+        assert(isFunction(_builder), 'dom.replaceBuilder : builder is not a function', _builder);
+        builder = _builder;
         drawToTarget();
     });
 
-    use.on('draw', function (newDraw) {
-        assert(isFunction(newDraw), 'dom.replaceDraw : new draw is not a function', newDraw);
-        draw = newDraw;
+    use.on('draw', function (_draw) {
+        assert(isFunction(_draw), 'dom.replaceDraw : new draw is not a function', _draw);
+        draw = _draw;
         drawToTarget(true);
     });
 
-    use.on('update', function (newUpdate) {
-        assert(isFunction(newUpdate), 'dom.replaceUpdate : new target updater is not a function', newUpdate);
-        update = newUpdate;
+    use.on('update', function (_update) {
+        assert(isFunction(_update), 'dom.replaceUpdate : new target updater is not a function', _update);
+        update = _update;
         drawToTarget();
     });
 
-    use.on('build', function (newBuild) {
-        assert(isFunction(newBuild), 'dom.replaceBuild : new build is not a function', newBuild);
-        build = newBuild;
+    use.on('build', function (_build) {
+        assert(isFunction(_build), 'dom.replaceBuild : new build is not a function', _build);
+        build = _build;
         drawToTarget();
     });
 
