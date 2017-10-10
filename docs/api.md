@@ -32,7 +32,7 @@ app.setState(updater);
   // updater: function that returns the new state [(currentState) => ... newState]
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/set-state.js)
+[example](https://github.com/okwolo/okwolo/blob/master/examples/setstate.js)
 
 #
 
@@ -41,7 +41,7 @@ app.setState(updater);
 app.getState();
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/get-state.js)
+[example](https://github.com/okwolo/okwolo/blob/master/examples/getstate.js)
 
 #
 

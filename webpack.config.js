@@ -20,7 +20,7 @@ const kit = (name) => ([
     },
 ]);
 
-const kits = [
+const bundles = [
     {
         name: 'browser',
         entry: './packages/okwolo',
@@ -40,7 +40,7 @@ const kits = [
     ...kit('server'),
 ];
 
-module.exports = kits.map((options) => {
+module.exports = bundles.map((options) => {
     const plugins = [];
     if (options.minified) {
         plugins.push(new UglifyJSPlugin());
