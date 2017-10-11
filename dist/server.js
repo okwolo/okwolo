@@ -884,16 +884,8 @@ var blob = function blob(_window) {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'dom.update : target is not a DOM node', target);
 
-        // using a queue to clean up deleted nodes after diffing finishes. this
-        // is done so as to not mutate the arrays of children while it is being
-        // iterated over.
-        var queue = makeQueue();
-
         _window.requestAnimationFrame(function () {
-            queue.add(function () {
-                _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
-                queue.done();
-            });
+            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
         });
 
         // recursive function to update an element according to new state. the
@@ -914,11 +906,8 @@ var blob = function blob(_window) {
 
             // lack of successor element implies the original is being removed.
             if (!isDefined(successor)) {
-                queue.add(function () {
-                    originalParent.DOM.removeChild(original.DOM);
-                    delete originalParent.children[parentIndex];
-                    queue.done();
-                });
+                originalParent.DOM.removeChild(original.DOM);
+                delete originalParent.children[parentIndex];
                 return;
             }
 

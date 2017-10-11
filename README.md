@@ -26,7 +26,7 @@ app.setState({
     fruits: ['orange', 'apple', 'pear']
 });
 
-let FruitItem = ({type}) => (
+let FruitComponent = ({type}) => (
     ['li.fruit', {}, [
         type,
     ]]
@@ -35,7 +35,7 @@ let FruitItem = ({type}) => (
 app(() => ({fruits}) => (
     ['ul.fruit-list', {},
         fruits.map((type) => (
-            [FruitItem, {type}]
+            [FruitComponent, {type}]
         )),
     ]
 ));
