@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isNode, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
+const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isNode, isObject, isFunction} = require('@okwolo/utils')();
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
