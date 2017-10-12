@@ -6,32 +6,9 @@
 </head>
 
 <body>
-    <style>
-        h1 {
-            display: inline-block;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        td {
-            vertical-align: top;
-        }
-        .test1 .wrapper {
-            height: 300px;
-            overflow-y: scroll;
-        }
-        .test1 > table td {
-            width: 50%;
-        }
-        .test1 .results td {
-            height: 20px;
-        }
-        .test1 .results tr:nth-child(2n) {
-            background-color: #eee;
-        }
-    </style>
-    <div class="test test1">
+    <script src="script.js"></script>
+    <!--
+    <div class="test">
         <h1>Test 1</h1>
         <button onclick="test1()">run</button>
         <table>
@@ -55,11 +32,13 @@
                 </td>
             </tr>
         </table>
-        <hr>
     </div>
+
     <script>
         (() => {
-            const wrapper = document.querySelector('.test1 .wrapper');
+            const wrapper = document.querySelector('.test .wrapper');
+            const button = document.querySelector('.test button');
+            const resultsWrapper = document.querySelector('.test .results');
 
             let rowContents = [];
 
@@ -123,9 +102,11 @@
                 });
             };
 
+            resultsWrapper.querySelectorAll('.title').forEach((titleWrapper, index) => {
+                titleWrapper.innerHTML = tests[index].title;
+            });
+
             window.test1 = () => {
-                const button = document.querySelector('.test1 button');
-                const resultsWrapper = document.querySelector('.test1 .results');
                 button.disabled = true;
                 const avg = [];
                 const addToAvg = (results) => {
@@ -166,7 +147,7 @@
                 });
             };
         })()
-    </script>
+    </script> -->
 </body>
 
 </html>

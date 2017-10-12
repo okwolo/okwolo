@@ -57,7 +57,7 @@ const state = ({emit, use}) => {
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 let newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), `state.execute : result of action ${type} on target @state${targetAddress.join('.')} is undefined`);
+                assert(isDefined(newValue), `state.execute : result of action ${type} on target @state.${targetAddress.join('.')} is undefined`);
                 reference[key] = newValue;
             });
         });
