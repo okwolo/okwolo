@@ -698,8 +698,7 @@ var _require = __webpack_require__(0)(),
     isBoolean = _require.isBoolean,
     isNode = _require.isNode,
     isObject = _require.isObject,
-    isFunction = _require.isFunction,
-    makeQueue = _require.makeQueue;
+    isFunction = _require.isFunction;
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
@@ -884,10 +883,6 @@ var blob = function blob(_window) {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'dom.update : target is not a DOM node', target);
 
-        _window.requestAnimationFrame(function () {
-            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
-        });
-
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make
         // modifications to the vdom object in place.
@@ -954,6 +949,11 @@ var blob = function blob(_window) {
                 _update(original.children[i], successor.children[i], original, i);
             }
         };
+
+        _window.requestAnimationFrame(function () {
+            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
+        });
+
         return vdom;
     };
 

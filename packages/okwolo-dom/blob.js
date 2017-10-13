@@ -163,10 +163,6 @@ const blob = (_window) => {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'dom.update : target is not a DOM node', target);
 
-        _window.requestAnimationFrame(() => {
-            _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0);
-        });
-
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make
         // modifications to the vdom object in place.
@@ -233,6 +229,12 @@ const blob = (_window) => {
                 _update(original.children[i], successor.children[i], original, i);
             }
         };
+
+        _window.requestAnimationFrame(() => {
+            _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0);
+        });
+
+        // TODO vdom object is modified after being returned.
         return vdom;
     };
 
