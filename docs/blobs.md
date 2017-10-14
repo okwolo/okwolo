@@ -27,11 +27,11 @@ app.use(myPlugin); // will not add the middleware again
 
 ## Comprehensive list of blob keys
 
-| module         | recognized keys                                                                          |
-|----------------|------------------------------------------------------------------------------------------|
-| @okwolo/state  | `name`, `action`, `watcher`, `middleware`                                                |
-| @okwolo/router | `name`, `route`, `base`                                                                  |
-| @okwolo/dom    | `name`, `target`, `builder`, `state`, `draw`, `update`, `build`, `prebuild`, `postbuild` |
+| module         | recognized keys                                                                 |
+|----------------|---------------------------------------------------------------------------------|
+| @okwolo/state  | `name`, `action`, `watcher`, `middleware`                                       |
+| @okwolo/router | `name`, `route`, `base`                                                         |
+| @okwolo/dom    | `name`, `target`, `builder`, `draw`, `update`, `build`, `prebuild`, `postbuild` |
 
 ### `action`
 
@@ -173,37 +173,6 @@ let builder = (state) => (
 );
 
 app.use(builder);
-````
-
-### `state`
-
-````javascript
-let state = state
-  // state: object to update ONLY the layout's state
-````
-
-It is not recommended to use this key. It will ONLY change the state of the DOM module.
-
-````javascript
-let app = okwolo(document.body);
-
-app.setState('originalState');
-
-app(() => (state) => (
-    ['span', {}, [
-        state,
-    ]]
-));
-// <span>originalState</span>
-
-app.use({state: 'newState'});
-// <span>newState</span>
-
-app.getState();
-// 'originalState'
-
-app.update();
-// <span>originalState</span>
 ````
 
 ### `draw`

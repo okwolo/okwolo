@@ -18,9 +18,20 @@ const timer = async (subject) => {
 
 const app = okwolo(document.body);
 
-const runner = async (done, testArea) => {
+const runner1 = async (done, testArea) => {
     const testSamples = 5;
-    const numberOfRows = 10000;
+
+    const numberOfRows = 25000;
+
+    const tests = {
+        [`Create ${numberOfRows} rows`]: () => Array(...Array(numberOfRows)).map(() => 'TEST'),
+        'Diff with no changes': (temp) => temp,
+        [`Append ${numberOfRows/10} rows`]: (temp) => temp.concat(temp.slice(0, numberOfRows/10)),
+        [`Remove ${numberOfRows/10} rows`]: (temp) => temp.slice(0, numberOfRows),
+        'Update 25% of rows': (temp) => temp.map(() => Math.random() < 0.25 ? 'UPDATED' : 'TEST'),
+        'Update all rows': (temp) => temp.map(() => 'UPDATED'),
+        'Remove all rows': () => [],
+    };
 
     const testApp = okwolo(testArea);
 
@@ -42,60 +53,37 @@ const runner = async (done, testArea) => {
         ]
     ));
 
-    const tests = [
-        {
-            title: `Create ${numberOfRows} rows`,
-            rows: () => Array(...Array(numberOfRows)).map(() => 'TEST'),
-        },
-        {
-            title: `Append ${numberOfRows/10} rows`,
-            rows: (temp) => temp.concat(temp.slice(0, numberOfRows/10)),
-        },
-        {
-            title: `Remove ${numberOfRows/10} rows`,
-            rows: (temp) => temp.slice(0, numberOfRows),
-        },
-        {
-            title: 'Update 25% of rows',
-            rows: (temp) => temp.map(() => Math.random() < 0.25 ? 'UPDATED' : 'TEST'),
-        },
-        {
-            title: 'Update all rows',
-            rows: (temp) => temp.map(() => 'UPDATED'),
-        },
-        {
-            title: 'Do nothing',
-            rows: (temp) => temp,
-        },
-        {
-            title: 'Remove all rows',
-            rows: () => [],
-        },
-    ];
-
     const averages = [];
     for (let i = 1; i <= testSamples; ++i) {
         const times = [];
-        for (let i = 0; i < tests.length; ++i) {
-            const {rows} = tests[i];
-            rowContents = rows(rowContents).slice();
+        const testKeys = Object.keys(tests);
+        for (let i = 0; i < testKeys.length; ++i) {
+            rowContents = tests[testKeys[i]](rowContents).slice();
             const testTime = await timer(testApp.update);
             times.push(testTime);
         }
+        // add new sample times to the current average
         times.forEach((time, index) => {
             averages[index] = 1/i * time + (averages[index] || 0) * (i-1)/i;
         });
     }
 
+    const fastestTest = Math.min(...averages);
+    const scaledAverages = averages.map((value) => value/fastestTest);
+
     done(
         ['table', {},
-            tests.map(({title}, index) => (
+            Object.keys(tests).map((title, index) => (
                 ['tr', {}, [
                     ['td', {}, [
                         title,
                     ]],
                     ['td', {}, [
+                        scaledAverages[index].toFixed(2),
+                    ]],
+                    ['td', {}, [
                         averages[index].toFixed(1),
+                        'ms',
                     ]],
                 ]]
             )),
@@ -103,19 +91,93 @@ const runner = async (done, testArea) => {
     );
 };
 
+const runner2 = async (done, testArea) => {
+    const multiplier = 200;
+
+    const defaultSetup = (app) => {
+        app.setState({});
+        app(() => () => '');
+        app.use({action: {
+            type: 'TEST',
+            target: [],
+            handler: (state) => state,
+        }});
+    };
+
+    const setups = {
+        'wide state': (app) => {
+            const state = Array(...Array(multiplier)).map(() => ({
+                test: 'test',
+                other: Array(...Array(multiplier)).map(() => ({
+                    test: 'test',
+                })),
+            }));
+            app.setState(state);
+        },
+        'deep state': (app) => {
+            const state = {};
+            const levelPointer = state;
+            for (let i = 0; i < multiplier; ++i) {
+                levelPointer.test = {};
+                levelPointer = levelPointer.test;
+            }
+            levelPointer.test = 'test';
+            app.setState(state);
+        },
+        'multiple actions': (app) => {
+            for (let i = 0; i < multiplier; ++i) {
+                app.use({action: {
+                    type: String(Math.random()),
+                    target: [],
+                    handler: (state) => state,
+                }});
+            }
+        },
+        'multiple actions of same type': (app) => {
+            for (let i = 0; i < multiplier; ++i) {
+                app.use({action: {
+                    type: 'TEST',
+                    target: [],
+                    handler: (state) => state,
+                }});
+            }
+        },
+        'action with deep target': (app) => {
+            const target = Array(...Array(multiplier)).map(() => 'test');
+            app.use({action: {
+                type: 'TEST',
+                target,
+                handler: (state) => state,
+            }});
+        },
+        'multiple middleware': (app) => {
+            for (let i = 0; i < multiplier; ++i) {
+                app.use({middleware: (next, state, actionType, params) => {
+                    next(state, actionType, params);
+                }});
+            }
+        },
+        'multiple watchers': (app) => {
+            for (let i = 0; i < multiplier; ++i) {
+                app.use({watcher: (state, actionType, params) => {
+                    return [state, actionType, params];
+                }});
+            }
+        },
+        'multiple routes': (app) => {
+            for (let i = 0; i < multiplier; ++i) {
+                app.use({route: {
+                    path: String(Math.random()),
+                    handler: () => app(() => () => 'TEST'),
+                }});
+            }
+        },
+    };
+};
+
 const runners = [
-    runner,
-    (done, testArea) => {
-        setTimeout(() => {
-            testArea.innerHTML = 'done';
-            done(
-                ['h1', {}, [
-                    'RESULTS ARE IN !!!',
-                ]]
-            );
-        }, 1000);
-        testArea.innerHTML = 'running';
-    },
+    runner1,
+    runner2,
 ];
 
 app.setState({
