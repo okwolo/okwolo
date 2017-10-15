@@ -5,7 +5,12 @@ const timer = async (subject) => {
         setTimeout(() => {
             window.requestAnimationFrame(() => {
                 const startTime = Date.now();
-                subject();
+                try {
+                    subject();
+                } catch (e) {
+                    console.warn(e);
+                    resolve(NaN);
+                }
                 setTimeout(() => {
                     window.requestAnimationFrame(() => {
                         resolve(Date.now() - startTime);
@@ -21,7 +26,7 @@ const app = okwolo(document.body);
 const runner1 = async (done, testArea) => {
     const testSamples = 5;
 
-    const numberOfRows = 25000;
+    const numberOfRows = 10000;
 
     const tests = {
         [`Create ${numberOfRows} rows`]: () => Array(...Array(numberOfRows)).map(() => 'TEST'),
@@ -96,35 +101,33 @@ const runner2 = async (done, testArea) => {
 
     const defaultSetup = (app) => {
         app.setState({});
+        app('/test', () => () => 'test');
         app(() => () => '');
         app.use({action: {
             type: 'TEST',
             target: [],
             handler: (state) => state,
         }});
+        app.act('TEST');
+        app.act('TEST');
     };
 
     const setups = {
-        'wide state': (app) => {
-            const state = Array(...Array(multiplier)).map(() => ({
-                test: 'test',
-                other: Array(...Array(multiplier)).map(() => ({
-                    test: 'test',
-                })),
-            }));
-            app.setState(state);
-        },
-        'deep state': (app) => {
-            const state = {};
-            const levelPointer = state;
+        'baseline': () => {},
+        'large state': (app) => {
+            const deepBranch = {};
+            let levelPointer = deepBranch;
             for (let i = 0; i < multiplier; ++i) {
                 levelPointer.test = {};
                 levelPointer = levelPointer.test;
             }
             levelPointer.test = 'test';
+            const state = Array(...Array(multiplier)).map(() => ({
+                test: deepBranch,
+            }));
             app.setState(state);
         },
-        'multiple actions': (app) => {
+        'many actions': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({action: {
                     type: String(Math.random()),
@@ -133,7 +136,7 @@ const runner2 = async (done, testArea) => {
                 }});
             }
         },
-        'multiple actions of same type': (app) => {
+        'many actions of same type': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({action: {
                     type: 'TEST',
@@ -150,21 +153,21 @@ const runner2 = async (done, testArea) => {
                 handler: (state) => state,
             }});
         },
-        'multiple middleware': (app) => {
+        'many middleware': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({middleware: (next, state, actionType, params) => {
                     next(state, actionType, params);
                 }});
             }
         },
-        'multiple watchers': (app) => {
+        'many watchers': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({watcher: (state, actionType, params) => {
                     return [state, actionType, params];
                 }});
             }
         },
-        'multiple routes': (app) => {
+        'many routes': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({route: {
                     path: String(Math.random()),
@@ -172,7 +175,83 @@ const runner2 = async (done, testArea) => {
                 }});
             }
         },
+        'expensive builder': (app) => {
+            app.use({builder: () => {
+                let temp = 0;
+                for (let i = 0; i < multiplier ** 3; ++i) {
+                    temp += Math.sqrt(i/Math.PI/Math.random())/(i+1);
+                }
+                return temp;
+            }});
+        },
+        'large output tree': (app) => {
+            app.use({builder: () => {
+                const grandChildren = Array(...Array(multiplier/10)).map(() => ['span', {}, ['test']]);
+                return (
+                    ['div', {},
+                        Array(...Array(multiplier/10)).map(() => ['div', {}, grandChildren]),
+                    ]
+                );
+            }});
+        },
     };
+
+    const tests = {
+        'app.update': (app) => {
+            app.update();
+        },
+        'app.act': (app) => {
+            app.act('TEST');
+        },
+        'app.show': (app) => {
+            app.show('/test');
+        },
+        'app.setState': (app) => {
+            app.setState({});
+        },
+        'app.undo': (app) => {
+            app.undo();
+        },
+    };
+
+    const resetTestArea = () => {
+        testArea.innerHTML = '';
+    };
+
+    const results = Object.keys(setups).map(() => Object.keys(tests));
+
+    for (let i = 0; i < results.length; ++i) {
+        for (let j = 0; j < results[i].length; ++j) {
+            resetTestArea();
+            const testApp = okwolo(testArea);
+            defaultSetup(testApp);
+            setups[Object.keys(setups)[i]](testApp);
+            results[i][j] = await timer(() => {
+                tests[Object.keys(tests)[j]](testApp);
+            });
+        }
+    }
+    resetTestArea();
+
+    results.forEach((row, index) => {
+        row.unshift(Object.keys(setups)[index]);
+    });
+
+    results.unshift([''].concat(Object.keys(tests)));
+
+    done(
+        ['table', {},
+            results.map((row) => (
+                ['tr', {},
+                    row.map((cell) => (
+                        ['td', {}, [
+                            cell,
+                        ]]
+                    )),
+                ]
+            )),
+        ]
+    );
 };
 
 const runners = [
@@ -234,7 +313,7 @@ app(() => ({suites}) => (
                 ]],
                 ['table | width: 100%;', {}, [
                     ['tr', {}, [
-                        ['td | width: 50%;', {}, [
+                        ['td | width: 25%;', {}, [
                             ['h3', {}, [
                                 'Test Area',
                             ]],
@@ -243,7 +322,7 @@ app(() => ({suites}) => (
                                 height: 300px;
                             `],
                         ]],
-                        ['td | width: 50%; vertical-align: top;', {}, [
+                        ['td | width: 75%; vertical-align: top;', {}, [
                             ['h3', {}, [
                                 'Result Area',
                             ]],
