@@ -345,6 +345,7 @@ module.exports = core({
 var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     isDefined = _require.isDefined,
+    isObject = _require.isObject,
     assert = _require.assert,
     deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
@@ -375,8 +376,49 @@ var core = function core(_ref) {
         var emit = makeBus();
         var use = makeBus();
 
-        // the api object will contain all the exposed functions/variables.
-        var api = { emit: emit, use: use };
+        var primary = function primary() {};
+
+        // the api function will contain all the exposed functions/variables.
+        var api = function api() {
+            return primary.apply(undefined, arguments);
+        };
+
+        api.emit = emit;
+        api.use = use;
+
+        use.on('api', function (_api) {
+            assert(isObject(_api), 'core.use.api : additional api is not an object', _api);
+            Object.assign(api, _api);
+        });
+
+        use.on('primary', function (_primary) {
+            assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
+            primary = _primary;
+        });
+
+        // reference to initial state is kept to be able to track whether it
+        // has changed using strict equality.
+        var inital = {};
+        var state = inital;
+
+        // new state is emitted directly instead of giving that responsibility
+        // to the state module.
+        use({ api: {
+                setState: function setState(replacement) {
+                    state = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+                    emit({ state: state });
+                },
+                getState: function getState() {
+                    assert(state !== initial, 'getState : cannot get state before it has been set');
+                    return deepCopy(state);
+                }
+            } });
+
+        use({ primary: function primary(init) {
+                assert(isFunction(init), 'core.primary : init is not a function', init);
+                use({ builder: init() });
+                return;
+            } });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
@@ -385,120 +427,16 @@ var core = function core(_ref) {
 
         // each blob is used.
         blobs.forEach(function (blob) {
-            use(blob(_window));
+            use(blob(api, _window));
         });
 
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        var initial = {};
-        var _state = initial;
-
-        // current state is monitored and stored.
-        emit.on('state', function (newState) {
-            _state = newState;
-        });
-
-        api.getState = function () {
-            assert(_state !== initial, 'getState : cannot get state before it has been set');
-            return deepCopy(_state);
-        };
-
-        // the only functionality from the dom module that is directly exposed
-        // is the update event.
-        if (options.modules.dom) {
-            api.update = function () {
-                emit({ state: _state });
-            };
-
-            // target is used if it is defined, but this step can be deferred
-            // if it is not convenient to pass the target on app creation.
-            if (isDefined(target)) {
-                use({ target: target });
-            }
+        // target is used if it is defined, but this step can be deferred
+        // if it is not convenient to pass the target on app creation.
+        if (isDefined(target)) {
+            use({ target: target });
         }
 
-        if (options.modules.state) {
-            api.act = function (type, params) {
-                // the only action that does not need the state to have already
-                // been changed is SET_STATE
-                assert(_state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
-                emit({ act: { state: _state, type: type, params: params } });
-            };
-
-            // action is used to override state in order to give visibility to
-            // watchers and middleware.
-            use({ action: {
-                    type: 'SET_STATE',
-                    target: [],
-                    handler: function handler(state, params) {
-                        return params;
-                    }
-                } });
-
-            api.setState = function (replacement) {
-                if (isFunction(replacement)) {
-                    api.act('SET_STATE', replacement(_state));
-                    return;
-                }
-                api.act('SET_STATE', replacement);
-            };
-        } else {
-            // new state is emitted directly instead of giving that responsibility
-            // to the state module.
-            api.setState = function (replacement) {
-                if (isFunction(replacement)) {
-                    emit({ state: replacement(deepCopy(_state)) });
-                    return;
-                }
-                emit({ state: replacement });
-            };
-        }
-
-        if (options.modules.history) {
-            assert(options.modules.state, 'app : cannot use history blob without the state module', options);
-
-            api.undo = function () {
-                api.act('UNDO');
-            };
-
-            api.redo = function () {
-                api.act('REDO');
-            };
-        }
-
-        if (options.modules.router) {
-            api.redirect = function (path, params) {
-                emit({ redirect: { path: path, params: params } });
-            };
-
-            api.show = function (path, params) {
-                emit({ show: { path: path, params: params } });
-            };
-
-            // first argument can be a path string to register a route handler
-            // or a function to directly use a builder.
-            api.register = function (path, builder) {
-                if (isFunction(path)) {
-                    use({ builder: path() });
-                    return;
-                }
-                use({ route: {
-                        path: path,
-                        handler: function handler(params) {
-                            use({ builder: builder(params) });
-                        }
-                    } });
-            };
-        } else {
-            api.register = function (builder) {
-                use({ builder: builder() });
-                return;
-            };
-        }
-
-        // the returned object contains all the keys added to the api object
-        // but is also the register function.
-        return Object.assign(api.register, api);
+        return api;
     };
 
     // okwolo attempts to define itself globally and includes information about
@@ -600,7 +538,7 @@ var dom = function dom(_ref, _window) {
     };
 
     emit.on('state', function (_state) {
-        assert(isDefined(_state), 'dom.updateState : new state is not defined', _state);
+        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
         state = _state;
         drawToTarget();
     });
@@ -611,40 +549,48 @@ var dom = function dom(_ref, _window) {
     });
 
     use.on('builder', function (_builder) {
-        assert(isFunction(_builder), 'dom.replaceBuilder : builder is not a function', _builder);
+        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
         builder = _builder;
         drawToTarget();
     });
 
     use.on('draw', function (_draw) {
-        assert(isFunction(_draw), 'dom.replaceDraw : new draw is not a function', _draw);
+        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
         draw = _draw;
         drawToTarget(true);
     });
 
     use.on('update', function (_update) {
-        assert(isFunction(_update), 'dom.replaceUpdate : new target updater is not a function', _update);
+        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
         update = _update;
         drawToTarget();
     });
 
     use.on('build', function (_build) {
-        assert(isFunction(_build), 'dom.replaceBuild : new build is not a function', _build);
+        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
         build = _build;
         drawToTarget();
     });
 
     use.on('prebuild', function (newPrebuild) {
-        assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
+        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
         drawToTarget();
     });
 
     use.on('postbuild', function (newPostbuild) {
-        assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
+        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
         drawToTarget();
     });
+
+    // the only functionality from the dom module that is directly exposed
+    // is the update event.
+    use({ api: {
+            update: function update() {
+                drawToTarget();
+            }
+        } });
 };
 
 module.exports = dom;
@@ -788,6 +734,34 @@ var router = function router(_ref, _window) {
         assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
         fetch = _fetch;
     });
+
+    // first argument can be a path string to register a route handler
+    // or a function to directly use a builder.
+    use({ primary: function primary(path, builder) {
+            if (isFunction(path)) {
+                use({ builder: path() });
+                return;
+            }
+            use({ route: {
+                    path: path,
+                    handler: function handler(params) {
+                        use({ builder: builder(params) });
+                    }
+                } });
+        } });
+
+    var redirect = function redirect(path, params) {
+        emit({ redirect: { path: path, params: params } });
+    };
+
+    var show = function show(path, params) {
+        emit({ show: { path: path, params: params } });
+    };
+
+    use({ api: {
+            redirect: redirect,
+            show: show
+        } });
 };
 
 module.exports = router;
@@ -953,7 +927,7 @@ var build = function build(element) {
     };
 };
 
-var blob = function blob(_window) {
+var blob = function blob(api, _window) {
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
@@ -1069,6 +1043,7 @@ var blob = function blob(_window) {
             _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
         });
 
+        // TODO vdom object is modified after being returned.
         return vdom;
     };
 
