@@ -65,7 +65,7 @@ describe('core', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should add getState to the api', () => {
+    xit('should add getState to the api', () => {
         expect(c()().getState)
             .toBeInstanceOf(Function);
     });
@@ -99,7 +99,7 @@ describe('core', () => {
 
         describe('modules', () => {
             describe('state', () => {
-                it('should add act to the api', () => {
+                xit('should add act to the api', () => {
                     expect(c({
                         modules: {
                             state: true,
@@ -114,7 +114,7 @@ describe('core', () => {
                         .toBeFalsy();
                 });
 
-                it('should use an action to setState', () => {
+                xit('should use an action to setState', () => {
                     const test = jest.fn();
                     const app1 = c()();
                     app1.emit.on('act', test);
@@ -134,7 +134,7 @@ describe('core', () => {
             });
 
             describe('history', () => {
-                it('should not be added without state', () => {
+                xit('should not be added without state', () => {
                     expect(() => c({
                         modules: {
                             history: true,
@@ -150,7 +150,7 @@ describe('core', () => {
                         .not.toThrow(Error);
                 });
 
-                it('should add undo to the api', () => {
+                xit('should add undo to the api', () => {
                     expect(c({
                         modules: {
                             state: true,
@@ -167,7 +167,7 @@ describe('core', () => {
                         .toBeFalsy();
                 });
 
-                it('should add redo to the api', () => {
+                xit('should add redo to the api', () => {
                     expect(c({
                         modules: {
                             state: true,
@@ -186,7 +186,7 @@ describe('core', () => {
             });
 
             describe('dom', () => {
-                it('should use the target immediately', () => {
+                xit('should use the target immediately', () => {
                     const test = jest.fn();
                     const target = {};
                     const _module = ({use}) => {
@@ -204,7 +204,7 @@ describe('core', () => {
                         .toHaveBeenCalledWith(target);
                 });
 
-                it('should add update to the api', () => {
+                xit('should add update to the api', () => {
                     expect(c()().update)
                         .toBeFalsy();
                     expect(c({
@@ -215,7 +215,7 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should emit the current state when updated', () => {
+                xit('should emit the current state when updated', () => {
                     const test = jest.fn();
                     const app = c({
                         modules: {
@@ -230,7 +230,7 @@ describe('core', () => {
             });
 
             describe('router', () => {
-                it('should add redirect to the api', () => {
+                xit('should add redirect to the api', () => {
                     expect(c()().redirect)
                         .toBeFalsy();
                     expect(c({
@@ -241,7 +241,7 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should emit redirect when redirected', () => {
+                xit('should emit redirect when redirected', () => {
                     const test = jest.fn();
                     const _module = ({emit}) => {
                         emit.on('redirect', test);
@@ -258,7 +258,7 @@ describe('core', () => {
                         .toHaveBeenCalled();
                 });
 
-                it('should add show to the api', () => {
+                xit('should add show to the api', () => {
                     expect(c()().show)
                         .toBeFalsy();
                     expect(c({
@@ -269,7 +269,7 @@ describe('core', () => {
                         .toBeInstanceOf(Function);
                 });
 
-                it('should emit show when showed', () => {
+                xit('should emit show when showed', () => {
                     const test = jest.fn();
                     const _module = ({emit}) => {
                         emit.on('show', test);
@@ -286,7 +286,7 @@ describe('core', () => {
                         .toHaveBeenCalled();
                 });
 
-                it('should allow registering paths', () => {
+                xit('should allow registering paths', () => {
                     const app1 = c()();
                     expect(() => app1('test', () => 0))
                         .toThrow(Error);

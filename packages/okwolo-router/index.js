@@ -106,6 +106,34 @@ const router = ({emit, use}, _window) => {
         assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
         fetch = _fetch;
     });
+
+    // first argument can be a path string to register a route handler
+    // or a function to directly use a builder.
+    use({primary: (path, builder) => {
+        if (isFunction(path)) {
+            use({builder: path()});
+            return;
+        }
+        use({route: {
+            path,
+            handler: (params) => {
+                use({builder: builder(params)});
+            },
+        }});
+    }});
+
+    const redirect = (path, params) => {
+        emit({redirect: {path, params}});
+    };
+
+    const show = (path, params) => {
+        emit({show: {path, params}});
+    };
+
+    use({api: {
+        redirect,
+        show,
+    }});
 };
 
 module.exports = router;

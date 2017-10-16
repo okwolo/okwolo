@@ -2,8 +2,10 @@
 
 const history = require('./');
 
+const mockApi = {act: () => {}};
+
 const newState = (initialState) => {
-    const temp = history();
+    const temp = history(mockApi);
 
     const undo = () => {
         let newState = temp.action[0].handler();
@@ -35,7 +37,7 @@ const newState = (initialState) => {
 
 describe('@okwolo/history', () => {
     it('should return a blob with two actions and a watcher', () => {
-        let test = history();
+        let test = history(mockApi);
         expect(test.watcher)
             .toBeInstanceOf(Function);
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const {isFunction, isDefined, assert, deepCopy, isBrowser, makeBus} = require('@okwolo/utils')();
+const {isFunction, isDefined, isObject, assert, deepCopy, isBrowser, makeBus} = require('@okwolo/utils')();
 
 // version cannot be taken from package.json because environment is not guaranteed.
 const version = '1.3.0';
@@ -21,8 +21,52 @@ const core = ({modules, blobs, options}) => {
         const emit = makeBus();
         const use = makeBus();
 
-        // the api object will contain all the exposed functions/variables.
-        const api = {emit, use};
+        let primary = () => {};
+
+        // the api function will contain all the exposed functions/variables.
+        const api = (...args) => {
+            return primary(...args);
+        };
+
+        api.emit = emit;
+        api.use = use;
+
+        use.on('api', (_api) => {
+            assert(isObject(_api), 'core.use.api : additional api is not an object', _api);
+            Object.assign(api, _api);
+        });
+
+        use.on('primary', (_primary) => {
+            assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
+            primary = _primary;
+        });
+
+
+        // reference to initial state is kept to be able to track whether it
+        // has changed using strict equality.
+        const inital = {};
+        let state = inital;
+
+        // new state is emitted directly instead of giving that responsibility
+        // to the state module.
+        use({api: {
+            setState: (replacement) => {
+                state = isFunction(replacement)
+                    ? replacement(deepCopy(state))
+                    : replacement;
+                emit({state});
+            },
+            getState: () => {
+                assert(state !== initial, 'getState : cannot get state before it has been set');
+                return deepCopy(state);
+            },
+        }});
+
+        use({primary: (init) => {
+            assert(isFunction(init), 'core.primary : init is not a function', init);
+            use({builder: init()});
+            return;
+        }});
 
         // each module is instantiated.
         modules.forEach((_module) => {
@@ -31,118 +75,16 @@ const core = ({modules, blobs, options}) => {
 
         // each blob is used.
         blobs.forEach((blob) => {
-            use(blob(_window));
+            use(blob(api, _window));
         });
 
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        const initial = {};
-        let _state = initial;
-
-        // current state is monitored and stored.
-        emit.on('state', (newState) => {
-            _state = newState;
-        });
-
-        api.getState = () => {
-            assert(_state !== initial, 'getState : cannot get state before it has been set');
-            return deepCopy(_state);
-        };
-
-        // the only functionality from the dom module that is directly exposed
-        // is the update event.
-        if (options.modules.dom) {
-            api.update = () => {
-                emit({state: _state});
-            };
-
-            // target is used if it is defined, but this step can be deferred
-            // if it is not convenient to pass the target on app creation.
-            if (isDefined(target)) {
-                use({target});
-            }
+        // target is used if it is defined, but this step can be deferred
+        // if it is not convenient to pass the target on app creation.
+        if (isDefined(target)) {
+            use({target});
         }
 
-        if (options.modules.state) {
-            api.act = (type, params) => {
-                // the only action that does not need the state to have already
-                // been changed is SET_STATE
-                assert(_state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
-                emit({act: {state: _state, type, params}});
-            };
-
-            // action is used to override state in order to give visibility to
-            // watchers and middleware.
-            use({action: {
-                type: 'SET_STATE',
-                target: [],
-                handler: (state, params) => params,
-            }});
-
-            api.setState = (replacement) => {
-                if (isFunction(replacement)) {
-                    api.act('SET_STATE', replacement(_state));
-                    return;
-                }
-                api.act('SET_STATE', replacement);
-            };
-        } else {
-            // new state is emitted directly instead of giving that responsibility
-            // to the state module.
-            api.setState = (replacement) => {
-                if (isFunction(replacement)) {
-                    emit({state: replacement(deepCopy(_state))});
-                    return;
-                }
-                emit({state: replacement});
-            };
-        }
-
-        if (options.modules.history) {
-            assert(options.modules.state, 'app : cannot use history blob without the state module', options);
-
-            api.undo = () => {
-                api.act('UNDO');
-            };
-
-            api.redo = () => {
-                api.act('REDO');
-            };
-        }
-
-        if (options.modules.router) {
-            api.redirect = (path, params) => {
-                emit({redirect: {path, params}});
-            };
-
-            api.show = (path, params) => {
-                emit({show: {path, params}});
-            };
-
-            // first argument can be a path string to register a route handler
-            // or a function to directly use a builder.
-            api.register = (path, builder) => {
-                if (isFunction(path)) {
-                    use({builder: path()});
-                    return;
-                }
-                use({route: {
-                    path,
-                    handler: (params) => {
-                        use({builder: builder(params)});
-                    },
-                }});
-            };
-        } else {
-            api.register = (builder) => {
-                use({builder: builder()});
-                return;
-            };
-        }
-
-        // the returned object contains all the keys added to the api object
-        // but is also the register function.
-        return Object.assign(api.register, api);
+        return api;
     };
 
     // okwolo attempts to define itself globally and includes information about

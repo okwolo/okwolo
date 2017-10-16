@@ -145,14 +145,6 @@ const runner2 = async (done, testArea) => {
                 }});
             }
         },
-        'action with deep target': (app) => {
-            const target = Array(...Array(multiplier)).map(() => 'test');
-            app.use({action: {
-                type: 'TEST',
-                target,
-                handler: (state) => state,
-            }});
-        },
         'many middleware': (app) => {
             for (let i = 0; i < multiplier; ++i) {
                 app.use({middleware: (next, state, actionType, params) => {

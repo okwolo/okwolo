@@ -6,7 +6,7 @@ const router = () => {
     const emit = makeBus();
     const use = makeBus();
     require('./')({emit, use}, window);
-    use(require('./blob')(window));
+    use(require('./blob')({}, window));
     return {emit, use};
 };
 

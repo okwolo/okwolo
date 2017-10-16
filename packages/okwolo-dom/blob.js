@@ -120,7 +120,7 @@ const build = (element) => {
     };
 };
 
-const blob = (_window) => {
+const blob = (api, _window) => {
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.

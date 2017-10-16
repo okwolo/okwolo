@@ -67,7 +67,7 @@ const dom = ({emit, use}, _window) => {
     };
 
     emit.on('state', (_state) => {
-        assert(isDefined(_state), 'dom.updateState : new state is not defined', _state);
+        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
         state = _state;
         drawToTarget();
     });
@@ -78,40 +78,49 @@ const dom = ({emit, use}, _window) => {
     });
 
     use.on('builder', (_builder) => {
-        assert(isFunction(_builder), 'dom.replaceBuilder : builder is not a function', _builder);
+        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
         builder = _builder;
         drawToTarget();
     });
 
     use.on('draw', (_draw) => {
-        assert(isFunction(_draw), 'dom.replaceDraw : new draw is not a function', _draw);
+        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
         draw = _draw;
         drawToTarget(true);
     });
 
     use.on('update', (_update) => {
-        assert(isFunction(_update), 'dom.replaceUpdate : new target updater is not a function', _update);
+        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
         update = _update;
         drawToTarget();
     });
 
     use.on('build', (_build) => {
-        assert(isFunction(_build), 'dom.replaceBuild : new build is not a function', _build);
+        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
         build = _build;
         drawToTarget();
     });
 
     use.on('prebuild', (newPrebuild) => {
-        assert(isFunction(newPrebuild), 'dom.replacePrebuild : new prebuild is not a function', newPrebuild);
+        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
         drawToTarget();
     });
 
     use.on('postbuild', (newPostbuild) => {
-        assert(isFunction(newPostbuild), 'dom.replacePostbuild : new postbuild is not a function', newPostbuild);
+        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
         drawToTarget();
     });
+
+
+    // the only functionality from the dom module that is directly exposed
+    // is the update event.
+    use({api: {
+        update: () => {
+            drawToTarget();
+        },
+    }});
 };
 
 module.exports = dom;

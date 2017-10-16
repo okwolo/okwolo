@@ -143,6 +143,50 @@ const state = ({emit, use}) => {
             watchers.push(item);
         });
     });
+
+    // action is used to override state in order to give visibility to
+    // watchers and middleware.
+    use({action: {
+        type: 'SET_STATE',
+        target: [],
+        handler: (state, params) => params,
+    }});
+
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    const initial = {};
+    let state = initial;
+
+    // current state is monitored and stored.
+    emit.on('state', (newState) => {
+        state = newState;
+    });
+
+    const act = (type, params) => {
+        // the only action that does not need the state to have already
+        // been changed is SET_STATE
+        assert(state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
+        emit({act: {state: state, type, params}});
+    };
+
+    const setState = (replacement) => {
+        if (isFunction(replacement)) {
+            act('SET_STATE', replacement(state));
+            return;
+        }
+        act('SET_STATE', replacement);
+    };
+
+    const getState = () => {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    use({api: {
+        act,
+        setState,
+        getState,
+    }});
 };
 
 module.exports = state;

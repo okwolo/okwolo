@@ -1,6 +1,10 @@
 'use strict';
 
-const history = () => {
+const {isFunction, assert} = require('@okwolo/utils')();
+
+const history = (api) => {
+    assert(isFunction(api.act), 'app : cannot use history blob without an action handler');
+
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
     const initial = {};
@@ -77,8 +81,17 @@ const history = () => {
         current = state;
     };
 
+    const undo = () => {
+        api.act('UNDO');
+    };
+
+    const redo = () => {
+        api.act('REDO');
+    };
+
     return {
         name: '@okwolo/history',
+        api: {undo, redo},
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher,
     };
