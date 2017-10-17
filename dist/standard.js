@@ -279,7 +279,6 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isObject = _require.isObject,
     assert = _require.assert,
-    deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
     makeBus = _require.makeBus;
 
@@ -327,30 +326,6 @@ var core = function core(_ref) {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
-
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        var inital = {};
-        var state = inital;
-
-        // new state is emitted directly instead of giving that responsibility
-        // to the state module.
-        use({ api: {
-                setState: function setState(replacement) {
-                    state = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-                    emit({ state: state });
-                },
-                getState: function getState() {
-                    assert(state !== initial, 'getState : cannot get state before it has been set');
-                    return deepCopy(state);
-                }
-            } });
-
-        use({ primary: function primary(init) {
-                assert(isFunction(init), 'core.primary : init is not a function', init);
-                use({ builder: init() });
-                return;
-            } });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
@@ -522,6 +497,11 @@ var dom = function dom(_ref, _window) {
             update: function update() {
                 drawToTarget();
             }
+        } });
+
+    use({ primary: function primary(init) {
+            use({ builder: init() });
+            return;
         } });
 };
 
@@ -899,6 +879,19 @@ var router = function router(_ref, _window) {
         fetch = _fetch;
     });
 
+    var redirect = function redirect(path, params) {
+        emit({ redirect: { path: path, params: params } });
+    };
+
+    var show = function show(path, params) {
+        emit({ show: { path: path, params: params } });
+    };
+
+    use({ api: {
+            redirect: redirect,
+            show: show
+        } });
+
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
     use({ primary: function primary(path, builder) {
@@ -912,19 +905,6 @@ var router = function router(_ref, _window) {
                         use({ builder: builder(params) });
                     }
                 } });
-        } });
-
-    var redirect = function redirect(path, params) {
-        emit({ redirect: { path: path, params: params } });
-    };
-
-    var show = function show(path, params) {
-        emit({ show: { path: path, params: params } });
-    };
-
-    use({ api: {
-            redirect: redirect,
-            show: show
         } });
 };
 

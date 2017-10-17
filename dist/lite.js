@@ -252,8 +252,14 @@ module.exports = utils;
 
 var core = __webpack_require__(2);
 
+var _require = __webpack_require__(0)(),
+    isFunction = _require.isFunction,
+    deepCopy = _require.deepCopy;
+
 // creates a regex pattern from an input path string. all tags are replaced by a
 // capture group and special characters are escaped.
+
+
 var createPattern = function createPattern(path) {
     var pattern = path
     // the colon character is not escaped since it is used to denote tags.
@@ -263,66 +269,89 @@ var createPattern = function createPattern(path) {
 };
 
 // blob generating function that is expected in the configuration object.
-var liteRouter = function liteRouter() {
-    return {
-        name: 'okwolo-lite-router',
-        // the type of store is not enforced by the okwolo-router module. this means
-        // that it needs to be created when the first path is registered.
-        register: function register() {
-            var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-            var path = arguments[1];
-            var handler = arguments[2];
+var liteBlob = function liteBlob(api) {
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    var inital = {};
+    var state = inital;
 
-            // the keys are extracted from the path string and stored to properly
-            // assign the url's values to the right keys in the params.
-            var keys = (path.match(/:\w+/g) || []).map(function (key) {
-                return key.replace(/^:/g, '');
-            });
-            store.push({
-                keys: keys,
-                pattern: createPattern(path),
-                handler: handler
-            });
-            return store;
-        },
-        // the store's initial value is undefined so it needs to be defaulted
-        // to an empty array. this function should be the one doing the action
-        // defined in the route since it doesn't return it.
-        fetch: function fetch() {
-            var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-            var path = arguments[1];
-            var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var setState = function setState(replacement) {
+        state = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        api.emit({ state: state });
+    };
 
-            var found = false;
-            store.find(function (registeredPath) {
-                var test = registeredPath.pattern.exec(path);
-                if (test === null) {
-                    return;
-                }
-                // a non null value on the result of executing the query on the path
-                // is considered a successful hit.
-                found = true;
-                // the first element of the result array is the entire matched string.
-                // this value is not useful and the following capture group results
-                // are more relevant.
-                test.shift();
-                // the order of the keys and their values in the matched result is the
-                // same and their index is now shared. note that there is no protection
-                // against param values being overwritten or tags to share the same key.
-                registeredPath.keys.forEach(function (key, i) {
-                    params[key] = test[i];
-                });
-                registeredPath.handler(params);
-                return found;
+    var getState = function getState() {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    // the type of store is not enforced by the okwolo-router module. this means
+    // that it needs to be created when the first path is registered.
+    var register = function register() {
+        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var path = arguments[1];
+        var handler = arguments[2];
+
+        // the keys are extracted from the path string and stored to properly
+        // assign the url's values to the right keys in the params.
+        var keys = (path.match(/:\w+/g) || []).map(function (key) {
+            return key.replace(/^:/g, '');
+        });
+        store.push({
+            keys: keys,
+            pattern: createPattern(path),
+            handler: handler
+        });
+        return store;
+    };
+
+    // the store's initial value is undefined so it needs to be defaulted
+    // to an empty array. this function should be the one doing the action
+    // defined in the route since it doesn't return it.
+    var fetch = function fetch() {
+        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var path = arguments[1];
+        var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+        var found = false;
+        store.find(function (registeredPath) {
+            var test = registeredPath.pattern.exec(path);
+            if (test === null) {
+                return;
+            }
+            // a non null value on the result of executing the query on the path
+            // is considered a successful hit.
+            found = true;
+            // the first element of the result array is the entire matched string.
+            // this value is not useful and the following capture group results
+            // are more relevant.
+            test.shift();
+            // the order of the keys and their values in the matched result is the
+            // same and their index is now shared. note that there is no protection
+            // against param values being overwritten or tags to share the same key.
+            registeredPath.keys.forEach(function (key, i) {
+                params[key] = test[i];
             });
+            registeredPath.handler(params);
             return found;
+        });
+        return found;
+    };
+
+    return {
+        name: 'okwolo-lite',
+        register: register,
+        fetch: fetch,
+        api: {
+            setState: setState,
+            getState: getState
         }
     };
 };
 
 module.exports = core({
     modules: [__webpack_require__(3), __webpack_require__(4)],
-    blobs: [__webpack_require__(5), liteRouter],
+    blobs: [__webpack_require__(5), liteBlob],
     options: {
         kit: 'lite',
         browser: true,
@@ -347,7 +376,6 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isObject = _require.isObject,
     assert = _require.assert,
-    deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
     makeBus = _require.makeBus;
 
@@ -395,30 +423,6 @@ var core = function core(_ref) {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
-
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        var inital = {};
-        var state = inital;
-
-        // new state is emitted directly instead of giving that responsibility
-        // to the state module.
-        use({ api: {
-                setState: function setState(replacement) {
-                    state = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-                    emit({ state: state });
-                },
-                getState: function getState() {
-                    assert(state !== initial, 'getState : cannot get state before it has been set');
-                    return deepCopy(state);
-                }
-            } });
-
-        use({ primary: function primary(init) {
-                assert(isFunction(init), 'core.primary : init is not a function', init);
-                use({ builder: init() });
-                return;
-            } });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
@@ -591,6 +595,11 @@ var dom = function dom(_ref, _window) {
                 drawToTarget();
             }
         } });
+
+    use({ primary: function primary(init) {
+            use({ builder: init() });
+            return;
+        } });
 };
 
 module.exports = dom;
@@ -735,6 +744,19 @@ var router = function router(_ref, _window) {
         fetch = _fetch;
     });
 
+    var redirect = function redirect(path, params) {
+        emit({ redirect: { path: path, params: params } });
+    };
+
+    var show = function show(path, params) {
+        emit({ show: { path: path, params: params } });
+    };
+
+    use({ api: {
+            redirect: redirect,
+            show: show
+        } });
+
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
     use({ primary: function primary(path, builder) {
@@ -748,19 +770,6 @@ var router = function router(_ref, _window) {
                         use({ builder: builder(params) });
                     }
                 } });
-        } });
-
-    var redirect = function redirect(path, params) {
-        emit({ redirect: { path: path, params: params } });
-    };
-
-    var show = function show(path, params) {
-        emit({ show: { path: path, params: params } });
-    };
-
-    use({ api: {
-            redirect: redirect,
-            show: show
         } });
 };
 

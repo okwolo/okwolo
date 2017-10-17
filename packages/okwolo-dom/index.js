@@ -113,13 +113,17 @@ const dom = ({emit, use}, _window) => {
         drawToTarget();
     });
 
-
     // the only functionality from the dom module that is directly exposed
     // is the update event.
     use({api: {
         update: () => {
             drawToTarget();
         },
+    }});
+
+    use({primary: (init) => {
+        use({builder: init()});
+        return;
     }});
 };
 

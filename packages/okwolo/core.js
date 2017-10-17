@@ -1,6 +1,6 @@
 'use strict';
 
-const {isFunction, isDefined, isObject, assert, deepCopy, isBrowser, makeBus} = require('@okwolo/utils')();
+const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('@okwolo/utils')();
 
 // version cannot be taken from package.json because environment is not guaranteed.
 const version = '1.3.0';
@@ -40,33 +40,6 @@ const core = ({modules, blobs, options}) => {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
-
-
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        const inital = {};
-        let state = inital;
-
-        // new state is emitted directly instead of giving that responsibility
-        // to the state module.
-        use({api: {
-            setState: (replacement) => {
-                state = isFunction(replacement)
-                    ? replacement(deepCopy(state))
-                    : replacement;
-                emit({state});
-            },
-            getState: () => {
-                assert(state !== initial, 'getState : cannot get state before it has been set');
-                return deepCopy(state);
-            },
-        }});
-
-        use({primary: (init) => {
-            assert(isFunction(init), 'core.primary : init is not a function', init);
-            use({builder: init()});
-            return;
-        }});
 
         // each module is instantiated.
         modules.forEach((_module) => {

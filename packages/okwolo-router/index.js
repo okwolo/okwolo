@@ -107,6 +107,19 @@ const router = ({emit, use}, _window) => {
         fetch = _fetch;
     });
 
+    const redirect = (path, params) => {
+        emit({redirect: {path, params}});
+    };
+
+    const show = (path, params) => {
+        emit({show: {path, params}});
+    };
+
+    use({api: {
+        redirect,
+        show,
+    }});
+
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
     use({primary: (path, builder) => {
@@ -120,19 +133,6 @@ const router = ({emit, use}, _window) => {
                 use({builder: builder(params)});
             },
         }});
-    }});
-
-    const redirect = (path, params) => {
-        emit({redirect: {path, params}});
-    };
-
-    const show = (path, params) => {
-        emit({show: {path, params}});
-    };
-
-    use({api: {
-        redirect,
-        show,
     }});
 };
 

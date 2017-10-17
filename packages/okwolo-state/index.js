@@ -166,7 +166,7 @@ const state = ({emit, use}) => {
         // the only action that does not need the state to have already
         // been changed is SET_STATE
         assert(state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
-        emit({act: {state: state, type, params}});
+        emit({act: {state, type, params}});
     };
 
     const setState = (replacement) => {

@@ -335,11 +335,16 @@ var renderToString = function renderToString(target, _vdom) {
 };
 
 // blob generating function that is expected in the configuration object.
-var serverRender = function serverRender() {
+var serverRender = function serverRender(api) {
     return {
         name: 'okwolo-server-render',
         draw: renderToString,
-        update: renderToString
+        update: renderToString,
+        api: {
+            setState: function setState(state) {
+                return api.emit({ state: state });
+            }
+        }
     };
 };
 
@@ -375,7 +380,6 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isObject = _require.isObject,
     assert = _require.assert,
-    deepCopy = _require.deepCopy,
     isBrowser = _require.isBrowser,
     makeBus = _require.makeBus;
 
@@ -423,30 +427,6 @@ var core = function core(_ref) {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
-
-        // reference to initial state is kept to be able to track whether it
-        // has changed using strict equality.
-        var inital = {};
-        var state = inital;
-
-        // new state is emitted directly instead of giving that responsibility
-        // to the state module.
-        use({ api: {
-                setState: function setState(replacement) {
-                    state = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-                    emit({ state: state });
-                },
-                getState: function getState() {
-                    assert(state !== initial, 'getState : cannot get state before it has been set');
-                    return deepCopy(state);
-                }
-            } });
-
-        use({ primary: function primary(init) {
-                assert(isFunction(init), 'core.primary : init is not a function', init);
-                use({ builder: init() });
-                return;
-            } });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
@@ -618,6 +598,11 @@ var dom = function dom(_ref, _window) {
             update: function update() {
                 drawToTarget();
             }
+        } });
+
+    use({ primary: function primary(init) {
+            use({ builder: init() });
+            return;
         } });
 };
 

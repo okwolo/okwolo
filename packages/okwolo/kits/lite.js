@@ -2,6 +2,8 @@
 
 const core = require('../core');
 
+const {isFunction, deepCopy} = require('@okwolo/utils')();
+
 // creates a regex pattern from an input path string. all tags are replaced by a
 // capture group and special characters are escaped.
 const createPattern = (path) => {
@@ -14,11 +16,27 @@ const createPattern = (path) => {
 };
 
 // blob generating function that is expected in the configuration object.
-const liteRouter = () => ({
-    name: 'okwolo-lite-router',
+const liteBlob = (api) => {
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    const inital = {};
+    let state = inital;
+
+    const setState = (replacement) => {
+        state = isFunction(replacement)
+            ? replacement(deepCopy(state))
+            : replacement;
+        api.emit({state});
+    };
+
+    const getState = () => {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
-    register: (store = [], path, handler) => {
+    const register = (store = [], path, handler) => {
         // the keys are extracted from the path string and stored to properly
         // assign the url's values to the right keys in the params.
         let keys = (path.match(/:\w+/g) || [])
@@ -29,11 +47,12 @@ const liteRouter = () => ({
             handler,
         });
         return store;
-    },
+    };
+
     // the store's initial value is undefined so it needs to be defaulted
     // to an empty array. this function should be the one doing the action
     // defined in the route since it doesn't return it.
-    fetch: (store = [], path, params = {}) => {
+    const fetch = (store = [], path, params = {}) => {
         let found = false;
         store.find((registeredPath) => {
             let test = registeredPath.pattern.exec(path);
@@ -57,8 +76,18 @@ const liteRouter = () => ({
             return found;
         });
         return found;
-    },
-});
+    };
+
+    return {
+        name: 'okwolo-lite',
+        register,
+        fetch,
+        api: {
+            setState,
+            getState,
+        },
+    };
+};
 
 module.exports = core({
     modules: [
@@ -67,7 +96,7 @@ module.exports = core({
     ],
     blobs: [
         require('@okwolo/dom/blob'),
-        liteRouter,
+        liteBlob,
     ],
     options: {
         kit: 'lite',

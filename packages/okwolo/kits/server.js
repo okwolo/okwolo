@@ -74,10 +74,13 @@ const renderToString = (target, _vdom) => {
 };
 
 // blob generating function that is expected in the configuration object.
-const serverRender = () => ({
+const serverRender = (api) => ({
     name: 'okwolo-server-render',
     draw: renderToString,
     update: renderToString,
+    api: {
+        setState: (state) => api.emit({state}),
+    },
 });
 
 module.exports = core({
