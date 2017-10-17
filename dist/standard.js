@@ -253,17 +253,10 @@ module.exports = utils;
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5)],
-    blobs: [__webpack_require__(6), __webpack_require__(7), __webpack_require__(10)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(9), __webpack_require__(10)],
     options: {
         kit: 'standard',
-        browser: true,
-        modules: {
-            state: true,
-            history: true,
-            dom: true,
-            router: true
-        }
+        browser: true
     }
 });
 
@@ -289,7 +282,6 @@ var version = '1.3.0';
 
 var core = function core(_ref) {
     var modules = _ref.modules,
-        blobs = _ref.blobs,
         options = _ref.options;
 
     // if it is needed to define the window but not yet add a target, the first
@@ -329,12 +321,7 @@ var core = function core(_ref) {
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module({ emit: emit, use: use }, _window);
-        });
-
-        // each blob is used.
-        blobs.forEach(function (blob) {
-            use(blob(api, _window));
+            _module(api, _window);
         });
 
         // target is used if it is defined, but this step can be deferred
@@ -375,7 +362,7 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
 
-var dom = function dom(_ref, _window) {
+var dom = function dom(_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -917,297 +904,13 @@ module.exports = router;
 "use strict";
 
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    isDefined = _require.isDefined,
-    isNull = _require.isNull,
-    isArray = _require.isArray,
-    isString = _require.isString,
-    isNumber = _require.isNumber,
-    isBoolean = _require.isBoolean,
-    isNode = _require.isNode,
-    isObject = _require.isObject,
-    isFunction = _require.isFunction;
-
-// simulates the behavior of the classnames npm package. strings are concatenated,
-// arrays are spread and objects keys are included if their value is truthy.
-
-
-var classnames = function classnames() {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-    }
-
-    return args.map(function (arg) {
-        if (isString(arg)) {
-            return arg;
-        } else if (isArray(arg)) {
-            return classnames.apply(undefined, _toConsumableArray(arg));
-        } else if (isObject(arg)) {
-            return classnames(Object.keys(arg).map(function (key) {
-                return arg[key] && key;
-            }));
-        }
-    }).filter(Boolean).join(' ');
-};
-
-// shallow diff of two objects which returns an array of keys where the value is
-// different. differences include keys who's values have been deleted or added.
-// since there is no reliable way to compare function equality, they are always
-// considered to be different.
-var diff = function diff(original, successor) {
-    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
-        var valueOriginal = original[key];
-        var valueSuccessor = successor[key];
-        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            return true;
-        }
-        return valueOriginal !== valueSuccessor;
-    });
-};
-
-// will build a vdom structure from the output of the app's builder funtions. this
-// output must be valid element syntax, or an expception will be thrown.
-var build = function build(element) {
-    // boolean values will produce no visible output to make it easier to use inline
-    // logical expressions without worrying about unexpected strings on the page.
-    if (isBoolean(element)) {
-        element = null;
-    }
-    // null elements will produce no visible output. undefined is intentionally not
-    // handled since it is often produced as a result of an unexpected builder output
-    // and it should be made clear that something went wrong.
-    if (isNull(element)) {
-        return { text: '' };
-    }
-    // in order to simplify type checking, numbers are stringified.
-    if (isNumber(element)) {
-        element = String(element);
-    }
-    // strings will produce textNodes when rendered to the browser.
-    if (isString(element)) {
-        return { text: element };
-    }
-
-    // the only remaining element types are formatted as arrays.
-    assert(isArray(element), 'dom.build : vdom object is not a recognized type', element);
-
-    // early recursive return when the element is seen to be have the component syntax.
-    if (isFunction(element[0])) {
-        // leaving the props and children items undefined should not throw an error.
-        var _element = element,
-            _element2 = _slicedToArray(_element, 3),
-            component = _element2[0],
-            _element2$ = _element2[1],
-            props = _element2$ === undefined ? {} : _element2$,
-            _element2$2 = _element2[2],
-            _children = _element2$2 === undefined ? [] : _element2$2;
-
-        assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
-        assert(isArray(_children), 'dom.build : component\'s children is not an array', element, _children);
-        // the component function is called with an object containing the props
-        // and an extra key with the children of this element.
-        return build(component(Object.assign({}, props, { children: _children })));
-    }
-
-    var _element3 = element,
-        _element4 = _slicedToArray(_element3, 3),
-        tagType = _element4[0],
-        _element4$ = _element4[1],
-        attributes = _element4$ === undefined ? {} : _element4$,
-        _element4$2 = _element4[2],
-        children = _element4$2 === undefined ? [] : _element4$2;
-
-    assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
-    assert(isObject(attributes), 'dom.build : attributes is not an object', element, attributes);
-    assert(isArray(children), 'dom.build : children of vdom object is not an array', element, children);
-
-    // regular expression to capture values from the shorthand element tag syntax.
-    // it allows each section to be seperated by any amount of spaces, but enforces
-    // the order of the capture groups (tagName #id .className | style)
-    var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-    assert(isArray(match), 'dom.build : tag property cannot be parsed', tagType);
-    // first element is not needed since it is the entire matched string. default
-    // values are not used to avoid adding blank attributes to the nodes.
-
-    var _match = _slicedToArray(match, 5),
-        tagName = _match[1],
-        id = _match[2],
-        className = _match[3],
-        style = _match[4];
-
-    // priority is given to the id defined in the attributes.
-
-
-    if (isDefined(id) && !isDefined(attributes.id)) {
-        attributes.id = id.trim();
-    }
-
-    // class names from both the tag and the attributes are used.
-    if (isDefined(attributes.className) || isDefined(className)) {
-        attributes.className = classnames(attributes.className, className).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
-    }
-
-    if (isDefined(style)) {
-        if (!isDefined(attributes.style)) {
-            attributes.style = style;
-        } else {
-            // extra semicolon is added if not present to prevent conflicts.
-            style = (style + ';').replace(/;;$/g, ';');
-            // styles defined in the attributes are given priority by being
-            // placed after the ones from the tag.
-            attributes.style += style + attributes.style;
-        }
-    }
-
-    return {
-        tagName: tagName,
-        attributes: attributes,
-        children: children.map(build)
-    };
-};
-
-var blob = function blob(api, _window) {
-    // recursively travels vdom to create rendered elements. after being rendered,
-    // all vdom objects have a "DOM" key which references the created node. this
-    // can be used in the update process to manipulate the real dom nodes.
-    var render = function render(velem) {
-        // the text key will only be present for text elements.
-        if (isDefined(velem.text)) {
-            velem.DOM = _window.document.createTextNode(velem.text);
-            return velem;
-        }
-        var element = _window.document.createElement(velem.tagName);
-        // attributes are added onto the node.
-        Object.assign(element, velem.attributes);
-        // all children are rendered and immediately appended into the parent node
-        // in the same order that they appear in the children array.
-        Object.keys(velem.children).forEach(function (key) {
-            var _render = render(velem.children[key]),
-                DOM = _render.DOM;
-
-            element.appendChild(DOM);
-        });
-        velem.DOM = element;
-        return velem;
-    };
-
-    // initial draw to target will wipe the contents of the container node.
-    var draw = function draw(target, vdom) {
-        // the target's type is not enforced by the module and it needs to be
-        // done at this point. this is done to decouple the dom module from
-        // the browser (but cannot be avoided in this blob).
-        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        render(vdom);
-        _window.requestAnimationFrame(function () {
-            target.innerHTML = '';
-            target.appendChild(vdom.DOM);
-        });
-        return vdom;
-    };
-
-    // updates the existing vdom object and its html nodes to be consistent with
-    // the new vdom object.
-    var update = function update(target, newVdom, vdom) {
-        // responsibility of checking the target's type is deferred to the blobs.
-        assert(isNode(target), 'dom.update : target is not a DOM node', target);
-
-        // recursive function to update an element according to new state. the
-        // parent and the element's parent index must be passed in order to make
-        // modifications to the vdom object in place.
-        var _update = function _update(original, successor, originalParent, parentIndex) {
-            // covers an uncommon edge case.
-            if (!isDefined(original) && !isDefined(successor)) {
-                return;
-            }
-
-            // lack of original element implies the successor is a new element.
-            if (!isDefined(original)) {
-                originalParent.children[parentIndex] = render(successor);
-                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
-                return;
-            }
-
-            // lack of successor element implies the original is being removed.
-            if (!isDefined(successor)) {
-                originalParent.DOM.removeChild(original.DOM);
-                delete originalParent.children[parentIndex];
-                return;
-            }
-
-            // if the element's tagName has changed, the whole element must be
-            // replaced. this will also capture the case where an html node is
-            // being transformed into a text node since the text node's vdom
-            // object will not contain a tagName.
-            if (original.tagName !== successor.tagName) {
-                var oldDOM = original.DOM;
-                var newVDOM = render(successor);
-                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
-                // this technique is used to modify the vdom object in place.
-                // both the text element and the tag element props are reset
-                // since the types are not recorded.
-                Object.assign(original, {
-                    DOM: undefined,
-                    text: undefined,
-                    tagName: undefined,
-                    attributes: undefined,
-                    children: undefined
-                }, newVDOM);
-                return;
-            }
-
-            // nodeType of three indicates that the HTML node is a textNode.
-            // at this point in the function it has been estblished that the
-            // original and successor nodes are of the same type.
-            if (original.DOM.nodeType === 3) {
-                if (original.text !== successor.text) {
-                    original.DOM.nodeValue = successor.text;
-                    original.text = successor.text;
-                }
-                return;
-            }
-
-            var attributesDiff = diff(original.attributes, successor.attributes);
-            attributesDiff.forEach(function (key) {
-                original.attributes[key] = successor.attributes[key];
-                original.DOM[key] = successor.attributes[key];
-            });
-
-            var max = Math.max(original.children.length, successor.children.length);
-            for (var i = 0; i < max; ++i) {
-                _update(original.children[i], successor.children[i], original, i);
-            }
-        };
-
-        _window.requestAnimationFrame(function () {
-            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
-        });
-
-        // TODO vdom object is modified after being returned.
-        return vdom;
-    };
-
-    return { name: '@okwolo/dom', draw: draw, update: update, build: build };
-};
-
-module.exports = blob;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 // this is the same library that is used in by express to match routes.
 
-var pathToRegexp = __webpack_require__(8);
+var pathToRegexp = __webpack_require__(7);
 
-var blob = function blob() {
+module.exports = function (_ref) {
+    var use = _ref.use;
+
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
     var register = function register() {
@@ -1255,16 +958,18 @@ var blob = function blob() {
         return found;
     };
 
-    return { name: '@okwolo/router', register: register, fetch: fetch };
+    use({
+        name: '@okwolo/router',
+        register: register,
+        fetch: fetch
+    });
 };
 
-module.exports = blob;
-
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isarray = __webpack_require__(9)
+var isarray = __webpack_require__(8)
 
 /**
  * Expose `pathToRegexp`.
@@ -1693,13 +1398,304 @@ function pathToRegexp (path, keys, options) {
 
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports) {
 
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    isDefined = _require.isDefined,
+    isNull = _require.isNull,
+    isArray = _require.isArray,
+    isString = _require.isString,
+    isNumber = _require.isNumber,
+    isBoolean = _require.isBoolean,
+    isNode = _require.isNode,
+    isObject = _require.isObject,
+    isFunction = _require.isFunction;
+
+// simulates the behavior of the classnames npm package. strings are concatenated,
+// arrays are spread and objects keys are included if their value is truthy.
+
+
+var classnames = function classnames() {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+    }
+
+    return args.map(function (arg) {
+        if (isString(arg)) {
+            return arg;
+        } else if (isArray(arg)) {
+            return classnames.apply(undefined, _toConsumableArray(arg));
+        } else if (isObject(arg)) {
+            return classnames(Object.keys(arg).map(function (key) {
+                return arg[key] && key;
+            }));
+        }
+    }).filter(Boolean).join(' ');
+};
+
+// shallow diff of two objects which returns an array of keys where the value is
+// different. differences include keys who's values have been deleted or added.
+// since there is no reliable way to compare function equality, they are always
+// considered to be different.
+var diff = function diff(original, successor) {
+    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
+        var valueOriginal = original[key];
+        var valueSuccessor = successor[key];
+        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
+            return true;
+        }
+        return valueOriginal !== valueSuccessor;
+    });
+};
+
+// will build a vdom structure from the output of the app's builder funtions. this
+// output must be valid element syntax, or an expception will be thrown.
+var build = function build(element) {
+    // boolean values will produce no visible output to make it easier to use inline
+    // logical expressions without worrying about unexpected strings on the page.
+    if (isBoolean(element)) {
+        element = null;
+    }
+    // null elements will produce no visible output. undefined is intentionally not
+    // handled since it is often produced as a result of an unexpected builder output
+    // and it should be made clear that something went wrong.
+    if (isNull(element)) {
+        return { text: '' };
+    }
+    // in order to simplify type checking, numbers are stringified.
+    if (isNumber(element)) {
+        element = String(element);
+    }
+    // strings will produce textNodes when rendered to the browser.
+    if (isString(element)) {
+        return { text: element };
+    }
+
+    // the only remaining element types are formatted as arrays.
+    assert(isArray(element), 'dom.build : vdom object is not a recognized type', element);
+
+    // early recursive return when the element is seen to be have the component syntax.
+    if (isFunction(element[0])) {
+        // leaving the props and children items undefined should not throw an error.
+        var _element = element,
+            _element2 = _slicedToArray(_element, 3),
+            component = _element2[0],
+            _element2$ = _element2[1],
+            props = _element2$ === undefined ? {} : _element2$,
+            _element2$2 = _element2[2],
+            _children = _element2$2 === undefined ? [] : _element2$2;
+
+        assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
+        assert(isArray(_children), 'dom.build : component\'s children is not an array', element, _children);
+        // the component function is called with an object containing the props
+        // and an extra key with the children of this element.
+        return build(component(Object.assign({}, props, { children: _children })));
+    }
+
+    var _element3 = element,
+        _element4 = _slicedToArray(_element3, 3),
+        tagType = _element4[0],
+        _element4$ = _element4[1],
+        attributes = _element4$ === undefined ? {} : _element4$,
+        _element4$2 = _element4[2],
+        children = _element4$2 === undefined ? [] : _element4$2;
+
+    assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
+    assert(isObject(attributes), 'dom.build : attributes is not an object', element, attributes);
+    assert(isArray(children), 'dom.build : children of vdom object is not an array', element, children);
+
+    // regular expression to capture values from the shorthand element tag syntax.
+    // it allows each section to be seperated by any amount of spaces, but enforces
+    // the order of the capture groups (tagName #id .className | style)
+    var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+    assert(isArray(match), 'dom.build : tag property cannot be parsed', tagType);
+    // first element is not needed since it is the entire matched string. default
+    // values are not used to avoid adding blank attributes to the nodes.
+
+    var _match = _slicedToArray(match, 5),
+        tagName = _match[1],
+        id = _match[2],
+        className = _match[3],
+        style = _match[4];
+
+    // priority is given to the id defined in the attributes.
+
+
+    if (isDefined(id) && !isDefined(attributes.id)) {
+        attributes.id = id.trim();
+    }
+
+    // class names from both the tag and the attributes are used.
+    if (isDefined(attributes.className) || isDefined(className)) {
+        attributes.className = classnames(attributes.className, className).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
+    }
+
+    if (isDefined(style)) {
+        if (!isDefined(attributes.style)) {
+            attributes.style = style;
+        } else {
+            // extra semicolon is added if not present to prevent conflicts.
+            style = (style + ';').replace(/;;$/g, ';');
+            // styles defined in the attributes are given priority by being
+            // placed after the ones from the tag.
+            attributes.style += style + attributes.style;
+        }
+    }
+
+    return {
+        tagName: tagName,
+        attributes: attributes,
+        children: children.map(build)
+    };
+};
+
+module.exports = function (_ref, _window) {
+    var use = _ref.use;
+
+    // recursively travels vdom to create rendered elements. after being rendered,
+    // all vdom objects have a "DOM" key which references the created node. this
+    // can be used in the update process to manipulate the real dom nodes.
+    var render = function render(velem) {
+        // the text key will only be present for text elements.
+        if (isDefined(velem.text)) {
+            velem.DOM = _window.document.createTextNode(velem.text);
+            return velem;
+        }
+        var element = _window.document.createElement(velem.tagName);
+        // attributes are added onto the node.
+        Object.assign(element, velem.attributes);
+        // all children are rendered and immediately appended into the parent node
+        // in the same order that they appear in the children array.
+        Object.keys(velem.children).forEach(function (key) {
+            var _render = render(velem.children[key]),
+                DOM = _render.DOM;
+
+            element.appendChild(DOM);
+        });
+        velem.DOM = element;
+        return velem;
+    };
+
+    // initial draw to target will wipe the contents of the container node.
+    var draw = function draw(target, vdom) {
+        // the target's type is not enforced by the module and it needs to be
+        // done at this point. this is done to decouple the dom module from
+        // the browser (but cannot be avoided in this blob).
+        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
+        render(vdom);
+        _window.requestAnimationFrame(function () {
+            target.innerHTML = '';
+            target.appendChild(vdom.DOM);
+        });
+        return vdom;
+    };
+
+    // updates the existing vdom object and its html nodes to be consistent with
+    // the new vdom object.
+    var update = function update(target, newVdom, vdom) {
+        // responsibility of checking the target's type is deferred to the blobs.
+        assert(isNode(target), 'dom.update : target is not a DOM node', target);
+
+        // recursive function to update an element according to new state. the
+        // parent and the element's parent index must be passed in order to make
+        // modifications to the vdom object in place.
+        var _update = function _update(original, successor, originalParent, parentIndex) {
+            // covers an uncommon edge case.
+            if (!isDefined(original) && !isDefined(successor)) {
+                return;
+            }
+
+            // lack of original element implies the successor is a new element.
+            if (!isDefined(original)) {
+                originalParent.children[parentIndex] = render(successor);
+                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
+                return;
+            }
+
+            // lack of successor element implies the original is being removed.
+            if (!isDefined(successor)) {
+                originalParent.DOM.removeChild(original.DOM);
+                delete originalParent.children[parentIndex];
+                return;
+            }
+
+            // if the element's tagName has changed, the whole element must be
+            // replaced. this will also capture the case where an html node is
+            // being transformed into a text node since the text node's vdom
+            // object will not contain a tagName.
+            if (original.tagName !== successor.tagName) {
+                var oldDOM = original.DOM;
+                var newVDOM = render(successor);
+                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                // this technique is used to modify the vdom object in place.
+                // both the text element and the tag element props are reset
+                // since the types are not recorded.
+                Object.assign(original, {
+                    DOM: undefined,
+                    text: undefined,
+                    tagName: undefined,
+                    attributes: undefined,
+                    children: undefined
+                }, newVDOM);
+                return;
+            }
+
+            // nodeType of three indicates that the HTML node is a textNode.
+            // at this point in the function it has been estblished that the
+            // original and successor nodes are of the same type.
+            if (original.DOM.nodeType === 3) {
+                if (original.text !== successor.text) {
+                    original.DOM.nodeValue = successor.text;
+                    original.text = successor.text;
+                }
+                return;
+            }
+
+            var attributesDiff = diff(original.attributes, successor.attributes);
+            attributesDiff.forEach(function (key) {
+                original.attributes[key] = successor.attributes[key];
+                original.DOM[key] = successor.attributes[key];
+            });
+
+            var max = Math.max(original.children.length, successor.children.length);
+            for (var i = 0; i < max; ++i) {
+                _update(original.children[i], successor.children[i], original, i);
+            }
+        };
+
+        _window.requestAnimationFrame(function () {
+            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
+        });
+
+        // TODO vdom object is modified after being returned.
+        return vdom;
+    };
+
+    use({
+        name: '@okwolo/dom',
+        draw: draw,
+        update: update,
+        build: build
+    });
+};
 
 /***/ }),
 /* 10 */
@@ -1712,8 +1708,11 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     assert = _require.assert;
 
-var history = function history(api) {
-    assert(isFunction(api.act), 'app : cannot use history blob without an action handler');
+module.exports = function (_ref) {
+    var use = _ref.use,
+        act = _ref.act;
+
+    assert(isFunction(act), 'app : cannot use history blob without an action handler');
 
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
@@ -1792,22 +1791,20 @@ var history = function history(api) {
     };
 
     var undo = function undo() {
-        api.act('UNDO');
+        act('UNDO');
     };
 
     var redo = function redo() {
-        api.act('REDO');
+        act('REDO');
     };
 
-    return {
+    use({
         name: '@okwolo/history',
         api: { undo: undo, redo: redo },
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher
-    };
+    });
 };
-
-module.exports = history;
 
 /***/ })
 /******/ ]);

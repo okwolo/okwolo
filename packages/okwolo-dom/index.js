@@ -2,7 +2,7 @@
 
 const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
-const dom = ({emit, use}, _window) => {
+const dom = ({emit, use}) => {
     let target;
     let builder;
     let build;

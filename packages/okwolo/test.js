@@ -12,8 +12,7 @@ let wrapper;
 describe('core', () => {
     const c = (options, modules = [], blobs = []) => {
         return core({
-            modules: [].concat(modules),
-            blobs: [].concat(blobs),
+            modules: [].concat(modules).concat(blobs),
             options: merge({
                 modules: {},
             }, options),

@@ -74,20 +74,20 @@ const renderToString = (target, _vdom) => {
 };
 
 // blob generating function that is expected in the configuration object.
-const serverRender = (api) => ({
-    name: 'okwolo-server-render',
-    draw: renderToString,
-    update: renderToString,
-    api: {
-        setState: (state) => api.emit({state}),
-    },
-});
+const serverRender = ({use, emit}) => {
+    use({
+        name: 'okwolo-server-render',
+        draw: renderToString,
+        update: renderToString,
+        api: {
+            setState: (state) => emit({state}),
+        },
+    });
+};
 
 module.exports = core({
     modules: [
         require('@okwolo/dom'),
-    ],
-    blobs: [
         // the dom blob is still required to parse the shorthand vdom syntax.
         // since this kit is intended to be used on a server, the extra size
         // should not be a big problem. since the blobs are added sequentially,
@@ -98,11 +98,5 @@ module.exports = core({
     options: {
         kit: 'server',
         browser: false,
-        modules: {
-            state: false,
-            history: false,
-            dom: true,
-            router: false,
-        },
     },
 });

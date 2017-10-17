@@ -5,7 +5,7 @@ const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('@
 // version cannot be taken from package.json because environment is not guaranteed.
 const version = '1.3.0';
 
-const core = ({modules, blobs, options}) => {
+const core = ({modules, options}) => {
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
     const okwolo = (target, _window) => {
@@ -43,12 +43,7 @@ const core = ({modules, blobs, options}) => {
 
         // each module is instantiated.
         modules.forEach((_module) => {
-            _module({emit, use}, _window);
-        });
-
-        // each blob is used.
-        blobs.forEach((blob) => {
-            use(blob(api, _window));
+            _module(api, _window);
         });
 
         // target is used if it is defined, but this step can be deferred

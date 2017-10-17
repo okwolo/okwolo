@@ -335,22 +335,24 @@ var renderToString = function renderToString(target, _vdom) {
 };
 
 // blob generating function that is expected in the configuration object.
-var serverRender = function serverRender(api) {
-    return {
+var serverRender = function serverRender(_ref) {
+    var use = _ref.use,
+        emit = _ref.emit;
+
+    use({
         name: 'okwolo-server-render',
         draw: renderToString,
         update: renderToString,
         api: {
             setState: function setState(state) {
-                return api.emit({ state: state });
+                return emit({ state: state });
             }
         }
-    };
+    });
 };
 
 module.exports = core({
-    modules: [__webpack_require__(3)],
-    blobs: [
+    modules: [__webpack_require__(3),
     // the dom blob is still required to parse the shorthand vdom syntax.
     // since this kit is intended to be used on a server, the extra size
     // should not be a big problem. since the blobs are added sequentially,
@@ -358,13 +360,7 @@ module.exports = core({
     __webpack_require__(4), serverRender],
     options: {
         kit: 'server',
-        browser: false,
-        modules: {
-            state: false,
-            history: false,
-            dom: true,
-            router: false
-        }
+        browser: false
     }
 });
 
@@ -390,7 +386,6 @@ var version = '1.3.0';
 
 var core = function core(_ref) {
     var modules = _ref.modules,
-        blobs = _ref.blobs,
         options = _ref.options;
 
     // if it is needed to define the window but not yet add a target, the first
@@ -430,12 +425,7 @@ var core = function core(_ref) {
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module({ emit: emit, use: use }, _window);
-        });
-
-        // each blob is used.
-        blobs.forEach(function (blob) {
-            use(blob(api, _window));
+            _module(api, _window);
         });
 
         // target is used if it is defined, but this step can be deferred
@@ -476,7 +466,7 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
 
-var dom = function dom(_ref, _window) {
+var dom = function dom(_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -769,7 +759,9 @@ var build = function build(element) {
     };
 };
 
-var blob = function blob(api, _window) {
+module.exports = function (_ref, _window) {
+    var use = _ref.use;
+
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
@@ -889,10 +881,13 @@ var blob = function blob(api, _window) {
         return vdom;
     };
 
-    return { name: '@okwolo/dom', draw: draw, update: update, build: build };
+    use({
+        name: '@okwolo/dom',
+        draw: draw,
+        update: update,
+        build: build
+    });
 };
-
-module.exports = blob;
 
 /***/ })
 /******/ ]);

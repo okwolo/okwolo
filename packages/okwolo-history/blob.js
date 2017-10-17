@@ -2,8 +2,8 @@
 
 const {isFunction, assert} = require('@okwolo/utils')();
 
-const history = (api) => {
-    assert(isFunction(api.act), 'app : cannot use history blob without an action handler');
+module.exports = ({use, act}) => {
+    assert(isFunction(act), 'app : cannot use history blob without an action handler');
 
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
@@ -82,19 +82,17 @@ const history = (api) => {
     };
 
     const undo = () => {
-        api.act('UNDO');
+        act('UNDO');
     };
 
     const redo = () => {
-        api.act('REDO');
+        act('REDO');
     };
 
-    return {
+    use({
         name: '@okwolo/history',
         api: {undo, redo},
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher,
-    };
+    });
 };
-
-module.exports = history;

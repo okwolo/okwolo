@@ -1,11 +1,16 @@
 'use strict';
 
-const history = require('./');
-
-const mockApi = {act: () => {}};
+const history = () => {
+    const api = {};
+    const use = (blob) => {
+        Object.assign(api, blob);
+    };
+    require('./')({use, act: () => {}});
+    return api;
+};
 
 const newState = (initialState) => {
-    const temp = history(mockApi);
+    const temp = history();
 
     const undo = () => {
         let newState = temp.action[0].handler();
@@ -37,7 +42,7 @@ const newState = (initialState) => {
 
 describe('@okwolo/history', () => {
     it('should return a blob with two actions and a watcher', () => {
-        let test = history(mockApi);
+        let test = history();
         expect(test.watcher)
             .toBeInstanceOf(Function);
 

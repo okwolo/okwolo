@@ -16,7 +16,7 @@ const createPattern = (path) => {
 };
 
 // blob generating function that is expected in the configuration object.
-const liteBlob = (api) => {
+const liteBlob = ({use, emit}) => {
     // reference to initial state is kept to be able to track whether it
     // has changed using strict equality.
     const inital = {};
@@ -26,7 +26,7 @@ const liteBlob = (api) => {
         state = isFunction(replacement)
             ? replacement(deepCopy(state))
             : replacement;
-        api.emit({state});
+        emit({state});
     };
 
     const getState = () => {
@@ -78,7 +78,7 @@ const liteBlob = (api) => {
         return found;
     };
 
-    return {
+    use({
         name: 'okwolo-lite',
         register,
         fetch,
@@ -86,26 +86,18 @@ const liteBlob = (api) => {
             setState,
             getState,
         },
-    };
+    });
 };
 
 module.exports = core({
     modules: [
         require('@okwolo/dom'),
         require('@okwolo/router'),
-    ],
-    blobs: [
         require('@okwolo/dom/blob'),
         liteBlob,
     ],
     options: {
         kit: 'lite',
         browser: true,
-        modules: {
-            state: false,
-            history: false,
-            dom: true,
-            router: true,
-        },
     },
 });
