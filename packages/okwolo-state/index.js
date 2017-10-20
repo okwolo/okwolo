@@ -3,6 +3,15 @@
 const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('@okwolo/utils')();
 
 const state = ({emit, use}) => {
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    const initial = {};
+    let state = initial;
+
+    // this module defines an action which overrides the whole state while
+    // giving visibility to the middleware and watchers.
+    const overrideActionType = 'SET_STATE';
+
     // actions is a map where actions are stored in an array at their type key.
     const actions = {};
     const middleware = [];
@@ -98,15 +107,6 @@ const state = ({emit, use}) => {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    emit.on('act', ({state, type, params = {}} = {}) => {
-        assert(isString(type), 'state.act : action type is not a string', type);
-        assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
-        // the queue will make all actions wait to be ran sequentially.
-        queue.add(() => {
-            apply(state, type, params);
-        });
-    });
-
     // actions can be added in batches by using an array.
     use.on('action', (action) => {
         [].concat(action).forEach((item = {}) => {
@@ -144,37 +144,28 @@ const state = ({emit, use}) => {
         });
     });
 
-    // action is used to override state in order to give visibility to
-    // watchers and middleware.
-    use({action: {
-        type: 'SET_STATE',
-        target: [],
-        handler: (state, params) => params,
-    }});
-
-    // reference to initial state is kept to be able to track whether it
-    // has changed using strict equality.
-    const initial = {};
-    let state = initial;
+    emit.on('act', ({type, params = {}} = {}) => {
+        // the only action that does not need the state to have already
+        // been changed is SET_STATE.
+        assert(state !== initial || type === overrideActionType, 'act : cannot act on state before it has been set');
+        assert(isString(type), 'state.act : action type is not a string', type);
+        assert(isDefined(state), `state.act : cannot call action ${type} on an undefined state`, state);
+        // the queue will make all actions wait to be ran sequentially.
+        queue.add(() => {
+            apply(state, type, params);
+        });
+    });
 
     // current state is monitored and stored.
     emit.on('state', (newState) => {
         state = newState;
     });
 
-    const act = (type, params) => {
-        // the only action that does not need the state to have already
-        // been changed is SET_STATE
-        assert(state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
-        emit({act: {state, type, params}});
-    };
-
     const setState = (replacement) => {
-        if (isFunction(replacement)) {
-            act('SET_STATE', replacement(state));
-            return;
-        }
-        act('SET_STATE', replacement);
+        const params = isFunction(replacement)
+            ? replacement(deepCopy(state))
+            : replacement;
+        emit({act: {type: overrideActionType, params}});
     };
 
     const getState = () => {
@@ -183,9 +174,17 @@ const state = ({emit, use}) => {
     };
 
     use({api: {
-        act,
+        act: (type, params) => emit({act: {type, params}}),
         setState,
         getState,
+    }});
+
+    // action is used to override state in order to give visibility to
+    // watchers and middleware.
+    use({action: {
+        type: overrideActionType,
+        target: [],
+        handler: (state, params) => params,
     }});
 };
 

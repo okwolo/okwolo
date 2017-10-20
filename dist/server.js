@@ -503,6 +503,53 @@ var dom = function dom(_ref) {
         return temp;
     };
 
+    use.on('target', function (_target) {
+        target = _target;
+        emit({ update: true });
+    });
+
+    use.on('builder', function (_builder) {
+        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
+        builder = _builder;
+        emit({ update: false });
+    });
+
+    use.on('draw', function (_draw) {
+        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
+        draw = _draw;
+        emit({ update: true });
+    });
+
+    use.on('update', function (_update) {
+        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
+        update = _update;
+        emit({ update: false });
+    });
+
+    use.on('build', function (_build) {
+        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
+        build = _build;
+        emit({ update: false });
+    });
+
+    use.on('prebuild', function (newPrebuild) {
+        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
+        prebuild = newPrebuild;
+        emit({ update: false });
+    });
+
+    use.on('postbuild', function (newPostbuild) {
+        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
+        postbuild = newPostbuild;
+        emit({ update: false });
+    });
+
+    emit.on('state', function (_state) {
+        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
+        state = _state;
+        emit({ update: false });
+    });
+
     // tracks whether the app has been drawn. this information is used to
     // determing if the update or draw function should be called.
     var hasDrawn = false;
@@ -514,9 +561,7 @@ var dom = function dom(_ref) {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    var drawToTarget = function drawToTarget() {
-        var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : !hasDrawn;
-
+    emit.on('update', function (force) {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
@@ -527,66 +572,19 @@ var dom = function dom(_ref) {
                 return;
             }
         }
-        if (!force) {
+        if (!force && hasDrawn) {
             view = update(target, create(state), view);
             return;
         }
         view = draw(target, create(state));
         hasDrawn = true;
-    };
-
-    emit.on('state', function (_state) {
-        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
-        state = _state;
-        drawToTarget();
-    });
-
-    use.on('target', function (_target) {
-        target = _target;
-        drawToTarget(true);
-    });
-
-    use.on('builder', function (_builder) {
-        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
-        builder = _builder;
-        drawToTarget();
-    });
-
-    use.on('draw', function (_draw) {
-        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
-        draw = _draw;
-        drawToTarget(true);
-    });
-
-    use.on('update', function (_update) {
-        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
-        update = _update;
-        drawToTarget();
-    });
-
-    use.on('build', function (_build) {
-        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
-        build = _build;
-        drawToTarget();
-    });
-
-    use.on('prebuild', function (newPrebuild) {
-        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
-        prebuild = newPrebuild;
-        drawToTarget();
-    });
-
-    use.on('postbuild', function (newPostbuild) {
-        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
-        postbuild = newPostbuild;
-        drawToTarget();
     });
 
     // the only functionality from the dom module that is directly exposed
     // is the update event.
     use({ api: {
             update: function update() {
-                drawToTarget();
+                return emit({ update: false });
             }
         } });
 

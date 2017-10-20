@@ -400,6 +400,53 @@ var dom = function dom(_ref) {
         return temp;
     };
 
+    use.on('target', function (_target) {
+        target = _target;
+        emit({ update: true });
+    });
+
+    use.on('builder', function (_builder) {
+        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
+        builder = _builder;
+        emit({ update: false });
+    });
+
+    use.on('draw', function (_draw) {
+        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
+        draw = _draw;
+        emit({ update: true });
+    });
+
+    use.on('update', function (_update) {
+        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
+        update = _update;
+        emit({ update: false });
+    });
+
+    use.on('build', function (_build) {
+        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
+        build = _build;
+        emit({ update: false });
+    });
+
+    use.on('prebuild', function (newPrebuild) {
+        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
+        prebuild = newPrebuild;
+        emit({ update: false });
+    });
+
+    use.on('postbuild', function (newPostbuild) {
+        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
+        postbuild = newPostbuild;
+        emit({ update: false });
+    });
+
+    emit.on('state', function (_state) {
+        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
+        state = _state;
+        emit({ update: false });
+    });
+
     // tracks whether the app has been drawn. this information is used to
     // determing if the update or draw function should be called.
     var hasDrawn = false;
@@ -411,9 +458,7 @@ var dom = function dom(_ref) {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    var drawToTarget = function drawToTarget() {
-        var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : !hasDrawn;
-
+    emit.on('update', function (force) {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
@@ -424,66 +469,19 @@ var dom = function dom(_ref) {
                 return;
             }
         }
-        if (!force) {
+        if (!force && hasDrawn) {
             view = update(target, create(state), view);
             return;
         }
         view = draw(target, create(state));
         hasDrawn = true;
-    };
-
-    emit.on('state', function (_state) {
-        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
-        state = _state;
-        drawToTarget();
-    });
-
-    use.on('target', function (_target) {
-        target = _target;
-        drawToTarget(true);
-    });
-
-    use.on('builder', function (_builder) {
-        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
-        builder = _builder;
-        drawToTarget();
-    });
-
-    use.on('draw', function (_draw) {
-        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
-        draw = _draw;
-        drawToTarget(true);
-    });
-
-    use.on('update', function (_update) {
-        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
-        update = _update;
-        drawToTarget();
-    });
-
-    use.on('build', function (_build) {
-        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
-        build = _build;
-        drawToTarget();
-    });
-
-    use.on('prebuild', function (newPrebuild) {
-        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
-        prebuild = newPrebuild;
-        drawToTarget();
-    });
-
-    use.on('postbuild', function (newPostbuild) {
-        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
-        postbuild = newPostbuild;
-        drawToTarget();
     });
 
     // the only functionality from the dom module that is directly exposed
     // is the update event.
     use({ api: {
             update: function update() {
-                drawToTarget();
+                return emit({ update: false });
             }
         } });
 
@@ -514,6 +512,15 @@ var _require = __webpack_require__(0)(),
 var state = function state(_ref) {
     var emit = _ref.emit,
         use = _ref.use;
+
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    var initial = {};
+    var state = initial;
+
+    // this module defines an action which overrides the whole state while
+    // giving visibility to the middleware and watchers.
+    var overrideActionType = 'SET_STATE';
 
     // actions is a map where actions are stored in an array at their type key.
     var actions = {};
@@ -622,21 +629,6 @@ var state = function state(_ref) {
         funcs[middleware.length](deepCopy(state), type, params);
     };
 
-    emit.on('act', function () {
-        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            state = _ref2.state,
-            type = _ref2.type,
-            _ref2$params = _ref2.params,
-            params = _ref2$params === undefined ? {} : _ref2$params;
-
-        assert(isString(type), 'state.act : action type is not a string', type);
-        assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
-        // the queue will make all actions wait to be ran sequentially.
-        queue.add(function () {
-            apply(state, type, params);
-        });
-    });
-
     // actions can be added in batches by using an array.
     use.on('action', function (action) {
         [].concat(action).forEach(function () {
@@ -678,39 +670,31 @@ var state = function state(_ref) {
         });
     });
 
-    // action is used to override state in order to give visibility to
-    // watchers and middleware.
-    use({ action: {
-            type: 'SET_STATE',
-            target: [],
-            handler: function handler(state, params) {
-                return params;
-            }
-        } });
+    emit.on('act', function () {
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            type = _ref2.type,
+            _ref2$params = _ref2.params,
+            params = _ref2$params === undefined ? {} : _ref2$params;
 
-    // reference to initial state is kept to be able to track whether it
-    // has changed using strict equality.
-    var initial = {};
-    var state = initial;
+        // the only action that does not need the state to have already
+        // been changed is SET_STATE.
+        assert(state !== initial || type === overrideActionType, 'act : cannot act on state before it has been set');
+        assert(isString(type), 'state.act : action type is not a string', type);
+        assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
+        // the queue will make all actions wait to be ran sequentially.
+        queue.add(function () {
+            apply(state, type, params);
+        });
+    });
 
     // current state is monitored and stored.
     emit.on('state', function (newState) {
         state = newState;
     });
 
-    var act = function act(type, params) {
-        // the only action that does not need the state to have already
-        // been changed is SET_STATE
-        assert(state !== initial || type === 'SET_STATE', 'act : cannot act on state before it has been set');
-        emit({ act: { state: state, type: type, params: params } });
-    };
-
     var setState = function setState(replacement) {
-        if (isFunction(replacement)) {
-            act('SET_STATE', replacement(state));
-            return;
-        }
-        act('SET_STATE', replacement);
+        var params = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        emit({ act: { type: overrideActionType, params: params } });
     };
 
     var getState = function getState() {
@@ -719,9 +703,21 @@ var state = function state(_ref) {
     };
 
     use({ api: {
-            act: act,
+            act: function act(type, params) {
+                return emit({ act: { type: type, params: params } });
+            },
             setState: setState,
             getState: getState
+        } });
+
+    // action is used to override state in order to give visibility to
+    // watchers and middleware.
+    use({ action: {
+            type: overrideActionType,
+            target: [],
+            handler: function handler(state, params) {
+                return params;
+            }
         } });
 };
 
@@ -793,53 +789,10 @@ var router = function router(_ref, _window) {
         safeFetch(currentPath);
     };
 
-    // fetch wrapper that makes the browser aware of the url change
-    emit.on('redirect', function () {
+    use.on('route', function () {
         var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref2.path,
-            _ref2$params = _ref2.params,
-            params = _ref2$params === undefined ? {} : _ref2$params;
-
-        assert(isString(path), 'router.redirect : path is not a string', path);
-        assert(isObject(params), 'router.redirect : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
-        queue.add(function () {
-            currentPath = path;
-            if (isHosted) {
-                // edge doesn't care that the file is local and will allow pushState.
-                // it also includes "/C:" in the location.pathname, but adds it to
-                // the path given to pushState. which means it needs to be removed here.
-                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
-            } else {
-                console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
-            }
-            safeFetch(currentPath, params);
-            queue.done();
-        });
-    });
-
-    // this will act like a redirect, but will not change the browser's url.
-    emit.on('show', function () {
-        var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref3.path,
-            _ref3$params = _ref3.params,
-            params = _ref3$params === undefined ? {} : _ref3$params;
-
-        assert(isString(path), 'router.show : path is not a string', path);
-        assert(isObject(params), 'router.show : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
-        queue.add(function () {
-            safeFetch(path, params);
-            queue.done();
-        });
-    });
-
-    use.on('route', function () {
-        var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref4.path,
-            handler = _ref4.handler;
+            handler = _ref2.handler;
 
         assert(isString(path), 'router.use.route : path is not a string', path);
         assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
@@ -867,17 +820,56 @@ var router = function router(_ref, _window) {
         fetch = _fetch;
     });
 
-    var redirect = function redirect(path, params) {
-        emit({ redirect: { path: path, params: params } });
-    };
+    // fetch wrapper that makes the browser aware of the url change
+    emit.on('redirect', function () {
+        var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            path = _ref3.path,
+            _ref3$params = _ref3.params,
+            params = _ref3$params === undefined ? {} : _ref3$params;
 
-    var show = function show(path, params) {
-        emit({ show: { path: path, params: params } });
-    };
+        assert(isString(path), 'router.redirect : path is not a string', path);
+        assert(isObject(params), 'router.redirect : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
+        queue.add(function () {
+            currentPath = path;
+            if (isHosted) {
+                // edge doesn't care that the file is local and will allow pushState.
+                // it also includes "/C:" in the location.pathname, but adds it to
+                // the path given to pushState. which means it needs to be removed here.
+                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
+            } else {
+                console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
+            }
+            safeFetch(currentPath, params);
+            queue.done();
+        });
+    });
+
+    // this will act like a redirect, but will not change the browser's url.
+    emit.on('show', function () {
+        var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            path = _ref4.path,
+            _ref4$params = _ref4.params,
+            params = _ref4$params === undefined ? {} : _ref4$params;
+
+        assert(isString(path), 'router.show : path is not a string', path);
+        assert(isObject(params), 'router.show : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
+        queue.add(function () {
+            safeFetch(path, params);
+            queue.done();
+        });
+    });
 
     use({ api: {
-            redirect: redirect,
-            show: show
+            redirect: function redirect(path, params) {
+                return emit({ redirect: { path: path, params: params } });
+            },
+            show: function show(path, params) {
+                return emit({ show: { path: path, params: params } });
+            }
         } });
 
     // first argument can be a path string to register a route handler

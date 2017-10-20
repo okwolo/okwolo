@@ -47,6 +47,33 @@ const router = ({emit, use}, _window) => {
         safeFetch(currentPath);
     };
 
+    use.on('route', ({path, handler} = {}) => {
+        assert(isString(path), 'router.use.route : path is not a string', path);
+        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
+        assert(isFunction(register), 'route.use.route : register is not a function', register);
+        store = register(store, path, handler);
+        if (!hasMatched) {
+            hasMatched = !!safeFetch(currentPath);
+        }
+    });
+
+    use.on('base', (base) => {
+        assert(isString(base), 'router.use.base : base url is not a string', base);
+        baseUrl = base;
+        currentPath = removeBaseUrl(currentPath);
+        safeFetch(currentPath);
+    });
+
+    use.on('register', (_register) => {
+        assert(isFunction(_register), 'router.use.register : register is not a function', register);
+        register = _register;
+    });
+
+    use.on('fetch', (_fetch) => {
+        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
+        fetch = _fetch;
+    });
+
     // fetch wrapper that makes the browser aware of the url change
     emit.on('redirect', ({path, params = {}} = {}) => {
         assert(isString(path), 'router.redirect : path is not a string', path);
@@ -80,44 +107,9 @@ const router = ({emit, use}, _window) => {
         });
     });
 
-    use.on('route', ({path, handler} = {}) => {
-        assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
-        assert(isFunction(register), 'route.use.route : register is not a function', register);
-        store = register(store, path, handler);
-        if (!hasMatched) {
-            hasMatched = !!safeFetch(currentPath);
-        }
-    });
-
-    use.on('base', (base) => {
-        assert(isString(base), 'router.use.base : base url is not a string', base);
-        baseUrl = base;
-        currentPath = removeBaseUrl(currentPath);
-        safeFetch(currentPath);
-    });
-
-    use.on('register', (_register) => {
-        assert(isFunction(_register), 'router.use.register : register is not a function', register);
-        register = _register;
-    });
-
-    use.on('fetch', (_fetch) => {
-        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
-        fetch = _fetch;
-    });
-
-    const redirect = (path, params) => {
-        emit({redirect: {path, params}});
-    };
-
-    const show = (path, params) => {
-        emit({show: {path, params}});
-    };
-
     use({api: {
-        redirect,
-        show,
+        redirect: (path, params) => emit({redirect: {path, params}}),
+        show: (path, params) => emit({show: {path, params}}),
     }});
 
     // first argument can be a path string to register a route handler
