@@ -1,6 +1,6 @@
 'use strict';
 
-const core = require('../core');
+const core = require('../../core');
 
 const {isFunction, deepCopy} = require('@okwolo/utils')();
 
@@ -79,7 +79,6 @@ const liteBlob = ({use, emit}) => {
     };
 
     use({
-        name: 'okwolo-lite',
         register,
         fetch,
         api: {

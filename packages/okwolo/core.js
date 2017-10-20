@@ -18,41 +18,42 @@ const core = ({modules, options}) => {
             }
         }
 
-        const emit = makeBus();
-        const use = makeBus();
-
+        // primary function will be called when app is called, it is stored
+        // outside of the app function so that it can be replaced after the
+        // creation of the app object without breaking all references to app.
         let primary = () => {};
 
-        // the api function will contain all the exposed functions/variables.
-        const api = (...args) => {
+        // the api will be added to the app function, it is returned when a
+        // new app is created.
+        const app = (...args) => {
             return primary(...args);
         };
 
-        api.emit = emit;
-        api.use = use;
+        app.emit = makeBus();
+        app.use = makeBus();
 
-        use.on('api', (_api) => {
-            assert(isObject(_api), 'core.use.api : additional api is not an object', _api);
-            Object.assign(api, _api);
+        app.use.on('api', (api) => {
+            assert(isObject(api), 'core.use.api : additional api is not an object', api);
+            Object.assign(app, api);
         });
 
-        use.on('primary', (_primary) => {
+        app.use.on('primary', (_primary) => {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
 
         // each module is instantiated.
         modules.forEach((_module) => {
-            _module(api, _window);
+            _module(app, _window);
         });
 
         // target is used if it is defined, but this step can be deferred
         // if it is not convenient to pass the target on app creation.
         if (isDefined(target)) {
-            use({target});
+            app.use({target});
         }
 
-        return api;
+        return app;
     };
 
     // okwolo attempts to define itself globally and includes information about

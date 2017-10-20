@@ -44,7 +44,6 @@ module.exports = ({use}) => {
     };
 
     use({
-        name: '@okwolo/router',
         register,
         fetch,
     });

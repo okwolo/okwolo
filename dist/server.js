@@ -340,7 +340,6 @@ var serverRender = function serverRender(_ref) {
         emit = _ref.emit;
 
     use({
-        name: 'okwolo-server-render',
         draw: renderToString,
         update: renderToString,
         api: {
@@ -400,41 +399,42 @@ var core = function core(_ref) {
             }
         }
 
-        var emit = makeBus();
-        var use = makeBus();
-
+        // primary function will be called when app is called, it is stored
+        // outside of the app function so that it can be replaced after the
+        // creation of the app object without breaking all references to app.
         var primary = function primary() {};
 
-        // the api function will contain all the exposed functions/variables.
-        var api = function api() {
+        // the api will be added to the app function, it is returned when a
+        // new app is created.
+        var app = function app() {
             return primary.apply(undefined, arguments);
         };
 
-        api.emit = emit;
-        api.use = use;
+        app.emit = makeBus();
+        app.use = makeBus();
 
-        use.on('api', function (_api) {
-            assert(isObject(_api), 'core.use.api : additional api is not an object', _api);
-            Object.assign(api, _api);
+        app.use.on('api', function (api) {
+            assert(isObject(api), 'core.use.api : additional api is not an object', api);
+            Object.assign(app, api);
         });
 
-        use.on('primary', function (_primary) {
+        app.use.on('primary', function (_primary) {
             assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
             primary = _primary;
         });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module(api, _window);
+            _module(app, _window);
         });
 
         // target is used if it is defined, but this step can be deferred
         // if it is not convenient to pass the target on app creation.
         if (isDefined(target)) {
-            use({ target: target });
+            app.use({ target: target });
         }
 
-        return api;
+        return app;
     };
 
     // okwolo attempts to define itself globally and includes information about
@@ -882,7 +882,6 @@ module.exports = function (_ref, _window) {
     };
 
     use({
-        name: '@okwolo/dom',
         draw: draw,
         update: update,
         build: build

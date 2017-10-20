@@ -1,6 +1,6 @@
 'use strict';
 
-const core = require('../core');
+const core = require('../../core');
 
 const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
@@ -76,7 +76,6 @@ const renderToString = (target, _vdom) => {
 // blob generating function that is expected in the configuration object.
 const serverRender = ({use, emit}) => {
     use({
-        name: 'okwolo-server-render',
         draw: renderToString,
         update: renderToString,
         api: {

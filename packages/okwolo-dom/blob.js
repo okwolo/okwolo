@@ -239,7 +239,6 @@ module.exports = ({use}, _window) => {
     };
 
     use({
-        name: '@okwolo/dom',
         draw,
         update,
         build,

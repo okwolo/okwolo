@@ -90,7 +90,6 @@ module.exports = ({use, act}) => {
     };
 
     use({
-        name: '@okwolo/history',
         api: {undo, redo},
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher,
