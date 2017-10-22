@@ -1,10 +1,6 @@
 'use strict';
 
-const {isFunction, assert} = require('@okwolo/utils')();
-
-module.exports = ({use, act}) => {
-    assert(isFunction(act), 'app : cannot use history blob without an action handler');
-
+module.exports = ({use, emit}) => {
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
     const initial = {};
@@ -81,16 +77,11 @@ module.exports = ({use, act}) => {
         current = state;
     };
 
-    const undo = () => {
-        act('UNDO');
-    };
-
-    const redo = () => {
-        act('REDO');
-    };
-
     use({
-        api: {undo, redo},
+        api: {
+            undo: () => emit({act: {type: 'UNDO'}}),
+            redo: () => emit({act: {type: 'REDO'}}),
+        },
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher,
     });
