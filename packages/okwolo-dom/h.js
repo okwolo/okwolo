@@ -2,7 +2,7 @@
 
 const {assert, isString, isObject, isFunction} = require('@okwolo/utils')();
 
-const h = (tagName, attributes, ...children) => {
+module.exports = (tagName, attributes, ...children) => {
     assert(isString(tagName) || isFunction(tagName), 'dom.h : tagName is not a string or a function', tagName);
     if (!attributes) {
         attributes = {};
@@ -11,5 +11,3 @@ const h = (tagName, attributes, ...children) => {
     }
     return [tagName, attributes, children];
 };
-
-module.exports = h;

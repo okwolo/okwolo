@@ -2,7 +2,7 @@
 
 const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('@okwolo/utils')();
 
-const state = ({emit, use}) => {
+module.exports = ({emit, use}) => {
     // reference to initial state is kept to be able to track whether it
     // has changed using strict equality.
     const initial = {};
@@ -29,9 +29,11 @@ const state = ({emit, use}) => {
         // potentially have access to it.
         let newState = deepCopy(state);
         assert(isDefined(actions[type]), `state.execute : action type '${type}' was not found`);
+
         // action types with multiple actions are executed in the order they are added.
         actions[type].forEach((currentAction) => {
             let targetAddress = currentAction.target;
+
             // if the target is a function, it is executed with the current state.
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
@@ -42,14 +44,17 @@ const state = ({emit, use}) => {
                     assert(isString(address), `state.execute : dynamic target of action ${type} is not an array of strings`, targetAddress);
                 });
             }
+
             // the target is the object being passed to the action handler.
             // it must be copied since any previous actions can still access it.
             let target = deepCopy(newState);
+
             // an empty array means the entire state object is the target.
             if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
                 assert(isDefined(newState), `state.execute : result of action ${type} on target @state is undefined`);
             }
+
             // reference will be the variable which keeps track of the current
             // layer at which the address is. it is initially equal to the new
             // state since that is the value that needs to be modified.
@@ -63,6 +68,7 @@ const state = ({emit, use}) => {
                     reference = reference[key];
                     return;
                 }
+
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 let newValue = currentAction.handler(target[key], params);
@@ -88,6 +94,7 @@ const state = ({emit, use}) => {
         const funcs = [(_state = state, _type = type, _params = params) => {
             execute(_state, _type, _params);
         }];
+
         // this code will create an array where all elements are funtions which
         // call the closest function with a lower index. the returned values for
         // the state, action type and params are also passed down to the next
@@ -101,6 +108,7 @@ const state = ({emit, use}) => {
                 currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
             };
         });
+
         // the funcs array is initialized with an extra element which makes it
         // one longer than middleware. therefore, using the length of middleware
         // is looking for the last element in the array of functions.
@@ -173,6 +181,7 @@ const state = ({emit, use}) => {
         return deepCopy(state);
     };
 
+    // expose module's features to the app.
     use({api: {
         act: (type, params) => emit({act: {type, params}}),
         setState,
@@ -187,5 +196,3 @@ const state = ({emit, use}) => {
         handler: (state, params) => params,
     }});
 };
-
-module.exports = state;

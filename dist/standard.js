@@ -70,7 +70,7 @@
 "use strict";
 
 
-var utils = function utils() {
+module.exports = function () {
     // all typechecks must always return a boolean value.
     var isDefined = function isDefined(value) {
         return value !== undefined;
@@ -241,8 +241,6 @@ var utils = function utils() {
     };
 };
 
-module.exports = utils;
-
 /***/ }),
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -280,7 +278,7 @@ var _require = __webpack_require__(0)(),
 
 var version = '1.3.0';
 
-var core = function core(_ref) {
+module.exports = function (_ref) {
     var modules = _ref.modules,
         options = _ref.options;
 
@@ -349,8 +347,6 @@ var core = function core(_ref) {
     return okwolo;
 };
 
-module.exports = core;
-
 /***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -363,7 +359,7 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
 
-var dom = function dom(_ref) {
+module.exports = function (_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -485,13 +481,12 @@ var dom = function dom(_ref) {
             }
         } });
 
+    // primary functionality will be to replace buider. this is overwritten
+    // by router modules to more easily associate routes to builders.
     use({ primary: function primary(init) {
-            use({ builder: init() });
-            return;
+            return use({ builder: init() });
         } });
 };
-
-module.exports = dom;
 
 /***/ }),
 /* 4 */
@@ -509,7 +504,7 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     isString = _require.isString;
 
-var state = function state(_ref) {
+module.exports = function (_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -539,9 +534,11 @@ var state = function state(_ref) {
         // potentially have access to it.
         var newState = deepCopy(state);
         assert(isDefined(actions[type]), 'state.execute : action type \'' + type + '\' was not found');
+
         // action types with multiple actions are executed in the order they are added.
         actions[type].forEach(function (currentAction) {
             var targetAddress = currentAction.target;
+
             // if the target is a function, it is executed with the current state.
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
@@ -552,14 +549,17 @@ var state = function state(_ref) {
                     assert(isString(address), 'state.execute : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
                 });
             }
+
             // the target is the object being passed to the action handler.
             // it must be copied since any previous actions can still access it.
             var target = deepCopy(newState);
+
             // an empty array means the entire state object is the target.
             if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
                 assert(isDefined(newState), 'state.execute : result of action ' + type + ' on target @state is undefined');
             }
+
             // reference will be the variable which keeps track of the current
             // layer at which the address is. it is initially equal to the new
             // state since that is the value that needs to be modified.
@@ -573,6 +573,7 @@ var state = function state(_ref) {
                     reference = reference[key];
                     return;
                 }
+
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 var newValue = currentAction.handler(target[key], params);
@@ -604,6 +605,7 @@ var state = function state(_ref) {
 
             execute(_state, _type, _params);
         }];
+
         // this code will create an array where all elements are funtions which
         // call the closest function with a lower index. the returned values for
         // the state, action type and params are also passed down to the next
@@ -623,6 +625,7 @@ var state = function state(_ref) {
                 currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
             };
         });
+
         // the funcs array is initialized with an extra element which makes it
         // one longer than middleware. therefore, using the length of middleware
         // is looking for the last element in the array of functions.
@@ -702,6 +705,7 @@ var state = function state(_ref) {
         return deepCopy(state);
     };
 
+    // expose module's features to the app.
     use({ api: {
             act: function act(type, params) {
                 return emit({ act: { type: type, params: params } });
@@ -721,8 +725,6 @@ var state = function state(_ref) {
         } });
 };
 
-module.exports = state;
-
 /***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -737,7 +739,7 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     makeQueue = _require.makeQueue;
 
-var router = function router(_ref, _window) {
+module.exports = function (_ref, _window) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -863,6 +865,7 @@ var router = function router(_ref, _window) {
         });
     });
 
+    // expose module's features to the app.
     use({ api: {
             redirect: function redirect(path, params) {
                 return emit({ redirect: { path: path, params: params } });
@@ -887,8 +890,6 @@ var router = function router(_ref, _window) {
                 } });
         } });
 };
-
-module.exports = router;
 
 /***/ }),
 /* 6 */
@@ -1695,15 +1696,9 @@ module.exports = function (_ref, _window) {
 "use strict";
 
 
-var _require = __webpack_require__(0)(),
-    isFunction = _require.isFunction,
-    assert = _require.assert;
-
 module.exports = function (_ref) {
     var use = _ref.use,
-        act = _ref.act;
-
-    assert(isFunction(act), 'app : cannot use history blob without an action handler');
+        emit = _ref.emit;
 
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
@@ -1775,22 +1770,24 @@ module.exports = function (_ref) {
                 past.shift();
             }
         }
+
         // objects stored into current will be moved to the past/future stacks.
         // it is assumed that the value given to this watcher is a copy of the
         // current state who's reference is not exposed enywhere else.
         current = state;
     };
 
-    var undo = function undo() {
-        act('UNDO');
-    };
-
-    var redo = function redo() {
-        act('REDO');
-    };
-
+    // expose undo/redo using helper functions and plug into the state module
+    // to monitor the app's state.
     use({
-        api: { undo: undo, redo: redo },
+        api: {
+            undo: function undo() {
+                return emit({ act: { type: 'UNDO' } });
+            },
+            redo: function redo() {
+                return emit({ act: { type: 'REDO' } });
+            }
+        },
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher
     });

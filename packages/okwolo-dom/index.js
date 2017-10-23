@@ -2,7 +2,7 @@
 
 const {assert, isDefined, isFunction} = require('@okwolo/utils')();
 
-const dom = ({emit, use}) => {
+module.exports = ({emit, use}) => {
     let target;
     let builder;
     let build;
@@ -119,10 +119,7 @@ const dom = ({emit, use}) => {
         update: () => emit({update: false}),
     }});
 
-    use({primary: (init) => {
-        use({builder: init()});
-        return;
-    }});
+    // primary functionality will be to replace buider. this is overwritten
+    // by router modules to more easily associate routes to builders.
+    use({primary: (init) => use({builder: init()})});
 };
-
-module.exports = dom;

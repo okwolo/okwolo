@@ -70,7 +70,7 @@
 "use strict";
 
 
-var utils = function utils() {
+module.exports = function () {
     // all typechecks must always return a boolean value.
     var isDefined = function isDefined(value) {
         return value !== undefined;
@@ -241,8 +241,6 @@ var utils = function utils() {
     };
 };
 
-module.exports = utils;
-
 /***/ }),
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -379,7 +377,7 @@ var _require = __webpack_require__(0)(),
 
 var version = '1.3.0';
 
-var core = function core(_ref) {
+module.exports = function (_ref) {
     var modules = _ref.modules,
         options = _ref.options;
 
@@ -448,8 +446,6 @@ var core = function core(_ref) {
     return okwolo;
 };
 
-module.exports = core;
-
 /***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -462,7 +458,7 @@ var _require = __webpack_require__(0)(),
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
 
-var dom = function dom(_ref) {
+module.exports = function (_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -584,13 +580,12 @@ var dom = function dom(_ref) {
             }
         } });
 
+    // primary functionality will be to replace buider. this is overwritten
+    // by router modules to more easily associate routes to builders.
     use({ primary: function primary(init) {
-            use({ builder: init() });
-            return;
+            return use({ builder: init() });
         } });
 };
-
-module.exports = dom;
 
 /***/ }),
 /* 4 */
@@ -606,7 +601,7 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     makeQueue = _require.makeQueue;
 
-var router = function router(_ref, _window) {
+module.exports = function (_ref, _window) {
     var emit = _ref.emit,
         use = _ref.use;
 
@@ -732,6 +727,7 @@ var router = function router(_ref, _window) {
         });
     });
 
+    // expose module's features to the app.
     use({ api: {
             redirect: function redirect(path, params) {
                 return emit({ redirect: { path: path, params: params } });
@@ -756,8 +752,6 @@ var router = function router(_ref, _window) {
                 } });
         } });
 };
-
-module.exports = router;
 
 /***/ }),
 /* 5 */

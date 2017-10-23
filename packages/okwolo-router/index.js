@@ -2,7 +2,7 @@
 
 const {assert, isString, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
 
-const router = ({emit, use}, _window) => {
+module.exports = ({emit, use}, _window) => {
     // will check is the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
     const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
@@ -107,6 +107,7 @@ const router = ({emit, use}, _window) => {
         });
     });
 
+    // expose module's features to the app.
     use({api: {
         redirect: (path, params) => emit({redirect: {path, params}}),
         show: (path, params) => emit({show: {path, params}}),
@@ -127,5 +128,3 @@ const router = ({emit, use}, _window) => {
         }});
     }});
 };
-
-module.exports = router;

@@ -71,12 +71,15 @@ module.exports = ({use, emit}) => {
                 past.shift();
             }
         }
+
         // objects stored into current will be moved to the past/future stacks.
         // it is assumed that the value given to this watcher is a copy of the
         // current state who's reference is not exposed enywhere else.
         current = state;
     };
 
+    // expose undo/redo using helper functions and plug into the state module
+    // to monitor the app's state.
     use({
         api: {
             undo: () => emit({act: {type: 'UNDO'}}),

@@ -1,6 +1,6 @@
 'use strict';
 
-const utils = () => {
+module.exports = () => {
     // all typechecks must always return a boolean value.
     const isDefined = (value) => value !== undefined;
     const isNull = (value) => value === null;
@@ -143,5 +143,3 @@ const utils = () => {
         makeBus,
     };
 };
-
-module.exports = utils;
