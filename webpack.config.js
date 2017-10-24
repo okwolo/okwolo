@@ -6,14 +6,14 @@ const CompressionPlugin = require('compression-webpack-plugin');
 const kit = (name) => ([
     {
         name,
-        entry: `./packages/okwolo/kits/${name}/index.js`,
+        entry: `./src/kits/${name}.js`,
         output: `dist/${name}.min.js`,
         minified: true,
         gzipped: true,
     },
     {
         name,
-        entry: `./packages/okwolo/kits/${name}/index.js`,
+        entry: `./src/kits/${name}.js`,
         output: `dist/${name}.js`,
         minified: false,
         gzipped: false,
@@ -23,15 +23,15 @@ const kit = (name) => ([
 const bundles = [
     {
         name: 'browser',
-        entry: './packages/okwolo',
-        output: 'packages/okwolo/okwolo.js',
+        entry: './src',
+        output: 'okwolo.js',
         minified: false,
         gzipped: false,
     },
     {
         name: 'browser:minified',
-        entry: './packages/okwolo',
-        output: 'packages/okwolo/okwolo.min.js',
+        entry: './src',
+        output: 'okwolo.min.js',
         minified: true,
         gzipped: false,
     },

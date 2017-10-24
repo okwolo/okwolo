@@ -1,14 +1,14 @@
 'use strict';
 
-const {makeBus} = require('@okwolo/utils')();
+const {makeBus} = require('../utils')();
 
-const h = require('./h');
+const h = require('../h');
 
 const dom = (target) => {
     const emit = makeBus();
     const use = makeBus();
-    require('./')({emit, use}, window);
-    require('./blob')({emit, use}, window);
+    require('./view')({emit, use}, window);
+    require('./view.dom')({emit, use}, window);
     use({target});
     return {emit, use};
 };
@@ -39,7 +39,7 @@ describe('@okwolo/dom', () => {
         const init = (events) => {
             const emit = makeBus();
             const use = makeBus();
-            require('./')({emit, use}, window);
+            require('./view')({emit, use}, window);
             expect(() => {
                 use(events);
                 emit(events);

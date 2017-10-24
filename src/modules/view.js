@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isFunction} = require('@okwolo/utils')();
+const {assert, isDefined, isFunction} = require('../utils')();
 
 module.exports = ({emit, use}) => {
     let target;

@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isString, isObject, isFunction, makeQueue} = require('@okwolo/utils')();
+const {assert, isString, isObject, isFunction, makeQueue} = require('../utils')();
 
 module.exports = ({emit, use}, _window) => {
     // will check is the code is being ran from the filesystem or is hosted.

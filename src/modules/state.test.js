@@ -1,11 +1,11 @@
 'use strict';
 
-const {makeBus} = require('@okwolo/utils')();
+const {makeBus} = require('../utils')();
 
 const state = () => {
     const emit = makeBus();
     const use = makeBus();
-    require('./')({emit, use});
+    require('./state')({emit, use});
     const setState = (state) => {
         emit({
             act: {

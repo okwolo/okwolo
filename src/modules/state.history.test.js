@@ -5,7 +5,7 @@ const history = () => {
     const use = (blob) => {
         Object.assign(api, blob);
     };
-    require('./')({use, act: () => {}});
+    require('./state.history')({use, act: () => {}});
     return api;
 };
 
