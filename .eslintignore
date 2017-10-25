@@ -1,5 +1,5 @@
 node_modules/
-okwolo.min.js
+*.min.js
 coverage/
-packages/okwolo/okwolo.js
+okwolo.js
 dist/

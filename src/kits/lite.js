@@ -1,8 +1,8 @@
 'use strict';
 
-const core = require('../core');
+const core = require('okwolo/src/core');
 
-const {isFunction, deepCopy} = require('../utils')();
+const {isFunction, deepCopy} = require('okwolo/src/utils')();
 
 // creates a regex pattern from an input path string. all tags are replaced by a
 // capture group and special characters are escaped.
@@ -90,9 +90,9 @@ const liteBlob = ({use, emit}) => {
 
 module.exports = core({
     modules: [
-        require('../modules/view'),
-        require('../modules/router'),
-        require('../modules/view.dom'),
+        require('okwolo/src/modules/view'),
+        require('okwolo/src/modules/router'),
+        require('okwolo/src/modules/view.dom'),
         liteBlob,
     ],
     options: {

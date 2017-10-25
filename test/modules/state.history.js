@@ -5,7 +5,7 @@ const history = () => {
     const use = (blob) => {
         Object.assign(api, blob);
     };
-    require('./state.history')({use, act: () => {}});
+    require('okwolo/src/modules/state.history')({use, act: () => {}});
     return api;
 };
 

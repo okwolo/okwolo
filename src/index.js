@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./kits/standard');
+module.exports = require('okwolo/src/kits/standard');

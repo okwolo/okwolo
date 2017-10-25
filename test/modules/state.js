@@ -1,11 +1,11 @@
 'use strict';
 
-const {makeBus} = require('../utils')();
+const {makeBus} = require('okwolo/src/utils')();
 
 const state = () => {
     const emit = makeBus();
     const use = makeBus();
-    require('./state')({emit, use});
+    require('okwolo/src/modules/state')({emit, use});
     const setState = (state) => {
         emit({
             act: {

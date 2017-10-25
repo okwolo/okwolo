@@ -1,9 +1,9 @@
 'use strict';
 
-const core = require('./core');
-const standard = require('./');
-const lite = require('./kits/lite');
-const server = require('./kits/server');
+const core = require('okwolo/src/core');
+const standard = require('okwolo/src/');
+const lite = require('okwolo/src/kits/lite');
+const server = require('okwolo/src/kits/server');
 
 const merge = require('lodash/merge');
 

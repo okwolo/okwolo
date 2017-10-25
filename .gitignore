@@ -3,5 +3,5 @@ node_modules/
 okwolo.min.js
 _*.html
 coverage/
-packages/okwolo/okwolo.js
+okwolo.js
 package-lock.json

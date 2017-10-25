@@ -1,8 +1,8 @@
 'use strict';
 
-const core = require('../core');
+const core = require('okwolo/src/core');
 
-const {assert, isDefined, isFunction} = require('../utils')();
+const {assert, isDefined, isFunction} = require('okwolo/src/utils')();
 
 // the tags appearing in this map will be represented as singletons.
 const singletons = {
@@ -86,12 +86,12 @@ const serverRender = ({use, emit}) => {
 
 module.exports = core({
     modules: [
-        require('../modules/view'),
+        require('okwolo/src/modules/view'),
         // the dom blob is still required to parse the shorthand vdom syntax.
         // since this kit is intended to be used on a server, the extra size
         // should not be a big problem. since the blobs are added sequentially,
         // the draw and update will be overwritten.
-        require('../modules/view.dom'),
+        require('okwolo/src/modules/view.dom'),
         serverRender,
     ],
     options: {

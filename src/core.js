@@ -1,6 +1,6 @@
 'use strict';
 
-const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('./utils')();
+const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('okwolo/src/utils')();
 
 // version cannot be taken from package.json because environment is not guaranteed.
 const version = '1.3.0';

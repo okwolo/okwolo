@@ -1,12 +1,12 @@
 'use strict';
 
-const {makeBus} = require('../utils')();
+const {makeBus} = require('okwolo/src/utils')();
 
 const router = () => {
     const emit = makeBus();
     const use = makeBus();
-    require('./router')({emit, use}, window);
-    require('./router.store')({emit, use}, window);
+    require('okwolo/src/modules/router')({emit, use}, window);
+    require('okwolo/src/modules/router.store')({emit, use}, window);
     return {emit, use};
 };
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils')();
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('okwolo/src/utils')();
 
 module.exports = ({emit, use}) => {
     // reference to initial state is kept to be able to track whether it
