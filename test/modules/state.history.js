@@ -3,7 +3,12 @@
 const history = () => {
     const api = {};
     const use = (blob) => {
-        Object.assign(api, blob);
+        Object.keys(blob).forEach((key) => {
+            if (!api[key]) {
+                api[key] = [];
+            }
+            api[key].push(blob[key]);
+        });
     };
     require('okwolo/src/modules/state.handler.history')({use, act: () => {}});
     return api;
@@ -14,24 +19,24 @@ const newState = (initialState) => {
 
     const undo = () => {
         let newState = temp.action[0].handler();
-        temp.watcher(newState, 'UNDO');
+        temp.watcher[0](newState, 'UNDO');
         return newState;
     };
 
     const redo = () => {
         let newState = temp.action[1].handler();
-        temp.watcher(newState, 'REDO');
+        temp.watcher[0](newState, 'REDO');
         return newState;
     };
 
     const reset = () => {
         let newState = temp.action[2].handler();
-        temp.watcher(newState, '__RESET__');
+        temp.watcher[0](newState, '__RESET__');
         return newState;
     };
 
     const setState = (newState, type) => {
-        temp.watcher(newState, type || '----');
+        temp.watcher[0](newState, type || '----');
         return newState;
     };
 
@@ -43,7 +48,7 @@ const newState = (initialState) => {
 describe('@okwolo/history', () => {
     it('should return a blob with two actions and a watcher', () => {
         let test = history();
-        expect(test.watcher)
+        expect(test.watcher[0])
             .toBeInstanceOf(Function);
 
         expect(test.action)

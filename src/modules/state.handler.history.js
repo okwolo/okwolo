@@ -16,7 +16,7 @@ module.exports = ({emit, use}) => {
     // can be useful for trivial interactions which should not be replayed.
     const ignorePrefix = '*';
 
-    const undoAction = {
+    use({action: {
         type: 'UNDO',
         target: [],
         handler: () => {
@@ -29,9 +29,9 @@ module.exports = ({emit, use}) => {
                 return current;
             }
         },
-    };
+    }});
 
-    const redoAction = {
+    use({action: {
         type: 'REDO',
         target: [],
         handler: () => {
@@ -42,11 +42,11 @@ module.exports = ({emit, use}) => {
                 return current;
             }
         },
-    };
+    }});
 
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
-    const resetAction = {
+    use({action: {
         type: '__RESET__',
         target: [],
         handler: () => {
@@ -54,11 +54,11 @@ module.exports = ({emit, use}) => {
             future = [];
             return current;
         },
-    };
+    }});
 
     // this watcher will monitor state changes and update what is stored within
     // this function.
-    const updateWatcher = (state, type) => {
+    use({watcher: (state, type) => {
         if (type === '__RESET__' || type[0] === ignorePrefix) {
             return;
         }
@@ -76,16 +76,12 @@ module.exports = ({emit, use}) => {
         // it is assumed that the value given to this watcher is a copy of the
         // current state who's reference is not exposed enywhere else.
         current = state;
-    };
+    }});
 
     // expose undo/redo using helper functions and plug into the state module
     // to monitor the app's state.
-    use({
-        api: {
-            undo: () => emit({act: {type: 'UNDO'}}),
-            redo: () => emit({act: {type: 'REDO'}}),
-        },
-        action: [undoAction, redoAction, resetAction],
-        watcher: updateWatcher,
-    });
+    use({api: {
+        undo: () => emit({act: {type: 'UNDO'}}),
+        redo: () => emit({act: {type: 'REDO'}}),
+    }});
 };

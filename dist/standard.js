@@ -806,10 +806,6 @@ module.exports = function (_ref) {
         handler = _handler;
     });
 
-    use({ handler: function handler(newState) {
-            emit({ state: newState });
-        } });
-
     // current state is monitored and stored.
     emit.on('state', function (newState) {
         state = newState;
@@ -818,6 +814,10 @@ module.exports = function (_ref) {
     emit.on('read', function (callback) {
         callback(state);
     });
+
+    use({ handler: function handler(newState) {
+            emit({ state: newState });
+        } });
 
     var setState = function setState(replacement) {
         var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
@@ -1085,82 +1085,78 @@ module.exports = function (_ref) {
     // can be useful for trivial interactions which should not be replayed.
     var ignorePrefix = '*';
 
-    var undoAction = {
-        type: 'UNDO',
-        target: [],
-        handler: function handler() {
-            // can only undo if there is at least one previous state which
-            // isin't the initial one.
-            if (past.length > 0 && past[past.length - 1] !== initial) {
-                future.push(current);
-                return past.pop();
-            } else {
-                return current;
+    use({ action: {
+            type: 'UNDO',
+            target: [],
+            handler: function handler() {
+                // can only undo if there is at least one previous state which
+                // isin't the initial one.
+                if (past.length > 0 && past[past.length - 1] !== initial) {
+                    future.push(current);
+                    return past.pop();
+                } else {
+                    return current;
+                }
             }
-        }
-    };
+        } });
 
-    var redoAction = {
-        type: 'REDO',
-        target: [],
-        handler: function handler() {
-            if (future.length > 0) {
-                past.push(current);
-                return future.pop();
-            } else {
-                return current;
+    use({ action: {
+            type: 'REDO',
+            target: [],
+            handler: function handler() {
+                if (future.length > 0) {
+                    past.push(current);
+                    return future.pop();
+                } else {
+                    return current;
+                }
             }
-        }
-    };
+        } });
 
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
-    var resetAction = {
-        type: '__RESET__',
-        target: [],
-        handler: function handler() {
-            past = [];
-            future = [];
-            return current;
-        }
-    };
+    use({ action: {
+            type: '__RESET__',
+            target: [],
+            handler: function handler() {
+                past = [];
+                future = [];
+                return current;
+            }
+        } });
 
     // this watcher will monitor state changes and update what is stored within
     // this function.
-    var updateWatcher = function updateWatcher(state, type) {
-        if (type === '__RESET__' || type[0] === ignorePrefix) {
-            return;
-        }
-        if (type !== 'UNDO' && type !== 'REDO') {
-            // adding an action to the stack invalidates anything in the "future".
-            future = [];
-            past.push(current);
-            // state history must be kept within the desired maximum length.
-            if (past.length > historyLength + 1) {
-                past.shift();
+    use({ watcher: function watcher(state, type) {
+            if (type === '__RESET__' || type[0] === ignorePrefix) {
+                return;
             }
-        }
+            if (type !== 'UNDO' && type !== 'REDO') {
+                // adding an action to the stack invalidates anything in the "future".
+                future = [];
+                past.push(current);
+                // state history must be kept within the desired maximum length.
+                if (past.length > historyLength + 1) {
+                    past.shift();
+                }
+            }
 
-        // objects stored into current will be moved to the past/future stacks.
-        // it is assumed that the value given to this watcher is a copy of the
-        // current state who's reference is not exposed enywhere else.
-        current = state;
-    };
+            // objects stored into current will be moved to the past/future stacks.
+            // it is assumed that the value given to this watcher is a copy of the
+            // current state who's reference is not exposed enywhere else.
+            current = state;
+        } });
 
     // expose undo/redo using helper functions and plug into the state module
     // to monitor the app's state.
-    use({
-        api: {
+    use({ api: {
             undo: function undo() {
                 return emit({ act: { type: 'UNDO' } });
             },
             redo: function redo() {
                 return emit({ act: { type: 'REDO' } });
             }
-        },
-        action: [undoAction, redoAction, resetAction],
-        watcher: updateWatcher
-    });
+        } });
 };
 
 /***/ }),

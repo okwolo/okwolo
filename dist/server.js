@@ -911,10 +911,6 @@ module.exports = function (_ref) {
         handler = _handler;
     });
 
-    use({ handler: function handler(newState) {
-            emit({ state: newState });
-        } });
-
     // current state is monitored and stored.
     emit.on('state', function (newState) {
         state = newState;
@@ -923,6 +919,10 @@ module.exports = function (_ref) {
     emit.on('read', function (callback) {
         callback(state);
     });
+
+    use({ handler: function handler(newState) {
+            emit({ state: newState });
+        } });
 
     var setState = function setState(replacement) {
         var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
