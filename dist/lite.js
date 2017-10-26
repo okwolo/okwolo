@@ -254,19 +254,9 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     deepCopy = _require.deepCopy;
 
-// creates a regex pattern from an input path string. all tags are replaced by a
-// capture group and special characters are escaped.
-
-
-var createPattern = function createPattern(path) {
-    var pattern = path
-    // the colon character is not escaped since it is used to denote tags.
-    .replace(/([^\w:])/g, '\\$1').replace(/:(\w+)/g, '([^/]*)');
-    // adds a condition to ignore the contents of the query string.
-    return new RegExp('^' + pattern + '(:?\\?.*)?$');
-};
-
 // blob generating function that is expected in the configuration object.
+
+
 var liteBlob = function liteBlob(_ref) {
     var use = _ref.use,
         emit = _ref.emit;
@@ -286,30 +276,7 @@ var liteBlob = function liteBlob(_ref) {
         return deepCopy(state);
     };
 
-    // the type of store is not enforced by the okwolo-router module. this means
-    // that it needs to be created when the first path is registered.
-    var register = function register() {
-        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        var path = arguments[1];
-        var handler = arguments[2];
-
-        // the keys are extracted from the path string and stored to properly
-        // assign the url's values to the right keys in the params.
-        var keys = (path.match(/:\w+/g) || []).map(function (key) {
-            return {
-                name: key.replace(/^:/g, '')
-            };
-        });
-        store.push({
-            keys: keys,
-            pattern: createPattern(path),
-            handler: handler
-        });
-        return store;
-    };
-
     use({
-        register: register,
         api: {
             setState: setState,
             getState: getState
@@ -318,7 +285,7 @@ var liteBlob = function liteBlob(_ref) {
 };
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), liteBlob],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), liteBlob],
     options: {
         kit: 'lite',
         browser: true
@@ -1055,6 +1022,53 @@ module.exports = function (_ref) {
     };
 
     use({ fetch: fetch });
+};
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var keyPattern = /:\w+/g;
+
+// creates a regex pattern from an input path string. all tags are replaced by a
+// capture group and special characters are escaped.
+var createPattern = function createPattern(path) {
+    var pattern = path
+    // the colon character is not escaped since it is used to denote tags.
+    .replace(/([^\w:])/g, '\\$1').replace(keyPattern, '([^/]*)');
+    // adds a condition to ignore the contents of the query string.
+    return new RegExp('^' + pattern + '(:?\\?.*)?$');
+};
+
+module.exports = function (_ref) {
+    var use = _ref.use;
+
+    // the type of store is not enforced by the okwolo-router module. this means
+    // that it needs to be created when the first path is registered.
+    var register = function register() {
+        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var path = arguments[1];
+        var handler = arguments[2];
+
+        // the keys are extracted from the path string and stored to properly
+        // assign the url's values to the right keys in the params.
+        var keys = (path.match(keyPattern) || []).map(function (key) {
+            return {
+                name: key.replace(/^:/g, '')
+            };
+        });
+        store.push({
+            keys: keys,
+            pattern: createPattern(path),
+            handler: handler
+        });
+        return store;
+    };
+
+    use({ register: register });
 };
 
 /***/ })
