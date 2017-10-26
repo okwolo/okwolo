@@ -248,105 +248,7 @@ module.exports = function () {
 "use strict";
 
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 var core = __webpack_require__(2);
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    isDefined = _require.isDefined,
-    isFunction = _require.isFunction;
-
-// the tags appearing in this map will be represented as singletons.
-
-
-var singletons = {
-    area: true,
-    base: true,
-    br: true,
-    col: true,
-    command: true,
-    embed: true,
-    hr: true,
-    img: true,
-    input: true,
-    keygen: true,
-    link: true,
-    meta: true,
-    param: true,
-    source: true,
-    track: true,
-    wbr: true
-};
-
-// target is used as a callback for the string output of rendering the vdom object.
-var renderToString = function renderToString(target, _vdom) {
-    // string used to indent each level of the rendered dom.
-    var indentString = '  ';
-    assert(isFunction(target), 'server.dom.draw : target is not a function', target);
-    // the return value of this function is an array of lines. the reason for
-    // this is that nested tags need extra indentation and this function is
-    // recursive. extra spaces can easily be appended to each line appearing
-    // in the result of the render of a child.
-    var render = function render() {
-        var vdom = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { text: '' };
-
-        if (isDefined(vdom.text)) {
-            return [vdom.text];
-        }
-        // the input of this function can be assumed to be proper vdom syntax
-        // since it has already been parsed and "transpiled" by the dom
-        // module's "build" blob.
-        var tagName = vdom.tagName,
-            _vdom$attributes = vdom.attributes,
-            attributes = _vdom$attributes === undefined ? {} : _vdom$attributes,
-            _vdom$children = vdom.children,
-            children = _vdom$children === undefined ? [] : _vdom$children;
-
-        var formattedAttributes = Object.keys(attributes).map(function (key) {
-            // since the class attribute is written as className in the
-            // vdom, a translation must be hardcoded.
-            if (key === 'className') {
-                key = 'class';
-                attributes.class = attributes.className;
-            }
-            return key + '="' + attributes[key].toString() + '"';
-        }).join(' ');
-        // to correctly catch tags written with uppercase letters.
-        tagName = tagName.toLowerCase();
-        // early return in the case the element is a recognized singleton.
-        // there it also checks that the element does not have descendents.
-        if (isDefined(singletons[tagName]) && children.length < 1) {
-            return ['<' + (tagName + ' ' + formattedAttributes).trim() + ' />'];
-        }
-        var contents = children
-        // cannot use a simple map because render returns an array of lines
-        // which all need to be indented.
-        .reduce(function (acc, child) {
-            return acc.concat(render(child));
-        }, []).map(function (line) {
-            return indentString + line;
-        });
-        return ['<' + (tagName + ' ' + formattedAttributes).trim() + '>'].concat(_toConsumableArray(contents), ['</' + tagName + '>']);
-    };
-    target(render(_vdom).join('\n'));
-};
-
-// blob generating function that is expected in the configuration object.
-var serverRender = function serverRender(_ref) {
-    var use = _ref.use,
-        emit = _ref.emit;
-
-    use({
-        draw: renderToString,
-        update: renderToString,
-        api: {
-            setState: function setState(state) {
-                return emit({ state: state });
-            }
-        }
-    });
-};
 
 module.exports = core({
     modules: [__webpack_require__(3),
@@ -354,7 +256,7 @@ module.exports = core({
     // since this kit is intended to be used on a server, the extra size
     // should not be a big problem. since the blobs are added sequentially,
     // the draw and update will be overwritten.
-    __webpack_require__(4), serverRender],
+    __webpack_require__(4), __webpack_require__(5)],
     options: {
         kit: 'server',
         browser: false
@@ -878,6 +780,111 @@ module.exports = function (_ref, _window) {
         draw: draw,
         update: update,
         build: build
+    });
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    isDefined = _require.isDefined,
+    isFunction = _require.isFunction;
+
+// the tags appearing in this map will be represented as singletons.
+
+
+var singletons = {
+    area: true,
+    base: true,
+    br: true,
+    col: true,
+    command: true,
+    embed: true,
+    hr: true,
+    img: true,
+    input: true,
+    keygen: true,
+    link: true,
+    meta: true,
+    param: true,
+    source: true,
+    track: true,
+    wbr: true
+};
+
+// target is used as a callback for the string output of rendering the vdom object.
+var renderToString = function renderToString(target, _vdom) {
+    // string used to indent each level of the rendered dom.
+    var indentString = '  ';
+    assert(isFunction(target), 'server.dom.draw : target is not a function', target);
+    // the return value of this function is an array of lines. the reason for
+    // this is that nested tags need extra indentation and this function is
+    // recursive. extra spaces can easily be appended to each line appearing
+    // in the result of the render of a child.
+    var render = function render() {
+        var vdom = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { text: '' };
+
+        if (isDefined(vdom.text)) {
+            return [vdom.text];
+        }
+        // the input of this function can be assumed to be proper vdom syntax
+        // since it has already been parsed and "transpiled" by the dom
+        // module's "build" blob.
+        var tagName = vdom.tagName,
+            _vdom$attributes = vdom.attributes,
+            attributes = _vdom$attributes === undefined ? {} : _vdom$attributes,
+            _vdom$children = vdom.children,
+            children = _vdom$children === undefined ? [] : _vdom$children;
+
+        var formattedAttributes = Object.keys(attributes).map(function (key) {
+            // since the class attribute is written as className in the
+            // vdom, a translation must be hardcoded.
+            if (key === 'className') {
+                key = 'class';
+                attributes.class = attributes.className;
+            }
+            return key + '="' + attributes[key].toString() + '"';
+        }).join(' ');
+        // to correctly catch tags written with uppercase letters.
+        tagName = tagName.toLowerCase();
+        // early return in the case the element is a recognized singleton.
+        // there it also checks that the element does not have descendents.
+        if (isDefined(singletons[tagName]) && children.length < 1) {
+            return ['<' + (tagName + ' ' + formattedAttributes).trim() + ' />'];
+        }
+        var contents = children
+        // cannot use a simple map because render returns an array of lines
+        // which all need to be indented.
+        .reduce(function (acc, child) {
+            return acc.concat(render(child));
+        }, []).map(function (line) {
+            return indentString + line;
+        });
+        return ['<' + (tagName + ' ' + formattedAttributes).trim() + '>'].concat(_toConsumableArray(contents), ['</' + tagName + '>']);
+    };
+    target(render(_vdom).join('\n'));
+};
+
+// blob generating function that is expected in the configuration object.
+module.exports = function (_ref) {
+    var use = _ref.use,
+        emit = _ref.emit;
+
+    use({
+        draw: renderToString,
+        update: renderToString,
+        api: {
+            setState: function setState(state) {
+                return emit({ state: state });
+            }
+        }
     });
 };
 

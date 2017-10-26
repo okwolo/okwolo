@@ -1,19 +1,6 @@
 'use strict';
 
-// this is the same library that is used in by express to match routes.
-const pathToRegexp = require('path-to-regexp');
-
 module.exports = ({use}) => {
-    // the type of store is not enforced by the okwolo-router module. this means
-    // that it needs to be created when the first path is registered.
-    const register = (store = [], path, handler) => {
-        store.push({
-            pattern: pathToRegexp(path, [], {strict: true}),
-            handler,
-        });
-        return store;
-    };
-
     // the store's initial value is undefined so it needs to be defaulted
     // to an empty array. this function should be the one doing the action
     // defined in the route since it doesn't return it.
@@ -34,7 +21,7 @@ module.exports = ({use}) => {
             // the order of the keys and their values in the matched result is the
             // same and their index is now shared. note that there is no protection
             // against param values being overwritten or tags to share the same key.
-            registeredPath.pattern.keys.forEach((key, i) => {
+            registeredPath.keys.forEach((key, i) => {
                 params[key.name] = test[i];
             });
             registeredPath.handler(params);
@@ -43,8 +30,5 @@ module.exports = ({use}) => {
         return found;
     };
 
-    use({
-        register,
-        fetch,
-    });
+    use({fetch});
 };

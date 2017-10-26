@@ -6,7 +6,8 @@ const router = () => {
     const emit = makeBus();
     const use = makeBus();
     require('okwolo/src/modules/router')({emit, use}, window);
-    require('okwolo/src/modules/router.store')({emit, use}, window);
+    require('okwolo/src/modules/router.register')({emit, use}, window);
+    require('okwolo/src/modules/router.fetch')({emit, use}, window);
     return {emit, use};
 };
 

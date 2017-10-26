@@ -251,7 +251,7 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(9), __webpack_require__(10)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(10)],
     options: {
         kit: 'standard',
         browser: true
@@ -490,917 +490,6 @@ module.exports = function (_ref) {
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    deepCopy = _require.deepCopy,
-    makeQueue = _require.makeQueue,
-    isDefined = _require.isDefined,
-    isArray = _require.isArray,
-    isFunction = _require.isFunction,
-    isString = _require.isString;
-
-module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
-
-    // reference to initial state is kept to be able to track whether it
-    // has changed using strict equality.
-    var initial = {};
-    var state = initial;
-
-    // this module defines an action which overrides the whole state while
-    // giving visibility to the middleware and watchers.
-    var overrideActionType = 'SET_STATE';
-
-    // actions is a map where actions are stored in an array at their type key.
-    var actions = {};
-    var middleware = [];
-    var watchers = [];
-
-    // this queue is used to ensure that an action, the middleware and the
-    // watchers all get called before a second action can be done. this is
-    // relevant in the case where an action is called from within a watcher.
-    // it does not however support waiting for any async code.
-    var queue = makeQueue();
-
-    var execute = function execute(state, type, params) {
-        // this value will represent the state after executing the action(s).
-        // it must be copied since all the middleware functions can still
-        // potentially have access to it.
-        var newState = deepCopy(state);
-        assert(isDefined(actions[type]), 'state.execute : action type \'' + type + '\' was not found');
-
-        // action types with multiple actions are executed in the order they are added.
-        actions[type].forEach(function (currentAction) {
-            var targetAddress = currentAction.target;
-
-            // if the target is a function, it is executed with the current state.
-            if (isFunction(targetAddress)) {
-                targetAddress = targetAddress(deepCopy(state), params);
-                // since the typechecks cannot be ran when the action is added,
-                // they need to be done during the action.
-                assert(isArray(targetAddress), 'state.execute : dynamic target of action ' + type + ' is not an array', targetAddress);
-                targetAddress.forEach(function (address) {
-                    assert(isString(address), 'state.execute : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
-                });
-            }
-
-            // the target is the object being passed to the action handler.
-            // it must be copied since any previous actions can still access it.
-            var target = deepCopy(newState);
-
-            // an empty array means the entire state object is the target.
-            if (targetAddress.length === 0) {
-                newState = currentAction.handler(target, params);
-                assert(isDefined(newState), 'state.execute : result of action ' + type + ' on target @state is undefined');
-            }
-
-            // reference will be the variable which keeps track of the current
-            // layer at which the address is. it is initially equal to the new
-            // state since that is the value that needs to be modified.
-            var reference = newState;
-            targetAddress.forEach(function (key, i) {
-                assert(isDefined(target[key]), 'state.execute : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
-                if (i < targetAddress.length - 1) {
-                    // both the reference to the "actual" state and the target
-                    // dummy copy are traversed at the same time.
-                    target = target[key];
-                    reference = reference[key];
-                    return;
-                }
-
-                // when the end of the address array is reached, the target
-                // has been found and can be used by the handler.
-                var newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), 'state.execute : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
-                reference[key] = newValue;
-            });
-        });
-
-        // other modules can listen for the state event to be updated when
-        // it changes (ex. the rendering process).
-        emit({ state: deepCopy(newState) });
-
-        watchers.forEach(function (watcher) {
-            watcher(deepCopy(newState), type, params);
-        });
-
-        // this will signal the queue that the next action can be started.
-        queue.done();
-    };
-
-    var apply = function apply(state, type, params) {
-        // base function executes the action after all middleware has been used.
-        var funcs = [function () {
-            var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
-
-            var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
-
-            var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
-
-            execute(_state, _type, _params);
-        }];
-
-        // this code will create an array where all elements are funtions which
-        // call the closest function with a lower index. the returned values for
-        // the state, action type and params are also passed down to the next
-        // function in the chain.
-        middleware.reverse().forEach(function (currentMiddleware, index) {
-            funcs[index + 1] = function () {
-                var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
-
-                var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
-
-                var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
-
-                // arguments are updated with the output of previous middleware.
-                state = _state;
-                type = _type;
-                params = _params;
-                currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
-            };
-        });
-
-        // the funcs array is initialized with an extra element which makes it
-        // one longer than middleware. therefore, using the length of middleware
-        // is looking for the last element in the array of functions.
-        funcs[middleware.length](deepCopy(state), type, params);
-    };
-
-    // actions can be added in batches by using an array.
-    use.on('action', function (action) {
-        [].concat(action).forEach(function () {
-            var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-            var type = item.type,
-                handler = item.handler,
-                target = item.target;
-
-            assert(isString(type), 'state.use.action : action\'s type is not a string', item, type);
-            assert(isFunction(handler), 'state.use.action : handler for action ' + type + ' is not a function', item, handler);
-            if (isArray(target)) {
-                target.forEach(function (address) {
-                    assert(isString(address), 'state.use.action : target of action ' + type + ' is not an array of strings', item, target);
-                });
-            } else {
-                assert(isFunction(target), 'state.use.action : target of action ' + type + ' is not valid', target);
-            }
-            if (actions[type] === undefined) {
-                actions[type] = [item];
-                return;
-            }
-            actions[type].push(item);
-        });
-    });
-
-    // middleware can be added in batches by using an array.
-    use.on('middleware', function (_middleware) {
-        [].concat(_middleware).forEach(function (item) {
-            assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
-            middleware.push(item);
-        });
-    });
-
-    // watchers can be added in batches by using an array.
-    use.on('watcher', function (watcher) {
-        [].concat(watcher).forEach(function (item) {
-            assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
-            watchers.push(item);
-        });
-    });
-
-    emit.on('act', function () {
-        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            type = _ref2.type,
-            _ref2$params = _ref2.params,
-            params = _ref2$params === undefined ? {} : _ref2$params;
-
-        // the only action that does not need the state to have already
-        // been changed is SET_STATE.
-        assert(state !== initial || type === overrideActionType, 'act : cannot act on state before it has been set');
-        assert(isString(type), 'state.act : action type is not a string', type);
-        assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
-        // the queue will make all actions wait to be ran sequentially.
-        queue.add(function () {
-            apply(state, type, params);
-        });
-    });
-
-    // current state is monitored and stored.
-    emit.on('state', function (newState) {
-        state = newState;
-    });
-
-    var setState = function setState(replacement) {
-        var params = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-        emit({ act: { type: overrideActionType, params: params } });
-    };
-
-    var getState = function getState() {
-        assert(state !== initial, 'getState : cannot get state before it has been set');
-        return deepCopy(state);
-    };
-
-    // expose module's features to the app.
-    use({ api: {
-            act: function act(type, params) {
-                return emit({ act: { type: type, params: params } });
-            },
-            setState: setState,
-            getState: getState
-        } });
-
-    // action is used to override state in order to give visibility to
-    // watchers and middleware.
-    use({ action: {
-            type: overrideActionType,
-            target: [],
-            handler: function handler(state, params) {
-                return params;
-            }
-        } });
-};
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    isString = _require.isString,
-    isObject = _require.isObject,
-    isFunction = _require.isFunction,
-    makeQueue = _require.makeQueue;
-
-module.exports = function (_ref, _window) {
-    var emit = _ref.emit,
-        use = _ref.use;
-
-    // will check is the code is being ran from the filesystem or is hosted.
-    // this information is used to correctly displaying routes in the former case.
-    var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
-
-    var baseUrl = '';
-
-    // keeps track of all the registered routes. the format/type of this variable
-    // is not enforced by this module and it is left to the regisiter and fetch
-    // to validate the values.
-    var store = void 0;
-
-    var register = void 0;
-    var fetch = void 0;
-
-    // if the router has not yet found a match, every new path might be the
-    // the current location and needs to be called. however, after this initial
-    // match, any new routes do not need to be verified against the current url.
-    var hasMatched = false;
-
-    var queue = makeQueue();
-
-    var safeFetch = function safeFetch() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
-        fetch.apply(undefined, [store].concat(args));
-    };
-
-    var removeBaseUrl = function removeBaseUrl(path) {
-        // escapes characters that may cause unintended behavior when converted
-        // from a string to a regular expression.
-        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
-        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
-    };
-
-    var currentPath = _window.location.pathname;
-    if (!isHosted) {
-        currentPath = '';
-    }
-
-    // handle back/forward events
-    _window.onpopstate = function () {
-        currentPath = removeBaseUrl(_window.location.pathname);
-        safeFetch(currentPath);
-    };
-
-    use.on('route', function () {
-        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref2.path,
-            handler = _ref2.handler;
-
-        assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
-        assert(isFunction(register), 'route.use.route : register is not a function', register);
-        store = register(store, path, handler);
-        if (!hasMatched) {
-            hasMatched = !!safeFetch(currentPath);
-        }
-    });
-
-    use.on('base', function (base) {
-        assert(isString(base), 'router.use.base : base url is not a string', base);
-        baseUrl = base;
-        currentPath = removeBaseUrl(currentPath);
-        safeFetch(currentPath);
-    });
-
-    use.on('register', function (_register) {
-        assert(isFunction(_register), 'router.use.register : register is not a function', register);
-        register = _register;
-    });
-
-    use.on('fetch', function (_fetch) {
-        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
-        fetch = _fetch;
-    });
-
-    // fetch wrapper that makes the browser aware of the url change
-    emit.on('redirect', function () {
-        var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref3.path,
-            _ref3$params = _ref3.params,
-            params = _ref3$params === undefined ? {} : _ref3$params;
-
-        assert(isString(path), 'router.redirect : path is not a string', path);
-        assert(isObject(params), 'router.redirect : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
-        queue.add(function () {
-            currentPath = path;
-            if (isHosted) {
-                // edge doesn't care that the file is local and will allow pushState.
-                // it also includes "/C:" in the location.pathname, but adds it to
-                // the path given to pushState. which means it needs to be removed here.
-                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
-            } else {
-                console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
-            }
-            safeFetch(currentPath, params);
-            queue.done();
-        });
-    });
-
-    // this will act like a redirect, but will not change the browser's url.
-    emit.on('show', function () {
-        var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref4.path,
-            _ref4$params = _ref4.params,
-            params = _ref4$params === undefined ? {} : _ref4$params;
-
-        assert(isString(path), 'router.show : path is not a string', path);
-        assert(isObject(params), 'router.show : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
-        queue.add(function () {
-            safeFetch(path, params);
-            queue.done();
-        });
-    });
-
-    // expose module's features to the app.
-    use({ api: {
-            redirect: function redirect(path, params) {
-                return emit({ redirect: { path: path, params: params } });
-            },
-            show: function show(path, params) {
-                return emit({ show: { path: path, params: params } });
-            }
-        } });
-
-    // first argument can be a path string to register a route handler
-    // or a function to directly use a builder.
-    use({ primary: function primary(path, builder) {
-            if (isFunction(path)) {
-                use({ builder: path() });
-                return;
-            }
-            use({ route: {
-                    path: path,
-                    handler: function handler(params) {
-                        use({ builder: builder(params) });
-                    }
-                } });
-        } });
-};
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-// this is the same library that is used in by express to match routes.
-
-var pathToRegexp = __webpack_require__(7);
-
-module.exports = function (_ref) {
-    var use = _ref.use;
-
-    // the type of store is not enforced by the okwolo-router module. this means
-    // that it needs to be created when the first path is registered.
-    var register = function register() {
-        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        var path = arguments[1];
-        var handler = arguments[2];
-
-        store.push({
-            pattern: pathToRegexp(path, [], { strict: true }),
-            handler: handler
-        });
-        return store;
-    };
-
-    // the store's initial value is undefined so it needs to be defaulted
-    // to an empty array. this function should be the one doing the action
-    // defined in the route since it doesn't return it.
-    var fetch = function fetch() {
-        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        var path = arguments[1];
-        var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
-        var found = false;
-        store.find(function (registeredPath) {
-            var test = registeredPath.pattern.exec(path);
-            if (test === null) {
-                return;
-            }
-            // a non null value on the result of executing the query on the path
-            // is considered a successful hit.
-            found = true;
-            // the first element of the result array is the entire matched string.
-            // this value is not useful and the following capture group results
-            // are more relevant.
-            test.shift();
-            // the order of the keys and their values in the matched result is the
-            // same and their index is now shared. note that there is no protection
-            // against param values being overwritten or tags to share the same key.
-            registeredPath.pattern.keys.forEach(function (key, i) {
-                params[key.name] = test[i];
-            });
-            registeredPath.handler(params);
-            return found;
-        });
-        return found;
-    };
-
-    use({
-        register: register,
-        fetch: fetch
-    });
-};
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isarray = __webpack_require__(8)
-
-/**
- * Expose `pathToRegexp`.
- */
-module.exports = pathToRegexp
-module.exports.parse = parse
-module.exports.compile = compile
-module.exports.tokensToFunction = tokensToFunction
-module.exports.tokensToRegExp = tokensToRegExp
-
-/**
- * The main path matching regexp utility.
- *
- * @type {RegExp}
- */
-var PATH_REGEXP = new RegExp([
-  // Match escaped characters that would otherwise appear in future matches.
-  // This allows the user to escape special characters that won't transform.
-  '(\\\\.)',
-  // Match Express-style parameters and un-named parameters with a prefix
-  // and optional suffixes. Matches appear as:
-  //
-  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
-  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
-  // "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
-  '([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'
-].join('|'), 'g')
-
-/**
- * Parse a string for the raw tokens.
- *
- * @param  {string}  str
- * @param  {Object=} options
- * @return {!Array}
- */
-function parse (str, options) {
-  var tokens = []
-  var key = 0
-  var index = 0
-  var path = ''
-  var defaultDelimiter = options && options.delimiter || '/'
-  var res
-
-  while ((res = PATH_REGEXP.exec(str)) != null) {
-    var m = res[0]
-    var escaped = res[1]
-    var offset = res.index
-    path += str.slice(index, offset)
-    index = offset + m.length
-
-    // Ignore already escaped sequences.
-    if (escaped) {
-      path += escaped[1]
-      continue
-    }
-
-    var next = str[index]
-    var prefix = res[2]
-    var name = res[3]
-    var capture = res[4]
-    var group = res[5]
-    var modifier = res[6]
-    var asterisk = res[7]
-
-    // Push the current path onto the tokens.
-    if (path) {
-      tokens.push(path)
-      path = ''
-    }
-
-    var partial = prefix != null && next != null && next !== prefix
-    var repeat = modifier === '+' || modifier === '*'
-    var optional = modifier === '?' || modifier === '*'
-    var delimiter = res[2] || defaultDelimiter
-    var pattern = capture || group
-
-    tokens.push({
-      name: name || key++,
-      prefix: prefix || '',
-      delimiter: delimiter,
-      optional: optional,
-      repeat: repeat,
-      partial: partial,
-      asterisk: !!asterisk,
-      pattern: pattern ? escapeGroup(pattern) : (asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?')
-    })
-  }
-
-  // Match any characters still remaining.
-  if (index < str.length) {
-    path += str.substr(index)
-  }
-
-  // If the path exists, push it onto the end.
-  if (path) {
-    tokens.push(path)
-  }
-
-  return tokens
-}
-
-/**
- * Compile a string to a template function for the path.
- *
- * @param  {string}             str
- * @param  {Object=}            options
- * @return {!function(Object=, Object=)}
- */
-function compile (str, options) {
-  return tokensToFunction(parse(str, options))
-}
-
-/**
- * Prettier encoding of URI path segments.
- *
- * @param  {string}
- * @return {string}
- */
-function encodeURIComponentPretty (str) {
-  return encodeURI(str).replace(/[\/?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
-}
-
-/**
- * Encode the asterisk parameter. Similar to `pretty`, but allows slashes.
- *
- * @param  {string}
- * @return {string}
- */
-function encodeAsterisk (str) {
-  return encodeURI(str).replace(/[?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
-}
-
-/**
- * Expose a method for transforming tokens into the path function.
- */
-function tokensToFunction (tokens) {
-  // Compile all the tokens into regexps.
-  var matches = new Array(tokens.length)
-
-  // Compile all the patterns before compilation.
-  for (var i = 0; i < tokens.length; i++) {
-    if (typeof tokens[i] === 'object') {
-      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
-    }
-  }
-
-  return function (obj, opts) {
-    var path = ''
-    var data = obj || {}
-    var options = opts || {}
-    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent
-
-    for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i]
-
-      if (typeof token === 'string') {
-        path += token
-
-        continue
-      }
-
-      var value = data[token.name]
-      var segment
-
-      if (value == null) {
-        if (token.optional) {
-          // Prepend partial segment prefixes.
-          if (token.partial) {
-            path += token.prefix
-          }
-
-          continue
-        } else {
-          throw new TypeError('Expected "' + token.name + '" to be defined')
-        }
-      }
-
-      if (isarray(value)) {
-        if (!token.repeat) {
-          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
-        }
-
-        if (value.length === 0) {
-          if (token.optional) {
-            continue
-          } else {
-            throw new TypeError('Expected "' + token.name + '" to not be empty')
-          }
-        }
-
-        for (var j = 0; j < value.length; j++) {
-          segment = encode(value[j])
-
-          if (!matches[i].test(segment)) {
-            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`')
-          }
-
-          path += (j === 0 ? token.prefix : token.delimiter) + segment
-        }
-
-        continue
-      }
-
-      segment = token.asterisk ? encodeAsterisk(value) : encode(value)
-
-      if (!matches[i].test(segment)) {
-        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
-      }
-
-      path += token.prefix + segment
-    }
-
-    return path
-  }
-}
-
-/**
- * Escape a regular expression string.
- *
- * @param  {string} str
- * @return {string}
- */
-function escapeString (str) {
-  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1')
-}
-
-/**
- * Escape the capturing group by escaping special characters and meaning.
- *
- * @param  {string} group
- * @return {string}
- */
-function escapeGroup (group) {
-  return group.replace(/([=!:$\/()])/g, '\\$1')
-}
-
-/**
- * Attach the keys as a property of the regexp.
- *
- * @param  {!RegExp} re
- * @param  {Array}   keys
- * @return {!RegExp}
- */
-function attachKeys (re, keys) {
-  re.keys = keys
-  return re
-}
-
-/**
- * Get the flags for a regexp from the options.
- *
- * @param  {Object} options
- * @return {string}
- */
-function flags (options) {
-  return options.sensitive ? '' : 'i'
-}
-
-/**
- * Pull out keys from a regexp.
- *
- * @param  {!RegExp} path
- * @param  {!Array}  keys
- * @return {!RegExp}
- */
-function regexpToRegexp (path, keys) {
-  // Use a negative lookahead to match only capturing groups.
-  var groups = path.source.match(/\((?!\?)/g)
-
-  if (groups) {
-    for (var i = 0; i < groups.length; i++) {
-      keys.push({
-        name: i,
-        prefix: null,
-        delimiter: null,
-        optional: false,
-        repeat: false,
-        partial: false,
-        asterisk: false,
-        pattern: null
-      })
-    }
-  }
-
-  return attachKeys(path, keys)
-}
-
-/**
- * Transform an array into a regexp.
- *
- * @param  {!Array}  path
- * @param  {Array}   keys
- * @param  {!Object} options
- * @return {!RegExp}
- */
-function arrayToRegexp (path, keys, options) {
-  var parts = []
-
-  for (var i = 0; i < path.length; i++) {
-    parts.push(pathToRegexp(path[i], keys, options).source)
-  }
-
-  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options))
-
-  return attachKeys(regexp, keys)
-}
-
-/**
- * Create a path regexp from string input.
- *
- * @param  {string}  path
- * @param  {!Array}  keys
- * @param  {!Object} options
- * @return {!RegExp}
- */
-function stringToRegexp (path, keys, options) {
-  return tokensToRegExp(parse(path, options), keys, options)
-}
-
-/**
- * Expose a function for taking tokens and returning a RegExp.
- *
- * @param  {!Array}          tokens
- * @param  {(Array|Object)=} keys
- * @param  {Object=}         options
- * @return {!RegExp}
- */
-function tokensToRegExp (tokens, keys, options) {
-  if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
-  }
-
-  options = options || {}
-
-  var strict = options.strict
-  var end = options.end !== false
-  var route = ''
-
-  // Iterate over the tokens and create our regexp string.
-  for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
-
-    if (typeof token === 'string') {
-      route += escapeString(token)
-    } else {
-      var prefix = escapeString(token.prefix)
-      var capture = '(?:' + token.pattern + ')'
-
-      keys.push(token)
-
-      if (token.repeat) {
-        capture += '(?:' + prefix + capture + ')*'
-      }
-
-      if (token.optional) {
-        if (!token.partial) {
-          capture = '(?:' + prefix + '(' + capture + '))?'
-        } else {
-          capture = prefix + '(' + capture + ')?'
-        }
-      } else {
-        capture = prefix + '(' + capture + ')'
-      }
-
-      route += capture
-    }
-  }
-
-  var delimiter = escapeString(options.delimiter || '/')
-  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter
-
-  // In non-strict mode we allow a slash at the end of match. If the path to
-  // match already ends with a slash, we remove it for consistency. The slash
-  // is valid at the end of a path match, not in the middle. This is important
-  // in non-ending mode, where "/test/" shouldn't match "/test//route".
-  if (!strict) {
-    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?'
-  }
-
-  if (end) {
-    route += '$'
-  } else {
-    // In non-ending mode, we need the capturing groups to match as much as
-    // possible by using a positive lookahead to the end or next path segment.
-    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)'
-  }
-
-  return attachKeys(new RegExp('^' + route, flags(options)), keys)
-}
-
-/**
- * Normalize the given path string, returning a regular expression.
- *
- * An empty array can be passed in for the keys, which will hold the
- * placeholder key descriptions. For example, using `/user/:id`, `keys` will
- * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
- *
- * @param  {(string|RegExp|Array)} path
- * @param  {(Array|Object)=}       keys
- * @param  {Object=}               options
- * @return {!RegExp}
- */
-function pathToRegexp (path, keys, options) {
-  if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
-  }
-
-  options = options || {}
-
-  if (path instanceof RegExp) {
-    return regexpToRegexp(path, /** @type {!Array} */ (keys))
-  }
-
-  if (isarray(path)) {
-    return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
-  }
-
-  return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
-}
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-module.exports = Array.isArray || function (arr) {
-  return Object.prototype.toString.call(arr) == '[object Array]';
-};
-
-
-/***/ }),
-/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1690,7 +779,244 @@ module.exports = function (_ref, _window) {
 };
 
 /***/ }),
-/* 10 */
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    deepCopy = _require.deepCopy,
+    makeQueue = _require.makeQueue,
+    isDefined = _require.isDefined,
+    isArray = _require.isArray,
+    isFunction = _require.isFunction,
+    isString = _require.isString;
+
+module.exports = function (_ref) {
+    var emit = _ref.emit,
+        use = _ref.use;
+
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    var initial = {};
+    var state = initial;
+
+    // this module defines an action which overrides the whole state while
+    // giving visibility to the middleware and watchers.
+    var overrideActionType = 'SET_STATE';
+
+    // actions is a map where actions are stored in an array at their type key.
+    var actions = {};
+    var middleware = [];
+    var watchers = [];
+
+    // this queue is used to ensure that an action, the middleware and the
+    // watchers all get called before a second action can be done. this is
+    // relevant in the case where an action is called from within a watcher.
+    // it does not however support waiting for any async code.
+    var queue = makeQueue();
+
+    var execute = function execute(state, type, params) {
+        // this value will represent the state after executing the action(s).
+        // it must be copied since all the middleware functions can still
+        // potentially have access to it.
+        var newState = deepCopy(state);
+        assert(isDefined(actions[type]), 'state.execute : action type \'' + type + '\' was not found');
+
+        // action types with multiple actions are executed in the order they are added.
+        actions[type].forEach(function (currentAction) {
+            var targetAddress = currentAction.target;
+
+            // if the target is a function, it is executed with the current state.
+            if (isFunction(targetAddress)) {
+                targetAddress = targetAddress(deepCopy(state), params);
+                // since the typechecks cannot be ran when the action is added,
+                // they need to be done during the action.
+                assert(isArray(targetAddress), 'state.execute : dynamic target of action ' + type + ' is not an array', targetAddress);
+                targetAddress.forEach(function (address) {
+                    assert(isString(address), 'state.execute : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
+                });
+            }
+
+            // the target is the object being passed to the action handler.
+            // it must be copied since any previous actions can still access it.
+            var target = deepCopy(newState);
+
+            // an empty array means the entire state object is the target.
+            if (targetAddress.length === 0) {
+                newState = currentAction.handler(target, params);
+                assert(isDefined(newState), 'state.execute : result of action ' + type + ' on target @state is undefined');
+            }
+
+            // reference will be the variable which keeps track of the current
+            // layer at which the address is. it is initially equal to the new
+            // state since that is the value that needs to be modified.
+            var reference = newState;
+            targetAddress.forEach(function (key, i) {
+                assert(isDefined(target[key]), 'state.execute : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
+                if (i < targetAddress.length - 1) {
+                    // both the reference to the "actual" state and the target
+                    // dummy copy are traversed at the same time.
+                    target = target[key];
+                    reference = reference[key];
+                    return;
+                }
+
+                // when the end of the address array is reached, the target
+                // has been found and can be used by the handler.
+                var newValue = currentAction.handler(target[key], params);
+                assert(isDefined(newValue), 'state.execute : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
+                reference[key] = newValue;
+            });
+        });
+
+        // other modules can listen for the state event to be updated when
+        // it changes (ex. the rendering process).
+        emit({ state: deepCopy(newState) });
+
+        watchers.forEach(function (watcher) {
+            watcher(deepCopy(newState), type, params);
+        });
+
+        // this will signal the queue that the next action can be started.
+        queue.done();
+    };
+
+    var apply = function apply(state, type, params) {
+        // base function executes the action after all middleware has been used.
+        var funcs = [function () {
+            var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
+
+            var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
+
+            var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
+
+            execute(_state, _type, _params);
+        }];
+
+        // this code will create an array where all elements are funtions which
+        // call the closest function with a lower index. the returned values for
+        // the state, action type and params are also passed down to the next
+        // function in the chain.
+        middleware.reverse().forEach(function (currentMiddleware, index) {
+            funcs[index + 1] = function () {
+                var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
+
+                var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
+
+                var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
+
+                // arguments are updated with the output of previous middleware.
+                state = _state;
+                type = _type;
+                params = _params;
+                currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
+            };
+        });
+
+        // the funcs array is initialized with an extra element which makes it
+        // one longer than middleware. therefore, using the length of middleware
+        // is looking for the last element in the array of functions.
+        funcs[middleware.length](deepCopy(state), type, params);
+    };
+
+    // actions can be added in batches by using an array.
+    use.on('action', function (action) {
+        [].concat(action).forEach(function () {
+            var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var type = item.type,
+                handler = item.handler,
+                target = item.target;
+
+            assert(isString(type), 'state.use.action : action\'s type is not a string', item, type);
+            assert(isFunction(handler), 'state.use.action : handler for action ' + type + ' is not a function', item, handler);
+            if (isArray(target)) {
+                target.forEach(function (address) {
+                    assert(isString(address), 'state.use.action : target of action ' + type + ' is not an array of strings', item, target);
+                });
+            } else {
+                assert(isFunction(target), 'state.use.action : target of action ' + type + ' is not valid', target);
+            }
+            if (actions[type] === undefined) {
+                actions[type] = [item];
+                return;
+            }
+            actions[type].push(item);
+        });
+    });
+
+    // middleware can be added in batches by using an array.
+    use.on('middleware', function (_middleware) {
+        [].concat(_middleware).forEach(function (item) {
+            assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
+            middleware.push(item);
+        });
+    });
+
+    // watchers can be added in batches by using an array.
+    use.on('watcher', function (watcher) {
+        [].concat(watcher).forEach(function (item) {
+            assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
+            watchers.push(item);
+        });
+    });
+
+    emit.on('act', function () {
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            type = _ref2.type,
+            _ref2$params = _ref2.params,
+            params = _ref2$params === undefined ? {} : _ref2$params;
+
+        // the only action that does not need the state to have already
+        // been changed is SET_STATE.
+        assert(state !== initial || type === overrideActionType, 'act : cannot act on state before it has been set');
+        assert(isString(type), 'state.act : action type is not a string', type);
+        assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
+        // the queue will make all actions wait to be ran sequentially.
+        queue.add(function () {
+            apply(state, type, params);
+        });
+    });
+
+    // current state is monitored and stored.
+    emit.on('state', function (newState) {
+        state = newState;
+    });
+
+    var setState = function setState(replacement) {
+        var params = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        emit({ act: { type: overrideActionType, params: params } });
+    };
+
+    var getState = function getState() {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    // expose module's features to the app.
+    use({ api: {
+            act: function act(type, params) {
+                return emit({ act: { type: type, params: params } });
+            },
+            setState: setState,
+            getState: getState
+        } });
+
+    // action is used to override state in order to give visibility to
+    // watchers and middleware.
+    use({ action: {
+            type: overrideActionType,
+            target: [],
+            handler: function handler(state, params) {
+                return params;
+            }
+        } });
+};
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1791,6 +1117,629 @@ module.exports = function (_ref) {
         action: [undoAction, redoAction, resetAction],
         watcher: updateWatcher
     });
+};
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    isString = _require.isString,
+    isObject = _require.isObject,
+    isFunction = _require.isFunction,
+    makeQueue = _require.makeQueue;
+
+module.exports = function (_ref, _window) {
+    var emit = _ref.emit,
+        use = _ref.use;
+
+    // will check is the code is being ran from the filesystem or is hosted.
+    // this information is used to correctly displaying routes in the former case.
+    var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
+
+    var baseUrl = '';
+
+    // keeps track of all the registered routes. the format/type of this variable
+    // is not enforced by this module and it is left to the regisiter and fetch
+    // to validate the values.
+    var store = void 0;
+
+    var register = void 0;
+    var fetch = void 0;
+
+    // if the router has not yet found a match, every new path might be the
+    // the current location and needs to be called. however, after this initial
+    // match, any new routes do not need to be verified against the current url.
+    var hasMatched = false;
+
+    var queue = makeQueue();
+
+    var safeFetch = function safeFetch() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
+        fetch.apply(undefined, [store].concat(args));
+    };
+
+    var removeBaseUrl = function removeBaseUrl(path) {
+        // escapes characters that may cause unintended behavior when converted
+        // from a string to a regular expression.
+        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
+        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
+    };
+
+    var currentPath = _window.location.pathname;
+    if (!isHosted) {
+        currentPath = '';
+    }
+
+    // handle back/forward events
+    _window.onpopstate = function () {
+        currentPath = removeBaseUrl(_window.location.pathname);
+        safeFetch(currentPath);
+    };
+
+    use.on('route', function () {
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            path = _ref2.path,
+            handler = _ref2.handler;
+
+        assert(isString(path), 'router.use.route : path is not a string', path);
+        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
+        assert(isFunction(register), 'route.use.route : register is not a function', register);
+        store = register(store, path, handler);
+        if (!hasMatched) {
+            hasMatched = !!safeFetch(currentPath);
+        }
+    });
+
+    use.on('base', function (base) {
+        assert(isString(base), 'router.use.base : base url is not a string', base);
+        baseUrl = base;
+        currentPath = removeBaseUrl(currentPath);
+        safeFetch(currentPath);
+    });
+
+    use.on('register', function (_register) {
+        assert(isFunction(_register), 'router.use.register : register is not a function', register);
+        register = _register;
+    });
+
+    use.on('fetch', function (_fetch) {
+        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
+        fetch = _fetch;
+    });
+
+    // fetch wrapper that makes the browser aware of the url change
+    emit.on('redirect', function () {
+        var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            path = _ref3.path,
+            _ref3$params = _ref3.params,
+            params = _ref3$params === undefined ? {} : _ref3$params;
+
+        assert(isString(path), 'router.redirect : path is not a string', path);
+        assert(isObject(params), 'router.redirect : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
+        queue.add(function () {
+            currentPath = path;
+            if (isHosted) {
+                // edge doesn't care that the file is local and will allow pushState.
+                // it also includes "/C:" in the location.pathname, but adds it to
+                // the path given to pushState. which means it needs to be removed here.
+                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
+            } else {
+                console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
+            }
+            safeFetch(currentPath, params);
+            queue.done();
+        });
+    });
+
+    // this will act like a redirect, but will not change the browser's url.
+    emit.on('show', function () {
+        var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            path = _ref4.path,
+            _ref4$params = _ref4.params,
+            params = _ref4$params === undefined ? {} : _ref4$params;
+
+        assert(isString(path), 'router.show : path is not a string', path);
+        assert(isObject(params), 'router.show : params is not an object', params);
+        // queue used so that route handlers that call route handlers behave
+        // as expected. (sequentially)
+        queue.add(function () {
+            safeFetch(path, params);
+            queue.done();
+        });
+    });
+
+    // expose module's features to the app.
+    use({ api: {
+            redirect: function redirect(path, params) {
+                return emit({ redirect: { path: path, params: params } });
+            },
+            show: function show(path, params) {
+                return emit({ show: { path: path, params: params } });
+            }
+        } });
+
+    // first argument can be a path string to register a route handler
+    // or a function to directly use a builder.
+    use({ primary: function primary(path, builder) {
+            if (isFunction(path)) {
+                use({ builder: path() });
+                return;
+            }
+            use({ route: {
+                    path: path,
+                    handler: function handler(params) {
+                        use({ builder: builder(params) });
+                    }
+                } });
+        } });
+};
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// this is the same library that is used in by express to match routes.
+
+var pathToRegexp = __webpack_require__(9);
+
+module.exports = function (_ref) {
+    var use = _ref.use;
+
+    // the type of store is not enforced by the okwolo-router module. this means
+    // that it needs to be created when the first path is registered.
+    var register = function register() {
+        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var path = arguments[1];
+        var handler = arguments[2];
+
+        var keys = [];
+        var pattern = pathToRegexp(path, keys, { strict: true });
+        store.push({
+            pattern: pattern,
+            keys: keys,
+            handler: handler
+        });
+        return store;
+    };
+
+    use({ register: register });
+};
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+/**
+ * Expose `pathToRegexp`.
+ */
+module.exports = pathToRegexp
+module.exports.parse = parse
+module.exports.compile = compile
+module.exports.tokensToFunction = tokensToFunction
+module.exports.tokensToRegExp = tokensToRegExp
+
+/**
+ * Default configs.
+ */
+var DEFAULT_DELIMITER = '/'
+var DEFAULT_DELIMITERS = './'
+
+/**
+ * The main path matching regexp utility.
+ *
+ * @type {RegExp}
+ */
+var PATH_REGEXP = new RegExp([
+  // Match escaped characters that would otherwise appear in future matches.
+  // This allows the user to escape special characters that won't transform.
+  '(\\\\.)',
+  // Match Express-style parameters and un-named parameters with a prefix
+  // and optional suffixes. Matches appear as:
+  //
+  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?"]
+  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined]
+  '(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?'
+].join('|'), 'g')
+
+/**
+ * Parse a string for the raw tokens.
+ *
+ * @param  {string}  str
+ * @param  {Object=} options
+ * @return {!Array}
+ */
+function parse (str, options) {
+  var tokens = []
+  var key = 0
+  var index = 0
+  var path = ''
+  var defaultDelimiter = (options && options.delimiter) || DEFAULT_DELIMITER
+  var delimiters = (options && options.delimiters) || DEFAULT_DELIMITERS
+  var pathEscaped = false
+  var res
+
+  while ((res = PATH_REGEXP.exec(str)) !== null) {
+    var m = res[0]
+    var escaped = res[1]
+    var offset = res.index
+    path += str.slice(index, offset)
+    index = offset + m.length
+
+    // Ignore already escaped sequences.
+    if (escaped) {
+      path += escaped[1]
+      pathEscaped = true
+      continue
+    }
+
+    var prev = ''
+    var next = str[index]
+    var name = res[2]
+    var capture = res[3]
+    var group = res[4]
+    var modifier = res[5]
+
+    if (!pathEscaped && path.length) {
+      var k = path.length - 1
+
+      if (delimiters.indexOf(path[k]) > -1) {
+        prev = path[k]
+        path = path.slice(0, k)
+      }
+    }
+
+    // Push the current path onto the tokens.
+    if (path) {
+      tokens.push(path)
+      path = ''
+      pathEscaped = false
+    }
+
+    var partial = prev !== '' && next !== undefined && next !== prev
+    var repeat = modifier === '+' || modifier === '*'
+    var optional = modifier === '?' || modifier === '*'
+    var delimiter = prev || defaultDelimiter
+    var pattern = capture || group
+
+    tokens.push({
+      name: name || key++,
+      prefix: prev,
+      delimiter: delimiter,
+      optional: optional,
+      repeat: repeat,
+      partial: partial,
+      pattern: pattern ? escapeGroup(pattern) : '[^' + escapeString(delimiter) + ']+?'
+    })
+  }
+
+  // Push any remaining characters.
+  if (path || index < str.length) {
+    tokens.push(path + str.substr(index))
+  }
+
+  return tokens
+}
+
+/**
+ * Compile a string to a template function for the path.
+ *
+ * @param  {string}             str
+ * @param  {Object=}            options
+ * @return {!function(Object=, Object=)}
+ */
+function compile (str, options) {
+  return tokensToFunction(parse(str, options))
+}
+
+/**
+ * Expose a method for transforming tokens into the path function.
+ */
+function tokensToFunction (tokens) {
+  // Compile all the tokens into regexps.
+  var matches = new Array(tokens.length)
+
+  // Compile all the patterns before compilation.
+  for (var i = 0; i < tokens.length; i++) {
+    if (typeof tokens[i] === 'object') {
+      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
+    }
+  }
+
+  return function (data, options) {
+    var path = ''
+    var encode = (options && options.encode) || encodeURIComponent
+
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i]
+
+      if (typeof token === 'string') {
+        path += token
+        continue
+      }
+
+      var value = data ? data[token.name] : undefined
+      var segment
+
+      if (Array.isArray(value)) {
+        if (!token.repeat) {
+          throw new TypeError('Expected "' + token.name + '" to not repeat, but got array')
+        }
+
+        if (value.length === 0) {
+          if (token.optional) continue
+
+          throw new TypeError('Expected "' + token.name + '" to not be empty')
+        }
+
+        for (var j = 0; j < value.length; j++) {
+          segment = encode(value[j])
+
+          if (!matches[i].test(segment)) {
+            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '"')
+          }
+
+          path += (j === 0 ? token.prefix : token.delimiter) + segment
+        }
+
+        continue
+      }
+
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        segment = encode(String(value))
+
+        if (!matches[i].test(segment)) {
+          throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but got "' + segment + '"')
+        }
+
+        path += token.prefix + segment
+        continue
+      }
+
+      if (token.optional) {
+        // Prepend partial segment prefixes.
+        if (token.partial) path += token.prefix
+
+        continue
+      }
+
+      throw new TypeError('Expected "' + token.name + '" to be ' + (token.repeat ? 'an array' : 'a string'))
+    }
+
+    return path
+  }
+}
+
+/**
+ * Escape a regular expression string.
+ *
+ * @param  {string} str
+ * @return {string}
+ */
+function escapeString (str) {
+  return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, '\\$1')
+}
+
+/**
+ * Escape the capturing group by escaping special characters and meaning.
+ *
+ * @param  {string} group
+ * @return {string}
+ */
+function escapeGroup (group) {
+  return group.replace(/([=!:$/()])/g, '\\$1')
+}
+
+/**
+ * Get the flags for a regexp from the options.
+ *
+ * @param  {Object} options
+ * @return {string}
+ */
+function flags (options) {
+  return options && options.sensitive ? '' : 'i'
+}
+
+/**
+ * Pull out keys from a regexp.
+ *
+ * @param  {!RegExp} path
+ * @param  {Array=}  keys
+ * @return {!RegExp}
+ */
+function regexpToRegexp (path, keys) {
+  if (!keys) return path
+
+  // Use a negative lookahead to match only capturing groups.
+  var groups = path.source.match(/\((?!\?)/g)
+
+  if (groups) {
+    for (var i = 0; i < groups.length; i++) {
+      keys.push({
+        name: i,
+        prefix: null,
+        delimiter: null,
+        optional: false,
+        repeat: false,
+        partial: false,
+        pattern: null
+      })
+    }
+  }
+
+  return path
+}
+
+/**
+ * Transform an array into a regexp.
+ *
+ * @param  {!Array}  path
+ * @param  {Array=}  keys
+ * @param  {Object=} options
+ * @return {!RegExp}
+ */
+function arrayToRegexp (path, keys, options) {
+  var parts = []
+
+  for (var i = 0; i < path.length; i++) {
+    parts.push(pathToRegexp(path[i], keys, options).source)
+  }
+
+  return new RegExp('(?:' + parts.join('|') + ')', flags(options))
+}
+
+/**
+ * Create a path regexp from string input.
+ *
+ * @param  {string}  path
+ * @param  {Array=}  keys
+ * @param  {Object=} options
+ * @return {!RegExp}
+ */
+function stringToRegexp (path, keys, options) {
+  return tokensToRegExp(parse(path, options), keys, options)
+}
+
+/**
+ * Expose a function for taking tokens and returning a RegExp.
+ *
+ * @param  {!Array}  tokens
+ * @param  {Array=}  keys
+ * @param  {Object=} options
+ * @return {!RegExp}
+ */
+function tokensToRegExp (tokens, keys, options) {
+  options = options || {}
+
+  var strict = options.strict
+  var end = options.end !== false
+  var delimiter = escapeString(options.delimiter || DEFAULT_DELIMITER)
+  var delimiters = options.delimiters || DEFAULT_DELIMITERS
+  var endsWith = [].concat(options.endsWith || []).map(escapeString).concat('$').join('|')
+  var route = ''
+  var isEndDelimited = false
+
+  // Iterate over the tokens and create our regexp string.
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i]
+
+    if (typeof token === 'string') {
+      route += escapeString(token)
+      isEndDelimited = i === tokens.length - 1 && delimiters.indexOf(token[token.length - 1]) > -1
+    } else {
+      var prefix = escapeString(token.prefix)
+      var capture = token.repeat
+        ? '(?:' + token.pattern + ')(?:' + prefix + '(?:' + token.pattern + '))*'
+        : token.pattern
+
+      if (keys) keys.push(token)
+
+      if (token.optional) {
+        if (token.partial) {
+          route += prefix + '(' + capture + ')?'
+        } else {
+          route += '(?:' + prefix + '(' + capture + '))?'
+        }
+      } else {
+        route += prefix + '(' + capture + ')'
+      }
+    }
+  }
+
+  if (end) {
+    if (!strict) route += '(?:' + delimiter + ')?'
+
+    route += endsWith === '$' ? '$' : '(?=' + endsWith + ')'
+  } else {
+    if (!strict) route += '(?:' + delimiter + '(?=' + endsWith + '))?'
+    if (!isEndDelimited) route += '(?=' + delimiter + '|' + endsWith + ')'
+  }
+
+  return new RegExp('^' + route, flags(options))
+}
+
+/**
+ * Normalize the given path string, returning a regular expression.
+ *
+ * An empty array can be passed in for the keys, which will hold the
+ * placeholder key descriptions. For example, using `/user/:id`, `keys` will
+ * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
+ *
+ * @param  {(string|RegExp|Array)} path
+ * @param  {Array=}                keys
+ * @param  {Object=}               options
+ * @return {!RegExp}
+ */
+function pathToRegexp (path, keys, options) {
+  if (path instanceof RegExp) {
+    return regexpToRegexp(path, keys)
+  }
+
+  if (Array.isArray(path)) {
+    return arrayToRegexp(/** @type {!Array} */ (path), keys, options)
+  }
+
+  return stringToRegexp(/** @type {string} */ (path), keys, options)
+}
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function (_ref) {
+    var use = _ref.use;
+
+    // the store's initial value is undefined so it needs to be defaulted
+    // to an empty array. this function should be the one doing the action
+    // defined in the route since it doesn't return it.
+    var fetch = function fetch() {
+        var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var path = arguments[1];
+        var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+        var found = false;
+        store.find(function (registeredPath) {
+            var test = registeredPath.pattern.exec(path);
+            if (test === null) {
+                return;
+            }
+            // a non null value on the result of executing the query on the path
+            // is considered a successful hit.
+            found = true;
+            // the first element of the result array is the entire matched string.
+            // this value is not useful and the following capture group results
+            // are more relevant.
+            test.shift();
+            // the order of the keys and their values in the matched result is the
+            // same and their index is now shared. note that there is no protection
+            // against param values being overwritten or tags to share the same key.
+            registeredPath.keys.forEach(function (key, i) {
+                params[key.name] = test[i];
+            });
+            registeredPath.handler(params);
+            return found;
+        });
+        return found;
+    };
+
+    use({ fetch: fetch });
 };
 
 /***/ })
