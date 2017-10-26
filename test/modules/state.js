@@ -6,6 +6,7 @@ const state = () => {
     const emit = makeBus();
     const use = makeBus();
     require('okwolo/src/modules/state')({emit, use});
+    require('okwolo/src/modules/state.handler')({emit, use});
     const setState = (state) => {
         emit({
             act: {

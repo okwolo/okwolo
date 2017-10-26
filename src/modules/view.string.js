@@ -72,12 +72,9 @@ const renderToString = (target, _vdom) => {
 };
 
 // blob generating function that is expected in the configuration object.
-module.exports = ({use, emit}) => {
+module.exports = ({emit, use}) => {
     use({
         draw: renderToString,
         update: renderToString,
-        api: {
-            setState: (state) => emit({state}),
-        },
     });
 };

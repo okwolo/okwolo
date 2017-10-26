@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = ({use, emit}) => {
+module.exports = ({emit, use}) => {
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
     const initial = {};

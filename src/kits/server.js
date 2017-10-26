@@ -11,6 +11,7 @@ module.exports = core({
         // the draw and update will be overwritten.
         require('okwolo/src/modules/view.dom'),
         require('okwolo/src/modules/view.string'),
+        require('okwolo/src/modules/state'),
     ],
     options: {
         kit: 'server',

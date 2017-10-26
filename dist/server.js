@@ -256,7 +256,7 @@ module.exports = core({
     // since this kit is intended to be used on a server, the extra size
     // should not be a big problem. since the blobs are added sequentially,
     // the draw and update will be overwritten.
-    __webpack_require__(4), __webpack_require__(5)],
+    __webpack_require__(4), __webpack_require__(5), __webpack_require__(6)],
     options: {
         kit: 'server',
         browser: false
@@ -874,18 +874,71 @@ var renderToString = function renderToString(target, _vdom) {
 
 // blob generating function that is expected in the configuration object.
 module.exports = function (_ref) {
-    var use = _ref.use,
-        emit = _ref.emit;
+    var emit = _ref.emit,
+        use = _ref.use;
 
     use({
         draw: renderToString,
-        update: renderToString,
-        api: {
-            setState: function setState(state) {
-                return emit({ state: state });
-            }
-        }
+        update: renderToString
     });
+};
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    deepCopy = _require.deepCopy,
+    isFunction = _require.isFunction;
+
+module.exports = function (_ref) {
+    var emit = _ref.emit,
+        use = _ref.use;
+
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    var initial = {};
+    var state = initial;
+
+    var handler = void 0;
+
+    use.on('handler', function (_handler) {
+        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+        handler = _handler;
+    });
+
+    use({ handler: function handler(newState) {
+            emit({ state: newState });
+        } });
+
+    // current state is monitored and stored.
+    emit.on('state', function (newState) {
+        state = newState;
+    });
+
+    emit.on('read', function (callback) {
+        callback(state);
+    });
+
+    var setState = function setState(replacement) {
+        var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        handler(newState);
+    };
+
+    var getState = function getState() {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    // expose module's features to the app.
+    use({ api: {
+            setState: setState,
+            getState: getState
+        } });
 };
 
 /***/ })

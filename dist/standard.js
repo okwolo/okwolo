@@ -251,7 +251,7 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(10)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(9), __webpack_require__(11)],
     options: {
         kit: 'standard',
         browser: true
@@ -788,11 +788,7 @@ module.exports = function (_ref, _window) {
 var _require = __webpack_require__(0)(),
     assert = _require.assert,
     deepCopy = _require.deepCopy,
-    makeQueue = _require.makeQueue,
-    isDefined = _require.isDefined,
-    isArray = _require.isArray,
-    isFunction = _require.isFunction,
-    isString = _require.isString;
+    isFunction = _require.isFunction;
 
 module.exports = function (_ref) {
     var emit = _ref.emit,
@@ -803,9 +799,68 @@ module.exports = function (_ref) {
     var initial = {};
     var state = initial;
 
+    var handler = void 0;
+
+    use.on('handler', function (_handler) {
+        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+        handler = _handler;
+    });
+
+    use({ handler: function handler(newState) {
+            emit({ state: newState });
+        } });
+
+    // current state is monitored and stored.
+    emit.on('state', function (newState) {
+        state = newState;
+    });
+
+    emit.on('read', function (callback) {
+        callback(state);
+    });
+
+    var setState = function setState(replacement) {
+        var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        handler(newState);
+    };
+
+    var getState = function getState() {
+        assert(state !== initial, 'getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    // expose module's features to the app.
+    use({ api: {
+            setState: setState,
+            getState: getState
+        } });
+};
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    deepCopy = _require.deepCopy,
+    makeQueue = _require.makeQueue,
+    isDefined = _require.isDefined,
+    isArray = _require.isArray,
+    isFunction = _require.isFunction,
+    isString = _require.isString;
+
+module.exports = function (_ref) {
+    var emit = _ref.emit,
+        use = _ref.use;
+
     // this module defines an action which overrides the whole state while
     // giving visibility to the middleware and watchers.
     var overrideActionType = 'SET_STATE';
+
+    var stateHasBeenOverwritten = false;
 
     // actions is a map where actions are stored in an array at their type key.
     var actions = {};
@@ -971,37 +1026,22 @@ module.exports = function (_ref) {
 
         // the only action that does not need the state to have already
         // been changed is SET_STATE.
-        assert(state !== initial || type === overrideActionType, 'act : cannot act on state before it has been set');
+        assert(stateHasBeenOverwritten || type === overrideActionType, 'act : cannot act on state before it has been overrwritten');
+        stateHasBeenOverwritten = true;
         assert(isString(type), 'state.act : action type is not a string', type);
-        assert(isDefined(state), 'state.act : cannot call action ' + type + ' on an undefined state', state);
         // the queue will make all actions wait to be ran sequentially.
         queue.add(function () {
-            apply(state, type, params);
+            emit({ read: function read(state) {
+                    apply(state, type, params);
+                } });
         });
     });
-
-    // current state is monitored and stored.
-    emit.on('state', function (newState) {
-        state = newState;
-    });
-
-    var setState = function setState(replacement) {
-        var params = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-        emit({ act: { type: overrideActionType, params: params } });
-    };
-
-    var getState = function getState() {
-        assert(state !== initial, 'getState : cannot get state before it has been set');
-        return deepCopy(state);
-    };
 
     // expose module's features to the app.
     use({ api: {
             act: function act(type, params) {
                 return emit({ act: { type: type, params: params } });
-            },
-            setState: setState,
-            getState: getState
+            }
         } });
 
     // action is used to override state in order to give visibility to
@@ -1013,18 +1053,22 @@ module.exports = function (_ref) {
                 return params;
             }
         } });
+
+    use({ handler: function handler(newState) {
+            emit({ act: { type: overrideActionType, params: newState } });
+        } });
 };
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = function (_ref) {
-    var use = _ref.use,
-        emit = _ref.emit;
+    var emit = _ref.emit,
+        use = _ref.use;
 
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
@@ -1120,7 +1164,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1286,7 +1330,7 @@ module.exports = function (_ref, _window) {
 };
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1294,7 +1338,7 @@ module.exports = function (_ref, _window) {
 
 // this is the same library that is used in by express to match routes.
 
-var pathToRegexp = __webpack_require__(9);
+var pathToRegexp = __webpack_require__(10);
 
 module.exports = function (_ref) {
     var use = _ref.use;
@@ -1320,7 +1364,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 /**
@@ -1697,7 +1741,7 @@ function pathToRegexp (path, keys, options) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

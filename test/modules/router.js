@@ -223,7 +223,7 @@ describe('@okwolo/router', () => {
 
             it('should not accept regex patterns', () => {
                 const test = jest.fn();
-                const {use, emit} = router();
+                const {emit, use} = router();
                 use({route: {
                     path: '/test',
                     handler: test,
