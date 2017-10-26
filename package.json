@@ -4,7 +4,6 @@
   "description": "light javascript framework to build web applications",
   "main": "src/index.js",
   "browser": "okwolo.js",
-  "minified": "okwolo.min.js",
   "types": "src/index.d.ts",
   "keywords": [
     "okwolo",
@@ -14,7 +13,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "publish": "webpack && npm publish && gulp clean",
+    "publish": "webpack && gulp prepublish && npm publish && gulp clean",
     "test": "run-s test:*",
     "test:eslint": "eslint **/*.js",
     "test:jest": "jest",
