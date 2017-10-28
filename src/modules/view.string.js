@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isDefined, isFunction} = require('okwolo/src/utils')();
+const {assert, isDefined, isFunction} = require('../utils')();
 
 // the tags appearing in this map will be represented as singletons.
 const singletons = {

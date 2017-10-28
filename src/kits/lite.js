@@ -1,15 +1,15 @@
 'use strict';
 
-const core = require('okwolo/src/core');
+const core = require('../core');
 
 module.exports = core({
     modules: [
-        require('okwolo/src/modules/view'),
-        require('okwolo/src/modules/view.dom'),
-        require('okwolo/src/modules/router'),
-        require('okwolo/src/modules/router.fetch'),
-        require('okwolo/src/modules/router.register.lite'),
-        require('okwolo/src/modules/state'),
+        require('../modules/view'),
+        require('../modules/view.dom'),
+        require('../modules/router'),
+        require('../modules/router.fetch'),
+        require('../modules/router.register.lite'),
+        require('../modules/state'),
     ],
     options: {
         kit: 'lite',

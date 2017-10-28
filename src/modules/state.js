@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, deepCopy, isFunction} = require('okwolo/src/utils')();
+const {assert, deepCopy, isFunction} = require('../utils')();
 
 module.exports = ({emit, use}) => {
     // reference to initial state is kept to be able to track whether it

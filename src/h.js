@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, isString, isObject, isFunction} = require('okwolo/src/utils')();
+const {assert, isString, isObject, isFunction} = require('./utils')();
 
 module.exports = (tagName, attributes, ...children) => {
     assert(isString(tagName) || isFunction(tagName), 'dom.h : tagName is not a string or a function', tagName);

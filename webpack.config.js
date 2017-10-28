@@ -65,7 +65,7 @@ module.exports = bundles.map((options) => {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['es2015'],
+                        presets: ['env'],
                     },
                 },
             }],

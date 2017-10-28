@@ -1,6 +1,6 @@
 'use strict';
 
-const utils = require('okwolo/src/utils');
+const utils = require('../src/utils');
 
 describe('@okwolo/utils', () => {
     describe('deepCopy', () => {

@@ -10,7 +10,7 @@ const history = () => {
             api[key].push(blob[key]);
         });
     };
-    require('okwolo/src/modules/state.handler.history')({use, act: () => {}});
+    require('../../src/modules/state.handler.history')({use, act: () => {}});
     return api;
 };
 

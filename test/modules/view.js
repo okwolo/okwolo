@@ -1,14 +1,14 @@
 'use strict';
 
-const {makeBus} = require('okwolo/src/utils')();
+const {makeBus} = require('../../src/utils')();
 
-const h = require('okwolo/src/h');
+const h = require('../../src/h');
 
 const dom = (target) => {
     const emit = makeBus();
     const use = makeBus();
-    require('okwolo/src/modules/view')({emit, use}, window);
-    require('okwolo/src/modules/view.dom')({emit, use}, window);
+    require('../../src/modules/view')({emit, use}, window);
+    require('../../src/modules/view.dom')({emit, use}, window);
     use({target});
     return {emit, use};
 };
@@ -39,7 +39,7 @@ describe('@okwolo/dom', () => {
         const init = (events) => {
             const emit = makeBus();
             const use = makeBus();
-            require('okwolo/src/modules/view')({emit, use}, window);
+            require('../../src/modules/view')({emit, use}, window);
             expect(() => {
                 use(events);
                 emit(events);

@@ -1,6 +1,6 @@
 'use strict';
 
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('okwolo/src/utils')();
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils')();
 
 module.exports = ({emit, use}) => {
     // this module defines an action which overrides the whole state while

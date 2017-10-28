@@ -8,25 +8,11 @@
     },
     "extends": "google",
     "rules": {
-        "indent": [
-            "error",
-            4
-        ],
+        "indent": [2, 4],
         "linebreak-style": 0,
-        "quotes": [
-            "error",
-            "single"
-        ],
-        "semi": [
-            "error",
-            "always"
-        ],
-        "switch-colon-spacing": "off",
-        "max-len": "off",
-        "no-throw-literal": "off",
-        "strict": [
-            "error",
-            "global"
-        ]
+        "quotes": [2, "single"],
+        "semi": [2, "always"],
+        "max-len": 0,
+        "strict": [2, "global"]
     }
 }
