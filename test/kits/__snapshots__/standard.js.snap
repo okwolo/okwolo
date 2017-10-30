@@ -1,28 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`server should correctly render complex structures 1`] = `
-<span id="body" class="center">
-  <center>
-    <div id="large" style="height: 200px; margin-top: 90px;">
-      <div style="padding-top: 100px;">
-        <div title="Test" align="left" id="logo" style="background-size: 250px 90px; height: 90px; width: 250px;">
-          <div class="logo-subtext">Subtext</div>
-        </div>
-      </div>
-    </div>
-    <div style="height: 120px;"></div>
-    <div id="prompt" style="margin-top: 10px;">
-      <div id="alias">
-        <div id="offer">Example.com offered in:
-          <a href="https://example.com">Français</a>
-        </div>
-      </div>
-      <div id="swimlanes"></div>
-    </div>
-  </center>
-</span>
-`;
-
 exports[`standard examples should correctly render the button example 1`] = `
 <div class="buttons">
   <button>abc
