@@ -5,7 +5,7 @@ const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('.
 // version cannot be taken from package.json because environment is not guaranteed.
 const version = '1.3.0';
 
-module.exports = ({modules, options}) => {
+module.exports = ({modules = [], options = {}}) => {
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
     const okwolo = (target, _window) => {
