@@ -6,6 +6,7 @@ const dom = (target) => {
     const emit = makeBus();
     const use = makeBus();
     require('../../src/modules/view')({emit, use}, window);
+    require('../../src/modules/view.build')({emit, use}, window);
     require('../../src/modules/view.dom')({emit, use}, window);
     use({target});
     return {emit, use};

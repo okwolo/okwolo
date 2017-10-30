@@ -251,12 +251,10 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3),
-    // the dom blob is still required to parse the shorthand vdom syntax.
-    // since this kit is intended to be used on a server, the extra size
-    // should not be a big problem. since the blobs are added sequentially,
-    // the draw and update will be overwritten.
-    __webpack_require__(4), __webpack_require__(5), __webpack_require__(6)],
+    modules: [__webpack_require__(3), __webpack_require__(4),
+    // since the blobs are added sequentially, the draw and update functions
+    // in the view module will be overwritten.
+    __webpack_require__(5), __webpack_require__(6)],
     options: {
         kit: 'server',
         browser: false
@@ -284,8 +282,10 @@ var _require = __webpack_require__(0)(),
 var version = '1.3.0';
 
 module.exports = function (_ref) {
-    var modules = _ref.modules,
-        options = _ref.options;
+    var _ref$modules = _ref.modules,
+        modules = _ref$modules === undefined ? [] : _ref$modules,
+        _ref$options = _ref.options,
+        options = _ref$options === undefined ? {} : _ref$options;
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
@@ -512,7 +512,6 @@ var _require = __webpack_require__(0)(),
     isString = _require.isString,
     isNumber = _require.isNumber,
     isBoolean = _require.isBoolean,
-    isNode = _require.isNode,
     isObject = _require.isObject,
     isFunction = _require.isFunction;
 
@@ -536,21 +535,6 @@ var classnames = function classnames() {
             }));
         }
     }).filter(Boolean).join(' ');
-};
-
-// shallow diff of two objects which returns an array of keys where the value is
-// different. differences include keys who's values have been deleted or added.
-// since there is no reliable way to compare function equality, they are always
-// considered to be different.
-var diff = function diff(original, successor) {
-    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
-        var valueOriginal = original[key];
-        var valueSuccessor = successor[key];
-        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            return true;
-        }
-        return valueOriginal !== valueSuccessor;
-    });
 };
 
 // will build a vdom structure from the output of the app's builder funtions. this
@@ -654,133 +638,10 @@ var build = function build(element) {
     };
 };
 
-module.exports = function (_ref, _window) {
+module.exports = function (_ref) {
     var use = _ref.use;
 
-    // recursively travels vdom to create rendered elements. after being rendered,
-    // all vdom objects have a "DOM" key which references the created node. this
-    // can be used in the update process to manipulate the real dom nodes.
-    var render = function render(velem) {
-        // the text key will only be present for text elements.
-        if (isDefined(velem.text)) {
-            velem.DOM = _window.document.createTextNode(velem.text);
-            return velem;
-        }
-        var element = _window.document.createElement(velem.tagName);
-        // attributes are added onto the node.
-        Object.assign(element, velem.attributes);
-        // all children are rendered and immediately appended into the parent node
-        // in the same order that they appear in the children array.
-        Object.keys(velem.children).forEach(function (key) {
-            var _render = render(velem.children[key]),
-                DOM = _render.DOM;
-
-            element.appendChild(DOM);
-        });
-        velem.DOM = element;
-        return velem;
-    };
-
-    // initial draw to target will wipe the contents of the container node.
-    var draw = function draw(target, vdom) {
-        // the target's type is not enforced by the module and it needs to be
-        // done at this point. this is done to decouple the dom module from
-        // the browser (but cannot be avoided in this blob).
-        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
-        render(vdom);
-        _window.requestAnimationFrame(function () {
-            target.innerHTML = '';
-            target.appendChild(vdom.DOM);
-        });
-        return vdom;
-    };
-
-    // updates the existing vdom object and its html nodes to be consistent with
-    // the new vdom object.
-    var update = function update(target, newVdom, vdom) {
-        // responsibility of checking the target's type is deferred to the blobs.
-        assert(isNode(target), 'dom.update : target is not a DOM node', target);
-
-        // recursive function to update an element according to new state. the
-        // parent and the element's parent index must be passed in order to make
-        // modifications to the vdom object in place.
-        var _update = function _update(original, successor, originalParent, parentIndex) {
-            // covers an uncommon edge case.
-            if (!isDefined(original) && !isDefined(successor)) {
-                return;
-            }
-
-            // lack of original element implies the successor is a new element.
-            if (!isDefined(original)) {
-                originalParent.children[parentIndex] = render(successor);
-                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
-                return;
-            }
-
-            // lack of successor element implies the original is being removed.
-            if (!isDefined(successor)) {
-                originalParent.DOM.removeChild(original.DOM);
-                delete originalParent.children[parentIndex];
-                return;
-            }
-
-            // if the element's tagName has changed, the whole element must be
-            // replaced. this will also capture the case where an html node is
-            // being transformed into a text node since the text node's vdom
-            // object will not contain a tagName.
-            if (original.tagName !== successor.tagName) {
-                var oldDOM = original.DOM;
-                var newVDOM = render(successor);
-                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
-                // this technique is used to modify the vdom object in place.
-                // both the text element and the tag element props are reset
-                // since the types are not recorded.
-                Object.assign(original, {
-                    DOM: undefined,
-                    text: undefined,
-                    tagName: undefined,
-                    attributes: undefined,
-                    children: undefined
-                }, newVDOM);
-                return;
-            }
-
-            // nodeType of three indicates that the HTML node is a textNode.
-            // at this point in the function it has been estblished that the
-            // original and successor nodes are of the same type.
-            if (original.DOM.nodeType === 3) {
-                if (original.text !== successor.text) {
-                    original.DOM.nodeValue = successor.text;
-                    original.text = successor.text;
-                }
-                return;
-            }
-
-            var attributesDiff = diff(original.attributes, successor.attributes);
-            attributesDiff.forEach(function (key) {
-                original.attributes[key] = successor.attributes[key];
-                original.DOM[key] = successor.attributes[key];
-            });
-
-            var max = Math.max(original.children.length, successor.children.length);
-            for (var i = 0; i < max; ++i) {
-                _update(original.children[i], successor.children[i], original, i);
-            }
-        };
-
-        _window.requestAnimationFrame(function () {
-            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
-        });
-
-        // TODO vdom object is modified after being returned.
-        return vdom;
-    };
-
-    use({
-        draw: draw,
-        update: update,
-        build: build
-    });
+    use({ build: build });
 };
 
 /***/ }),

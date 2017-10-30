@@ -251,7 +251,7 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(9)],
     options: {
         kit: 'lite',
         browser: true
@@ -279,8 +279,10 @@ var _require = __webpack_require__(0)(),
 var version = '1.3.0';
 
 module.exports = function (_ref) {
-    var modules = _ref.modules,
-        options = _ref.options;
+    var _ref$modules = _ref.modules,
+        modules = _ref$modules === undefined ? [] : _ref$modules,
+        _ref$options = _ref.options,
+        options = _ref$options === undefined ? {} : _ref$options;
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
@@ -507,7 +509,6 @@ var _require = __webpack_require__(0)(),
     isString = _require.isString,
     isNumber = _require.isNumber,
     isBoolean = _require.isBoolean,
-    isNode = _require.isNode,
     isObject = _require.isObject,
     isFunction = _require.isFunction;
 
@@ -531,21 +532,6 @@ var classnames = function classnames() {
             }));
         }
     }).filter(Boolean).join(' ');
-};
-
-// shallow diff of two objects which returns an array of keys where the value is
-// different. differences include keys who's values have been deleted or added.
-// since there is no reliable way to compare function equality, they are always
-// considered to be different.
-var diff = function diff(original, successor) {
-    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
-        var valueOriginal = original[key];
-        var valueSuccessor = successor[key];
-        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            return true;
-        }
-        return valueOriginal !== valueSuccessor;
-    });
 };
 
 // will build a vdom structure from the output of the app's builder funtions. this
@@ -647,6 +633,42 @@ var build = function build(element) {
         attributes: attributes,
         children: children.map(build)
     };
+};
+
+module.exports = function (_ref) {
+    var use = _ref.use;
+
+    use({ build: build });
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _require = __webpack_require__(0)(),
+    assert = _require.assert,
+    isDefined = _require.isDefined,
+    isNode = _require.isNode,
+    isFunction = _require.isFunction;
+
+// shallow diff of two objects which returns an array of keys where the value is
+// different. differences include keys who's values have been deleted or added.
+// since there is no reliable way to compare function equality, they are always
+// considered to be different.
+
+
+var diff = function diff(original, successor) {
+    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
+        var valueOriginal = original[key];
+        var valueSuccessor = successor[key];
+        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
+            return true;
+        }
+        return valueOriginal !== valueSuccessor;
+    });
 };
 
 module.exports = function (_ref, _window) {
@@ -773,13 +795,12 @@ module.exports = function (_ref, _window) {
 
     use({
         draw: draw,
-        update: update,
-        build: build
+        update: update
     });
 };
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -945,7 +966,7 @@ module.exports = function (_ref, _window) {
 };
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -991,7 +1012,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1038,7 +1059,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
