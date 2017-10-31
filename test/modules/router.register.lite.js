@@ -2,14 +2,14 @@
 
 const rrl = require('../../src/modules/router.register.lite');
 
-describe('router.register.lite', () => {
-    let register;
+let register;
+const use = (blob) => {
+    register = blob.register;
+};
+rrl({use});
 
+describe('router.register.lite', () => {
     it('should use a register blob', () => {
-        const use = (blob) => {
-            register = blob.register;
-        };
-        rrl({use});
         expect(register)
             .toBeInstanceOf(Function);
     });
