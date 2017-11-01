@@ -404,43 +404,43 @@ module.exports = function (_ref) {
     });
 
     use.on('builder', function (_builder) {
-        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
+        assert(isFunction(_builder), 'view.use.builder : builder is not a function', _builder);
         builder = _builder;
         emit({ update: false });
     });
 
     use.on('draw', function (_draw) {
-        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
+        assert(isFunction(_draw), 'view.use.draw : new draw is not a function', _draw);
         draw = _draw;
         emit({ update: true });
     });
 
     use.on('update', function (_update) {
-        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
+        assert(isFunction(_update), 'view.use.update : new target updater is not a function', _update);
         update = _update;
         emit({ update: false });
     });
 
     use.on('build', function (_build) {
-        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
+        assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
         build = _build;
         emit({ update: false });
     });
 
     use.on('prebuild', function (newPrebuild) {
-        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
+        assert(isFunction(newPrebuild), 'view.use.prebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
         emit({ update: false });
     });
 
     use.on('postbuild', function (newPostbuild) {
-        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
+        assert(isFunction(newPostbuild), 'view.use.postbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
         emit({ update: false });
     });
 
     emit.on('state', function (_state) {
-        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
+        assert(isDefined(_state), 'view.emit.state : new state is not defined', _state);
         state = _state;
         emit({ update: false });
     });
@@ -558,7 +558,7 @@ var build = function build(element) {
     }
 
     // the only remaining element types are formatted as arrays.
-    assert(isArray(element), 'dom.build : vdom object is not a recognized type', element);
+    assert(isArray(element), 'view.build : vdom object is not a recognized type', element);
 
     // early recursive return when the element is seen to be have the component syntax.
     if (isFunction(element[0])) {
@@ -571,8 +571,8 @@ var build = function build(element) {
             _element2$2 = _element2[2],
             _children = _element2$2 === undefined ? [] : _element2$2;
 
-        assert(isObject(props), 'dom.build : component\'s props is not an object', element, props);
-        assert(isArray(_children), 'dom.build : component\'s children is not an array', element, _children);
+        assert(isObject(props), 'view.build : component\'s props is not an object', element, props);
+        assert(isArray(_children), 'view.build : component\'s children is not an array', element, _children);
         // the component function is called with an object containing the props
         // and an extra key with the children of this element.
         return build(component(Object.assign({}, props, { children: _children })));
@@ -586,15 +586,15 @@ var build = function build(element) {
         _element4$2 = _element4[2],
         children = _element4$2 === undefined ? [] : _element4$2;
 
-    assert(isString(tagType), 'dom.build : tag property is not a string', element, tagType);
-    assert(isObject(attributes), 'dom.build : attributes is not an object', element, attributes);
-    assert(isArray(children), 'dom.build : children of vdom object is not an array', element, children);
+    assert(isString(tagType), 'view.build : tag property is not a string', element, tagType);
+    assert(isObject(attributes), 'view.build : attributes is not an object', element, attributes);
+    assert(isArray(children), 'view.build : children of vdom object is not an array', element, children);
 
     // regular expression to capture values from the shorthand element tag syntax.
     // it allows each section to be seperated by any amount of spaces, but enforces
     // the order of the capture groups (tagName #id .className | style)
     var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-    assert(isArray(match), 'dom.build : tag property cannot be parsed', tagType);
+    assert(isArray(match), 'view.build : tag property cannot be parsed', tagType);
     // first element is not needed since it is the entire matched string. default
     // values are not used to avoid adding blank attributes to the nodes.
 
@@ -703,7 +703,7 @@ module.exports = function (_ref, _window) {
         // the target's type is not enforced by the module and it needs to be
         // done at this point. this is done to decouple the dom module from
         // the browser (but cannot be avoided in this blob).
-        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
+        assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(vdom);
         _window.requestAnimationFrame(function () {
             target.innerHTML = '';
@@ -716,7 +716,7 @@ module.exports = function (_ref, _window) {
     // the new vdom object.
     var update = function update(target, newVdom, vdom) {
         // responsibility of checking the target's type is deferred to the blobs.
-        assert(isNode(target), 'dom.update : target is not a DOM node', target);
+        assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make
@@ -846,7 +846,7 @@ module.exports = function (_ref) {
     };
 
     var getState = function getState() {
-        assert(state !== initial, 'getState : cannot get state before it has been set');
+        assert(state !== initial, 'state.getState : cannot get state before it has been set');
         return deepCopy(state);
     };
 
@@ -899,7 +899,7 @@ module.exports = function (_ref) {
         // it must be copied since all the middleware functions can still
         // potentially have access to it.
         var newState = deepCopy(state);
-        assert(isDefined(actions[type]), 'state.execute : action type \'' + type + '\' was not found');
+        assert(isDefined(actions[type]), 'state.handler : action type \'' + type + '\' was not found');
 
         // action types with multiple actions are executed in the order they are added.
         actions[type].forEach(function (currentAction) {
@@ -910,9 +910,9 @@ module.exports = function (_ref) {
                 targetAddress = targetAddress(deepCopy(state), params);
                 // since the typechecks cannot be ran when the action is added,
                 // they need to be done during the action.
-                assert(isArray(targetAddress), 'state.execute : dynamic target of action ' + type + ' is not an array', targetAddress);
+                assert(isArray(targetAddress), 'state.handler : dynamic target of action ' + type + ' is not an array', targetAddress);
                 targetAddress.forEach(function (address) {
-                    assert(isString(address), 'state.execute : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
+                    assert(isString(address), 'state.handler : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
                 });
             }
 
@@ -923,7 +923,7 @@ module.exports = function (_ref) {
             // an empty array means the entire state object is the target.
             if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), 'state.execute : result of action ' + type + ' on target @state is undefined');
+                assert(isDefined(newState), 'state.handler : result of action ' + type + ' on target @state is undefined');
             }
 
             // reference will be the variable which keeps track of the current
@@ -931,7 +931,7 @@ module.exports = function (_ref) {
             // state since that is the value that needs to be modified.
             var reference = newState;
             targetAddress.forEach(function (key, i) {
-                assert(isDefined(target[key]), 'state.execute : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
+                assert(isDefined(target[key]), 'state.handler : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
                 if (i < targetAddress.length - 1) {
                     // both the reference to the "actual" state and the target
                     // dummy copy are traversed at the same time.
@@ -943,7 +943,7 @@ module.exports = function (_ref) {
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 var newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), 'state.execute : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
+                assert(isDefined(newValue), 'state.handler : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
                 reference[key] = newValue;
             });
         });
@@ -1224,7 +1224,7 @@ module.exports = function (_ref, _window) {
             args[_key] = arguments[_key];
         }
 
-        assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
+        assert(isFunction(fetch), 'router : fetch is not a function', fetch);
         fetch.apply(undefined, [store].concat(args));
     };
 

@@ -26,7 +26,7 @@ const singletons = {
 const renderToString = (target, _vdom) => {
     // string used to indent each level of the rendered dom.
     const indentString = '  ';
-    assert(isFunction(target), 'server.dom.draw : target is not a function', target);
+    assert(isFunction(target), 'view.string.draw : target is not a function', target);
     // the return value of this function is an array of lines. the reason for
     // this is that nested tags need extra indentation and this function is
     // recursive. extra spaces can easily be appended to each line appearing

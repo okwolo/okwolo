@@ -36,7 +36,7 @@ module.exports = ({emit, use}) => {
     };
 
     const getState = () => {
-        assert(state !== initial, 'getState : cannot get state before it has been set');
+        assert(state !== initial, 'state.getState : cannot get state before it has been set');
         return deepCopy(state);
     };
 

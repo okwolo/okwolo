@@ -42,43 +42,43 @@ module.exports = ({emit, use}) => {
     });
 
     use.on('builder', (_builder) => {
-        assert(isFunction(_builder), 'dom.use.builder : builder is not a function', _builder);
+        assert(isFunction(_builder), 'view.use.builder : builder is not a function', _builder);
         builder = _builder;
         emit({update: false});
     });
 
     use.on('draw', (_draw) => {
-        assert(isFunction(_draw), 'dom.use.draw : new draw is not a function', _draw);
+        assert(isFunction(_draw), 'view.use.draw : new draw is not a function', _draw);
         draw = _draw;
         emit({update: true});
     });
 
     use.on('update', (_update) => {
-        assert(isFunction(_update), 'dom.use.update : new target updater is not a function', _update);
+        assert(isFunction(_update), 'view.use.update : new target updater is not a function', _update);
         update = _update;
         emit({update: false});
     });
 
     use.on('build', (_build) => {
-        assert(isFunction(_build), 'dom.use.build : new build is not a function', _build);
+        assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
         build = _build;
         emit({update: false});
     });
 
     use.on('prebuild', (newPrebuild) => {
-        assert(isFunction(newPrebuild), 'dom.use.prebuild : new prebuild is not a function', newPrebuild);
+        assert(isFunction(newPrebuild), 'view.use.prebuild : new prebuild is not a function', newPrebuild);
         prebuild = newPrebuild;
         emit({update: false});
     });
 
     use.on('postbuild', (newPostbuild) => {
-        assert(isFunction(newPostbuild), 'dom.use.postbuild : new postbuild is not a function', newPostbuild);
+        assert(isFunction(newPostbuild), 'view.use.postbuild : new postbuild is not a function', newPostbuild);
         postbuild = newPostbuild;
         emit({update: false});
     });
 
     emit.on('state', (_state) => {
-        assert(isDefined(_state), 'dom.emit.state : new state is not defined', _state);
+        assert(isDefined(_state), 'view.emit.state : new state is not defined', _state);
         state = _state;
         emit({update: false});
     });

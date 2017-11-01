@@ -25,7 +25,7 @@ module.exports = ({emit, use}) => {
         // it must be copied since all the middleware functions can still
         // potentially have access to it.
         let newState = deepCopy(state);
-        assert(isDefined(actions[type]), `state.execute : action type '${type}' was not found`);
+        assert(isDefined(actions[type]), `state.handler : action type '${type}' was not found`);
 
         // action types with multiple actions are executed in the order they are added.
         actions[type].forEach((currentAction) => {
@@ -36,9 +36,9 @@ module.exports = ({emit, use}) => {
                 targetAddress = targetAddress(deepCopy(state), params);
                 // since the typechecks cannot be ran when the action is added,
                 // they need to be done during the action.
-                assert(isArray(targetAddress), `state.execute : dynamic target of action ${type} is not an array`, targetAddress);
+                assert(isArray(targetAddress), `state.handler : dynamic target of action ${type} is not an array`, targetAddress);
                 targetAddress.forEach((address) => {
-                    assert(isString(address), `state.execute : dynamic target of action ${type} is not an array of strings`, targetAddress);
+                    assert(isString(address), `state.handler : dynamic target of action ${type} is not an array of strings`, targetAddress);
                 });
             }
 
@@ -49,7 +49,7 @@ module.exports = ({emit, use}) => {
             // an empty array means the entire state object is the target.
             if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), `state.execute : result of action ${type} on target @state is undefined`);
+                assert(isDefined(newState), `state.handler : result of action ${type} on target @state is undefined`);
             }
 
             // reference will be the variable which keeps track of the current
@@ -57,7 +57,7 @@ module.exports = ({emit, use}) => {
             // state since that is the value that needs to be modified.
             let reference = newState;
             targetAddress.forEach((key, i) => {
-                assert(isDefined(target[key]), `state.execute : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
+                assert(isDefined(target[key]), `state.handler : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
                 if (i < targetAddress.length - 1) {
                     // both the reference to the "actual" state and the target
                     // dummy copy are traversed at the same time.
@@ -69,7 +69,7 @@ module.exports = ({emit, use}) => {
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 let newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), `state.execute : result of action ${type} on target @state.${targetAddress.join('.')} is undefined`);
+                assert(isDefined(newValue), `state.handler : result of action ${type} on target @state.${targetAddress.join('.')} is undefined`);
                 reference[key] = newValue;
             });
         });

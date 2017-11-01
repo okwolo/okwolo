@@ -45,7 +45,7 @@ module.exports = ({use}, _window) => {
         // the target's type is not enforced by the module and it needs to be
         // done at this point. this is done to decouple the dom module from
         // the browser (but cannot be avoided in this blob).
-        assert(isNode(target), 'dom.draw : target is not a DOM node', target);
+        assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(vdom);
         _window.requestAnimationFrame(() => {
             target.innerHTML = '';
@@ -58,7 +58,7 @@ module.exports = ({use}, _window) => {
     // the new vdom object.
     const update = (target, newVdom, vdom) => {
         // responsibility of checking the target's type is deferred to the blobs.
-        assert(isNode(target), 'dom.update : target is not a DOM node', target);
+        assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make

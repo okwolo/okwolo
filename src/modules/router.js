@@ -25,7 +25,7 @@ module.exports = ({emit, use}, _window) => {
     const queue = makeQueue();
 
     const safeFetch = (...args) => {
-        assert(isFunction(fetch), 'router.fetch : fetch is not a function', fetch);
+        assert(isFunction(fetch), 'router : fetch is not a function', fetch);
         fetch(store, ...args);
     };
 
