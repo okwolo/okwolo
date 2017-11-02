@@ -3,10 +3,10 @@
 const rf = require('../../src/modules/router.fetch');
 
 let fetch;
-const use = (blob) => {
-    fetch = blob.fetch;
-};
-rf({use});
+
+o(({use}) => {
+    use.on('fetch', (f) => fetch = f);
+}, rf);
 
 describe('router.fetch', () => {
     it('should use a fetch blob', () => {

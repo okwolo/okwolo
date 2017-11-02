@@ -2,10 +2,10 @@
 
 const {assert, isString, isObject, isFunction, makeQueue} = require('../utils')();
 
-module.exports = ({emit, use}, _window) => {
+module.exports = ({emit, use}, global) => {
     // will check is the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
-    const isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
+    const isHosted = global.document.origin !== null && global.document.origin !== 'null';
 
     let baseUrl = '';
 
@@ -36,14 +36,14 @@ module.exports = ({emit, use}, _window) => {
         return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
     };
 
-    let currentPath = _window.location.pathname;
+    let currentPath = global.location.pathname;
     if (!isHosted) {
         currentPath = '';
     }
 
     // handle back/forward events
-    _window.onpopstate = () => {
-        currentPath = removeBaseUrl(_window.location.pathname);
+    global.onpopstate = () => {
+        currentPath = removeBaseUrl(global.location.pathname);
         safeFetch(currentPath);
     };
 
@@ -86,7 +86,7 @@ module.exports = ({emit, use}, _window) => {
                 // edge doesn't care that the file is local and will allow pushState.
                 // it also includes "/C:" in the location.pathname, but adds it to
                 // the path given to pushState. which means it needs to be removed here.
-                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
+                global.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
                 console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
             }

@@ -7,10 +7,10 @@
 const rr = require('../../src/modules/router.register');
 
 let register;
-const use = (blob) => {
-    register = blob.register;
-};
-rr({use});
+
+o(({use}) => {
+    use.on('register', (f) => register = f);
+}, rr);
 
 describe('router.register', () => {
     it('should use a register blob', () => {

@@ -17,17 +17,17 @@ const diff = (original, successor) => {
     });
 };
 
-module.exports = ({use}, _window) => {
+module.exports = ({use}, global) => {
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
     const render = (velem) => {
         // the text key will only be present for text elements.
         if (isDefined(velem.text)) {
-            velem.DOM = _window.document.createTextNode(velem.text);
+            velem.DOM = global.document.createTextNode(velem.text);
             return velem;
         }
-        const element = _window.document.createElement(velem.tagName);
+        const element = global.document.createElement(velem.tagName);
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
         // all children are rendered and immediately appended into the parent node
@@ -47,7 +47,7 @@ module.exports = ({use}, _window) => {
         // the browser (but cannot be avoided in this blob).
         assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(vdom);
-        _window.requestAnimationFrame(() => {
+        global.requestAnimationFrame(() => {
             target.innerHTML = '';
             target.appendChild(vdom.DOM);
         });
@@ -127,7 +127,7 @@ module.exports = ({use}, _window) => {
             }
         };
 
-        _window.requestAnimationFrame(() => {
+        global.requestAnimationFrame(() => {
             _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0);
         });
 

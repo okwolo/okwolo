@@ -8,13 +8,13 @@ const version = '1.3.0';
 module.exports = ({modules = [], options = {}}) => {
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
-    const okwolo = (target, _window) => {
+    const okwolo = (target, global) => {
         // if the kit requires the browser api, there must be a window object in
         // scope or a window object must be injected as argument.
         if (options.browser) {
-            if (!isDefined(_window)) {
+            if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
-                _window = window;
+                global = window;
             }
         }
 
@@ -44,7 +44,7 @@ module.exports = ({modules = [], options = {}}) => {
 
         // each module is instantiated.
         modules.forEach((_module) => {
-            _module(app, _window);
+            _module(app, global);
         });
 
         // target is used if it is defined, but this step can be deferred

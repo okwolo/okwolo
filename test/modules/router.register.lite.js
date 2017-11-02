@@ -3,10 +3,10 @@
 const rrl = require('../../src/modules/router.register.lite');
 
 let register;
-const use = (blob) => {
-    register = blob.register;
-};
-rrl({use});
+
+o(({use}) => {
+    use.on('register', (f) => register = f);
+}, rrl);
 
 describe('router.register.lite', () => {
     it('should use a register blob', () => {

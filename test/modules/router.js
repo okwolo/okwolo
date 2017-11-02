@@ -1,11 +1,8 @@
 'use strict';
 
-const core = require('../../src/core');
 const r = require('../../src/modules/router');
 const rr = require('../../src/modules/router.register');
 const rf = require('../../src/modules/router.fetch');
-
-const okwolo = (...modules) => core({modules})(null, window);
 
 describe('router', () => {
     beforeEach(() => {
@@ -15,19 +12,19 @@ describe('router', () => {
     describe('emit', () => {
         describe('redirect', () => {
             it('should reject malformed paths', () => {
-                const {emit} = okwolo(r);
+                const {emit} = o(r);
                 expect(() => emit({redirect: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {emit} = okwolo(r, rf);
+                const {emit} = o(r, rf);
                 expect(() => emit({redirect: {path: '/', params: undefined}}))
                     .not.toThrow(Error);
             });
 
             it('should change the pathname', () => {
-                const {emit} = okwolo(r, rf);
+                const {emit} = o(r, rf);
                 emit({redirect: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .toBe('/test/xyz');
@@ -35,7 +32,7 @@ describe('router', () => {
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/xxx',
                     handler: () => {
@@ -55,7 +52,7 @@ describe('router', () => {
 
             it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/user/:id/fetch/:field',
                     handler: test,
@@ -68,18 +65,18 @@ describe('router', () => {
 
         describe('show', () => {
             it('should reject malformed paths', () => {
-                const {emit} = okwolo(r);
+                const {emit} = o(r);
                 expect(() => emit({show: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {emit} = okwolo(r, rf);
+                const {emit} = o(r, rf);
                 emit({show: {path: '/', params: undefined}});
             });
 
             it('should not change the pathname', () => {
-                const {emit} = okwolo(r, rf);
+                const {emit} = o(r, rf);
                 emit({show: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .not.toBe('/test/xyz');
@@ -87,7 +84,7 @@ describe('router', () => {
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/xxx',
                     handler: () => {
@@ -107,7 +104,7 @@ describe('router', () => {
 
             it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/user/:id/fetch/:field',
                     handler: test,
@@ -122,7 +119,7 @@ describe('router', () => {
     describe('use', () => {
         describe('route', () => {
             it('should reject malformed paths', () => {
-                const {use} = okwolo(r);
+                const {use} = o(r);
                 expect(() => {
                     use({route: {
                         path: {},
@@ -133,7 +130,7 @@ describe('router', () => {
             });
 
             it('should reject malformed handler', () => {
-                const {use} = okwolo(r);
+                const {use} = o(r);
                 expect(() => {
                     use({route: {
                         path: '',
@@ -146,7 +143,7 @@ describe('router', () => {
             it('should check the current pathname against new routes', () => {
                 const test = jest.fn();
                 window.history.pushState({}, '', '/test');
-                const {use} = okwolo(r, rr, rf);
+                const {use} = o(r, rr, rf);
                 use({route: {
                     path: '/test',
                     handler: test,
@@ -157,7 +154,7 @@ describe('router', () => {
 
             it('should save routes for future redirects', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/test',
                     handler: test,
@@ -170,7 +167,7 @@ describe('router', () => {
             it('should prioritize the earliest routes', () => {
                 const test1 = jest.fn();
                 const test2 = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/test',
                     handler: test1,
@@ -187,7 +184,7 @@ describe('router', () => {
 
         describe('base', () => {
             it('should reject malformed inputs', () => {
-                const {use} = okwolo(r);
+                const {use} = o(r);
                 expect(() => {
                     use({base: true});
                 })
@@ -195,7 +192,7 @@ describe('router', () => {
             });
 
             it('should add the base url to all new pathnames', () => {
-                const {emit, use} = okwolo(r, rf);
+                const {emit, use} = o(r, rf);
                 use({base: '/testBase'});
                 emit({redirect: {path: '/test'}});
                 expect(window.location.pathname)
@@ -205,7 +202,7 @@ describe('router', () => {
             it('should be applied to the current pathname', () => {
                 const test = jest.fn();
                 window.history.pushState({}, '', '/testBase/test');
-                const {use} = okwolo(r, rr, rf);
+                const {use} = o(r, rr, rf);
                 use({route: {
                     path: '/test',
                     handler: test,
@@ -219,7 +216,7 @@ describe('router', () => {
 
             it('should not accept regex patterns', () => {
                 const test = jest.fn();
-                const {emit, use} = okwolo(r, rr, rf);
+                const {emit, use} = o(r, rr, rf);
                 use({route: {
                     path: '/test',
                     handler: test,
@@ -235,13 +232,13 @@ describe('router', () => {
 
         describe('register', () => {
             it('should reject malformed register', () => {
-                const {use} = okwolo(r);
+                const {use} = o(r);
                 expect(() => use({register: true}))
                     .toThrow(/register/);
             });
 
             it('should be used to register routes', () => {
-                const {use} = okwolo(r, rf);
+                const {use} = o(r, rf);
                 let test = jest.fn();
                 use({register: test});
                 const handler = () => {};
@@ -255,7 +252,7 @@ describe('router', () => {
 
             it('should use register\'s return value as the new store', () => {
                 const test = jest.fn();
-                const {use} = okwolo(r, rr, rf);
+                const {use} = o(r, rr, rf);
                 const temp = [];
                 let first = true;
                 use({register: (store, path, handler) => {
@@ -282,13 +279,13 @@ describe('router', () => {
 
         describe('fetch', () => {
             it('should reject malformed fetch', () => {
-                const {use} = okwolo(r);
+                const {use} = o(r);
                 expect(() => use({fetch: true}))
                     .toThrow(/fetch/);
             });
 
             it('should be used to fetch routes', () => {
-                const {emit, use} = okwolo(r);
+                const {emit, use} = o(r);
                 let test = jest.fn();
                 use({fetch: test});
                 emit({redirect: {path: '/redirect', params: {redirect: true}}});
@@ -305,7 +302,7 @@ describe('router', () => {
         describe('redirect', () => {
             it('should add redirect to the api', () => {
                 const test = jest.fn();
-                const app = okwolo(({use}) => {
+                const app = o(({use}) => {
                     use.on('api', (api) => {
                         expect(api.redirect)
                             .toBeInstanceOf(Function);
@@ -320,7 +317,7 @@ describe('router', () => {
 
             it('should emit a redirect event', () => {
                 const test = jest.fn();
-                const app = okwolo(({emit}) => {
+                const app = o(({emit}) => {
                     emit.on('redirect', test);
                 }, r, rf);
                 expect(test)
@@ -334,7 +331,7 @@ describe('router', () => {
         describe('show', () => {
             it('should add show to the api', () => {
                 const test = jest.fn();
-                const app = okwolo(({use}) => {
+                const app = o(({use}) => {
                     use.on('api', (api) => {
                         expect(api.show)
                             .toBeInstanceOf(Function);
@@ -349,7 +346,7 @@ describe('router', () => {
 
             it('should emit a show event', () => {
                 const test = jest.fn();
-                const app = okwolo(({emit}) => {
+                const app = o(({emit}) => {
                     emit.on('show', test);
                 }, r, rf);
                 expect(test)
@@ -364,7 +361,7 @@ describe('router', () => {
     describe('primary', () => {
         it('should replace the primary', () => {
             const test = jest.fn();
-            okwolo(({use}) => {
+            o(({use}) => {
                 use.on('primary', test);
             }, r);
             expect(test)
@@ -373,7 +370,7 @@ describe('router', () => {
 
         it('should use a builder if no path is provided', () => {
             const test = jest.fn();
-            const app = okwolo(r, ({use}) => {
+            const app = o(r, ({use}) => {
                 use.on('builder', test);
             });
             expect(test)
@@ -386,7 +383,7 @@ describe('router', () => {
         it('should use a route that uses a builder when a path is given', () => {
             const testBuilder = jest.fn();
             const testRoute = jest.fn();
-            const app = okwolo(r, rr, rf, ({use}) => {
+            const app = o(r, rr, rf, ({use}) => {
                 use.on('route', testRoute);
                 use.on('builder', testBuilder);
             });
@@ -406,7 +403,7 @@ describe('router', () => {
 
         it('should pass route handler params to the builder generator', () => {
             const test = jest.fn();
-            const app = okwolo(r, rr, rf);
+            const app = o(r, rr, rf);
             const params = {test, app};
             app('/test', test);
             app.redirect('/test', params);
