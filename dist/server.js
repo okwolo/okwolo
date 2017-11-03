@@ -289,13 +289,13 @@ module.exports = function (_ref) {
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
-    var okwolo = function okwolo(target, _window) {
+    var okwolo = function okwolo(target, global) {
         // if the kit requires the browser api, there must be a window object in
         // scope or a window object must be injected as argument.
         if (options.browser) {
-            if (!isDefined(_window)) {
+            if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
-                _window = window;
+                global = window;
             }
         }
 
@@ -325,7 +325,7 @@ module.exports = function (_ref) {
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module(app, _window);
+            _module(app, global);
         });
 
         // target is used if it is defined, but this step can be deferred
@@ -767,11 +767,6 @@ module.exports = function (_ref) {
 
     var handler = void 0;
 
-    use.on('handler', function (_handler) {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
-        handler = _handler;
-    });
-
     // current state is monitored and stored.
     emit.on('state', function (newState) {
         state = newState;
@@ -779,6 +774,11 @@ module.exports = function (_ref) {
 
     emit.on('read', function (callback) {
         callback(state);
+    });
+
+    use.on('handler', function (_handler) {
+        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+        handler = _handler;
     });
 
     use({ handler: function handler(newState) {

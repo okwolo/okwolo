@@ -286,13 +286,13 @@ module.exports = function (_ref) {
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
-    var okwolo = function okwolo(target, _window) {
+    var okwolo = function okwolo(target, global) {
         // if the kit requires the browser api, there must be a window object in
         // scope or a window object must be injected as argument.
         if (options.browser) {
-            if (!isDefined(_window)) {
+            if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
-                _window = window;
+                global = window;
             }
         }
 
@@ -322,7 +322,7 @@ module.exports = function (_ref) {
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module(app, _window);
+            _module(app, global);
         });
 
         // target is used if it is defined, but this step can be deferred
@@ -671,7 +671,7 @@ var diff = function diff(original, successor) {
     });
 };
 
-module.exports = function (_ref, _window) {
+module.exports = function (_ref, global) {
     var use = _ref.use;
 
     // recursively travels vdom to create rendered elements. after being rendered,
@@ -680,10 +680,10 @@ module.exports = function (_ref, _window) {
     var render = function render(velem) {
         // the text key will only be present for text elements.
         if (isDefined(velem.text)) {
-            velem.DOM = _window.document.createTextNode(velem.text);
+            velem.DOM = global.document.createTextNode(velem.text);
             return velem;
         }
-        var element = _window.document.createElement(velem.tagName);
+        var element = global.document.createElement(velem.tagName);
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
         // all children are rendered and immediately appended into the parent node
@@ -705,7 +705,7 @@ module.exports = function (_ref, _window) {
         // the browser (but cannot be avoided in this blob).
         assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(vdom);
-        _window.requestAnimationFrame(function () {
+        global.requestAnimationFrame(function () {
             target.innerHTML = '';
             target.appendChild(vdom.DOM);
         });
@@ -785,7 +785,7 @@ module.exports = function (_ref, _window) {
             }
         };
 
-        _window.requestAnimationFrame(function () {
+        global.requestAnimationFrame(function () {
             _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
         });
 
@@ -813,13 +813,13 @@ var _require = __webpack_require__(0)(),
     isFunction = _require.isFunction,
     makeQueue = _require.makeQueue;
 
-module.exports = function (_ref, _window) {
+module.exports = function (_ref, global) {
     var emit = _ref.emit,
         use = _ref.use;
 
     // will check is the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
-    var isHosted = _window.document.origin !== null && _window.document.origin !== 'null';
+    var isHosted = global.document.origin !== null && global.document.origin !== 'null';
 
     var baseUrl = '';
 
@@ -854,14 +854,14 @@ module.exports = function (_ref, _window) {
         return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
     };
 
-    var currentPath = _window.location.pathname;
+    var currentPath = global.location.pathname;
     if (!isHosted) {
         currentPath = '';
     }
 
     // handle back/forward events
-    _window.onpopstate = function () {
-        currentPath = removeBaseUrl(_window.location.pathname);
+    global.onpopstate = function () {
+        currentPath = removeBaseUrl(global.location.pathname);
         safeFetch(currentPath);
     };
 
@@ -913,7 +913,7 @@ module.exports = function (_ref, _window) {
                 // edge doesn't care that the file is local and will allow pushState.
                 // it also includes "/C:" in the location.pathname, but adds it to
                 // the path given to pushState. which means it needs to be removed here.
-                _window.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
+                global.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
                 console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
             }
@@ -1081,11 +1081,6 @@ module.exports = function (_ref) {
 
     var handler = void 0;
 
-    use.on('handler', function (_handler) {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
-        handler = _handler;
-    });
-
     // current state is monitored and stored.
     emit.on('state', function (newState) {
         state = newState;
@@ -1093,6 +1088,11 @@ module.exports = function (_ref) {
 
     emit.on('read', function (callback) {
         callback(state);
+    });
+
+    use.on('handler', function (_handler) {
+        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+        handler = _handler;
     });
 
     use({ handler: function handler(newState) {

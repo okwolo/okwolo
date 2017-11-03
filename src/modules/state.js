@@ -10,11 +10,6 @@ module.exports = ({emit, use}) => {
 
     let handler;
 
-    use.on('handler', (_handler) => {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
-        handler = _handler;
-    });
-
     // current state is monitored and stored.
     emit.on('state', (newState) => {
         state = newState;
@@ -22,6 +17,11 @@ module.exports = ({emit, use}) => {
 
     emit.on('read', (callback) => {
         callback(state);
+    });
+
+    use.on('handler', (_handler) => {
+        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+        handler = _handler;
     });
 
     use({handler: (newState) => {
