@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = ({emit, use}) => {
+    const resetActionType = '__RESET__';
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
     const initial = {};
@@ -47,7 +48,7 @@ module.exports = ({emit, use}) => {
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
     use({action: {
-        type: '__RESET__',
+        type: resetActionType,
         target: [],
         handler: () => {
             past = [];
@@ -59,7 +60,7 @@ module.exports = ({emit, use}) => {
     // this watcher will monitor state changes and update what is stored within
     // this function.
     use({watcher: (state, type) => {
-        if (type === '__RESET__' || type[0] === ignorePrefix) {
+        if (type === resetActionType || type[0] === ignorePrefix) {
             return;
         }
         if (type !== 'UNDO' && type !== 'REDO') {

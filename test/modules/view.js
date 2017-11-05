@@ -14,7 +14,7 @@ const dom = (target) => {
 
 let wrapper;
 
-describe('@okwolo/dom', () => {
+describe('view', () => {
     beforeEach(() => {
         wrapper = document.createElement('div');
         document.body.appendChild(wrapper);
