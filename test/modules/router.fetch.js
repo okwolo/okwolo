@@ -25,7 +25,7 @@ describe('router.fetch', () => {
             .toHaveBeenCalledTimes(1);
     });
 
-    it('should run only one handler', () => {
+    it('should the first match\'s handler', () => {
         const test = jest.fn();
         fetch([
             {

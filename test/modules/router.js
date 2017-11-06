@@ -12,52 +12,52 @@ describe('router', () => {
     describe('emit', () => {
         describe('redirect', () => {
             it('should reject malformed paths', () => {
-                const {emit} = o(r);
-                expect(() => emit({redirect: undefined}))
+                const app = o(r);
+                expect(() => app.emit({redirect: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {emit} = o(r, rf);
-                expect(() => emit({redirect: {path: '/', params: undefined}}))
+                const app = o(r, rf);
+                expect(() => app.emit({redirect: {path: '/', params: undefined}}))
                     .not.toThrow(Error);
             });
 
             it('should change the pathname', () => {
-                const {emit} = o(r, rf);
-                emit({redirect: {path: '/test/xyz'}});
+                const app = o(r, rf);
+                app.emit({redirect: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .toBe('/test/xyz');
             });
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/xxx',
                     handler: () => {
-                        emit({show: {path: '/test'}});
+                        app.emit({show: {path: '/test'}});
                         test();
                     },
                 }});
-                use({route: {
+                app.use({route: {
                     path: '/test',
                     handler: () => {
                         expect(test)
                             .toHaveBeenCalled();
                     },
                 }});
-                emit({redirect: {path: '/xxx'}});
+                app.emit({redirect: {path: '/xxx'}});
             });
 
             it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/user/:id/fetch/:field',
                     handler: test,
                 }});
-                emit({redirect: {path: '/user/123/fetch/name'}});
+                app.emit({redirect: {path: '/user/123/fetch/name'}});
                 expect(test)
                     .toHaveBeenCalledWith({id: '123', field: 'name'});
             });
@@ -65,51 +65,51 @@ describe('router', () => {
 
         describe('show', () => {
             it('should reject malformed paths', () => {
-                const {emit} = o(r);
-                expect(() => emit({show: undefined}))
+                const app = o(r);
+                expect(() => app.emit({show: undefined}))
                     .toThrow(/path/);
             });
 
             it('should accept no params', () => {
-                const {emit} = o(r, rf);
-                emit({show: {path: '/', params: undefined}});
+                const app = o(r, rf);
+                app.emit({show: {path: '/', params: undefined}});
             });
 
             it('should not change the pathname', () => {
-                const {emit} = o(r, rf);
-                emit({show: {path: '/test/xyz'}});
+                const app = o(r, rf);
+                app.emit({show: {path: '/test/xyz'}});
                 expect(window.location.pathname)
                     .not.toBe('/test/xyz');
             });
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/xxx',
                     handler: () => {
-                        emit({redirect: {path: '/test'}});
+                        app.emit({redirect: {path: '/test'}});
                         test();
                     },
                 }});
-                use({route: {
+                app.use({route: {
                     path: '/test',
                     handler: () => {
                         expect(test)
                             .toHaveBeenCalled();
                     },
                 }});
-                emit({show: {path: '/xxx'}});
+                app.emit({show: {path: '/xxx'}});
             });
 
             it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/user/:id/fetch/:field',
                     handler: test,
                 }});
-                emit({show: {path: '/user/123/fetch/name'}});
+                app.emit({show: {path: '/user/123/fetch/name'}});
                 expect(test)
                     .toHaveBeenCalledWith({id: '123', field: 'name'});
             });
@@ -119,9 +119,9 @@ describe('router', () => {
     describe('use', () => {
         describe('route', () => {
             it('should reject malformed paths', () => {
-                const {use} = o(r);
+                const app = o(r);
                 expect(() => {
-                    use({route: {
+                    app.use({route: {
                         path: {},
                         handler: () => {},
                     }});
@@ -130,9 +130,9 @@ describe('router', () => {
             });
 
             it('should reject malformed handler', () => {
-                const {use} = o(r);
+                const app = o(r);
                 expect(() => {
-                    use({route: {
+                    app.use({route: {
                         path: '',
                         handler: '',
                     }});
@@ -143,8 +143,8 @@ describe('router', () => {
             it('should check the current pathname against new routes', () => {
                 const test = jest.fn();
                 window.history.pushState({}, '', '/test');
-                const {use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/test',
                     handler: test,
                 }});
@@ -154,12 +154,12 @@ describe('router', () => {
 
             it('should save routes for future redirects', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/test',
                     handler: test,
                 }});
-                emit({redirect: {path: '/test'}});
+                app.emit({redirect: {path: '/test'}});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -167,16 +167,16 @@ describe('router', () => {
             it('should prioritize the earliest routes', () => {
                 const test1 = jest.fn();
                 const test2 = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/test',
                     handler: test1,
                 }});
-                use({route: {
+                app.use({route: {
                     path: '/*',
                     handler: test2,
                 }});
-                emit({redirect: {path: '/test'}});
+                app.emit({redirect: {path: '/test'}});
                 expect(test1)
                     .toHaveBeenCalled();
             });
@@ -184,17 +184,17 @@ describe('router', () => {
 
         describe('base', () => {
             it('should reject malformed inputs', () => {
-                const {use} = o(r);
+                const app = o(r);
                 expect(() => {
-                    use({base: true});
+                    app.use({base: true});
                 })
                     .toThrow(/base/);
             });
 
             it('should add the base url to all new pathnames', () => {
-                const {emit, use} = o(r, rf);
-                use({base: '/testBase'});
-                emit({redirect: {path: '/test'}});
+                const app = o(r, rf);
+                app.use({base: '/testBase'});
+                app.emit({redirect: {path: '/test'}});
                 expect(window.location.pathname)
                     .toBe('/testBase/test');
             });
@@ -202,29 +202,29 @@ describe('router', () => {
             it('should be applied to the current pathname', () => {
                 const test = jest.fn();
                 window.history.pushState({}, '', '/testBase/test');
-                const {use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/test',
                     handler: test,
                 }});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
-                use({base: '/testBase'});
+                app.use({base: '/testBase'});
                 expect(test)
                     .toHaveBeenCalled();
             });
 
             it('should not accept regex patterns', () => {
                 const test = jest.fn();
-                const {emit, use} = o(r, rr, rf);
-                use({route: {
+                const app = o(r, rr, rf);
+                app.use({route: {
                     path: '/test',
                     handler: test,
                 }});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
-                emit({redirect: {path: '/abcdef/test'}});
-                use({base: '/.[^/]*'});
+                app.emit({redirect: {path: '/abcdef/test'}});
+                app.use({base: '/.[^/]*'});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
             });
@@ -232,17 +232,17 @@ describe('router', () => {
 
         describe('register', () => {
             it('should reject malformed register', () => {
-                const {use} = o(r);
-                expect(() => use({register: true}))
+                const app = o(r);
+                expect(() => app.use({register: true}))
                     .toThrow(/register/);
             });
 
             it('should be used to register routes', () => {
-                const {use} = o(r, rf);
+                const app = o(r, rf);
                 let test = jest.fn();
-                use({register: test});
+                app.use({register: test});
                 const handler = () => {};
-                use({route: {
+                app.use({route: {
                     path: '/',
                     handler,
                 }});
@@ -252,10 +252,10 @@ describe('router', () => {
 
             it('should use register\'s return value as the new store', () => {
                 const test = jest.fn();
-                const {use} = o(r, rr, rf);
+                const app = o(r, rr, rf);
                 const temp = [];
                 let first = true;
-                use({register: (store, path, handler) => {
+                app.use({register: (store, path, handler) => {
                     if (first) {
                         first = false;
                         return temp;
@@ -264,11 +264,11 @@ describe('router', () => {
                     expect(store)
                         .toBe(temp);
                 }});
-                use({route: {
+                app.use({route: {
                     path: '/',
                     handler: () => 0,
                 }});
-                use({route: {
+                app.use({route: {
                     path: '/',
                     handler: () => 0,
                 }});
@@ -279,17 +279,17 @@ describe('router', () => {
 
         describe('fetch', () => {
             it('should reject malformed fetch', () => {
-                const {use} = o(r);
-                expect(() => use({fetch: true}))
+                const app = o(r);
+                expect(() => app.use({fetch: true}))
                     .toThrow(/fetch/);
             });
 
             it('should be used to fetch routes', () => {
-                const {emit, use} = o(r);
+                const app = o(r);
                 let test = jest.fn();
-                use({fetch: test});
-                emit({redirect: {path: '/redirect', params: {redirect: true}}});
-                emit({show: {path: '/show', params: {show: true}}});
+                app.use({fetch: test});
+                app.emit({redirect: {path: '/redirect', params: {redirect: true}}});
+                app.emit({show: {path: '/show', params: {show: true}}});
                 expect(test)
                     .toHaveBeenCalledWith(undefined, '/redirect', {redirect: true});
                 expect(test)
