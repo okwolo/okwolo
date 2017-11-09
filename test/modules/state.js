@@ -13,22 +13,6 @@ describe('state', () => {
                     .toEqual(test);
             });
         });
-
-        describe('read', () => {
-            it('should directly pass the state to the callback', () => {
-                const test = jest.fn();
-                const app = o(s);
-                const temp = {};
-                app.emit({state: temp});
-                app.emit({read: (state) => {
-                    test();
-                    expect(state)
-                        .toBe(temp);
-                }});
-                expect(test)
-                    .toHaveBeenCalled();
-            });
-        });
     });
 
     describe('use', () => {
@@ -96,7 +80,7 @@ describe('state', () => {
                     const test = jest.fn();
                     const app = o(s);
                     const temp = {test: true};
-                    app.use({handler: test});
+                    app.use({handler: () => test});
                     expect(test)
                         .toHaveBeenCalledTimes(0);
                     app.setState(temp);
@@ -132,11 +116,28 @@ describe('state', () => {
                     .toThrow(/handler.*function/);
             });
 
+            it('should give the handler generator a function to read state', () => {
+                const test = jest.fn();
+                const app = o(s);
+                const temp = {};
+                app.setState(temp);
+                app.use({handler: (reader) => {
+                    expect(reader)
+                        .toBeInstanceOf(Function);
+                    expect(reader())
+                        .toBe(temp);
+                    test();
+                    return () => {};
+                }});
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
             it('should use the handler to handle new states', () => {
                 const test = jest.fn();
                 const app = o(s);
                 const temp = {test: true};
-                app.use({handler: test});
+                app.use({handler: () => test});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
                 app.setState(temp);

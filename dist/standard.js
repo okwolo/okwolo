@@ -827,17 +827,20 @@ module.exports = function (_ref) {
         state = newState;
     });
 
-    emit.on('read', function (callback) {
-        callback(state);
-    });
-
-    use.on('handler', function (_handler) {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+    use.on('handler', function (handlerGen) {
+        assert(isFunction(handlerGen), 'state.use.handler : handler generator is not a function', handlerGen);
+        // handler generator is given direct access to the state.
+        var _handler = handlerGen(function () {
+            return state;
+        });
+        assert(isFunction(_handler), 'state.use.handler : handler from generator is not a function', _handler);
         handler = _handler;
     });
 
-    use({ handler: function handler(newState) {
-            emit({ state: newState });
+    use({ handler: function handler() {
+            return function (newState) {
+                emit({ state: newState });
+            };
         } });
 
     var setState = function setState(replacement) {
@@ -893,6 +896,12 @@ module.exports = function (_ref) {
     // relevant in the case where an action is called from within a watcher.
     // it does not however support waiting for any async code.
     var queue = makeQueue();
+
+    // the real value is set after this module's handshake with the state
+    // module when the state handler is registered.
+    var readState = function readState() {
+        return undefined;
+    };
 
     var execute = function execute(state, type, params) {
         // this value will represent the state after executing the action(s).
@@ -995,7 +1004,7 @@ module.exports = function (_ref) {
         // the funcs array is initialized with an extra element which makes it
         // one longer than middleware. therefore, using the length of middleware
         // is looking for the last element in the array of functions.
-        funcs[middleware.length](deepCopy(state), type, params);
+        funcs[middleware.length](state, type, params);
     };
 
     // actions can be added in batches by using an array.
@@ -1052,9 +1061,7 @@ module.exports = function (_ref) {
         assert(isString(type), 'state.act : action type is not a string', type);
         // the queue will make all actions wait to be ran sequentially.
         queue.add(function () {
-            emit({ read: function read(state) {
-                    apply(state, type, params);
-                } });
+            apply(readState(), type, params);
         });
     });
 
@@ -1075,8 +1082,11 @@ module.exports = function (_ref) {
             }
         } });
 
-    use({ handler: function handler(newState) {
-            emit({ act: { type: overrideActionType, params: newState } });
+    use({ handler: function handler(reader) {
+            readState = reader;
+            return function (newState) {
+                emit({ act: { type: overrideActionType, params: newState } });
+            };
         } });
 };
 
@@ -1091,6 +1101,7 @@ module.exports = function (_ref) {
     var emit = _ref.emit,
         use = _ref.use;
 
+    var resetActionType = '__RESET__';
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
     var initial = {};
@@ -1137,7 +1148,7 @@ module.exports = function (_ref) {
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
     use({ action: {
-            type: '__RESET__',
+            type: resetActionType,
             target: [],
             handler: function handler() {
                 past = [];
@@ -1149,7 +1160,7 @@ module.exports = function (_ref) {
     // this watcher will monitor state changes and update what is stored within
     // this function.
     use({ watcher: function watcher(state, type) {
-            if (type === '__RESET__' || type[0] === ignorePrefix) {
+            if (type === resetActionType || type[0] === ignorePrefix) {
                 return;
             }
             if (type !== 'UNDO' && type !== 'REDO') {

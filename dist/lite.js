@@ -1086,17 +1086,20 @@ module.exports = function (_ref) {
         state = newState;
     });
 
-    emit.on('read', function (callback) {
-        callback(state);
-    });
-
-    use.on('handler', function (_handler) {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+    use.on('handler', function (handlerGen) {
+        assert(isFunction(handlerGen), 'state.use.handler : handler generator is not a function', handlerGen);
+        // handler generator is given direct access to the state.
+        var _handler = handlerGen(function () {
+            return state;
+        });
+        assert(isFunction(_handler), 'state.use.handler : handler from generator is not a function', _handler);
         handler = _handler;
     });
 
-    use({ handler: function handler(newState) {
-            emit({ state: newState });
+    use({ handler: function handler() {
+            return function (newState) {
+                emit({ state: newState });
+            };
         } });
 
     var setState = function setState(replacement) {

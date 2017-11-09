@@ -20,6 +20,10 @@ module.exports = ({emit, use}) => {
     // it does not however support waiting for any async code.
     const queue = makeQueue();
 
+    // the real value is set after this module's handshake with the state
+    // module when the state handler is registered.
+    let readState = () => undefined;
+
     const execute = (state, type, params) => {
         // this value will represent the state after executing the action(s).
         // it must be copied since all the middleware functions can still
@@ -109,7 +113,7 @@ module.exports = ({emit, use}) => {
         // the funcs array is initialized with an extra element which makes it
         // one longer than middleware. therefore, using the length of middleware
         // is looking for the last element in the array of functions.
-        funcs[middleware.length](deepCopy(state), type, params);
+        funcs[middleware.length](state, type, params);
     };
 
     // actions can be added in batches by using an array.
@@ -157,9 +161,7 @@ module.exports = ({emit, use}) => {
         assert(isString(type), 'state.act : action type is not a string', type);
         // the queue will make all actions wait to be ran sequentially.
         queue.add(() => {
-            emit({read: (state) => {
-                apply(state, type, params);
-            }});
+            apply(readState(), type, params);
         });
     });
 
@@ -176,7 +178,10 @@ module.exports = ({emit, use}) => {
         handler: (state, params) => params,
     }});
 
-    use({handler: (newState) => {
-        emit({act: {type: overrideActionType, params: newState}});
+    use({handler: (reader) => {
+        readState = reader;
+        return (newState) => {
+            emit({act: {type: overrideActionType, params: newState}});
+        };
     }});
 };

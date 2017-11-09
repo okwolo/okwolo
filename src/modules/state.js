@@ -15,16 +15,15 @@ module.exports = ({emit, use}) => {
         state = newState;
     });
 
-    emit.on('read', (callback) => {
-        callback(state);
-    });
-
-    use.on('handler', (_handler) => {
-        assert(isFunction(_handler), 'state.use.handler : handler is not a function', handler);
+    use.on('handler', (handlerGen) => {
+        assert(isFunction(handlerGen), 'state.use.handler : handler generator is not a function', handlerGen);
+        // handler generator is given direct access to the state.
+        const _handler = handlerGen(() => state);
+        assert(isFunction(_handler), 'state.use.handler : handler from generator is not a function', _handler);
         handler = _handler;
     });
 
-    use({handler: (newState) => {
+    use({handler: () => (newState) => {
         emit({state: newState});
     }});
 
