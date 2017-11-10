@@ -3,7 +3,9 @@
 const core = require('./src/core');
 
 // global function to facilitate testing modules
-window.o = (...modules) => core({modules})(null, window);
+window.wrapper = document.createElement('div');
+document.body.appendChild(wrapper);
+window.o = (...modules) => core({modules})(wrapper, window);
 
 // this assignment cannot be done using regular means.
 // it is used by the router to decide if okwolo is running from a local filesystem.
