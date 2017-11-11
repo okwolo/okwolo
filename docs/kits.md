@@ -1,57 +1,59 @@
 # Kits
 
-Okwolo is designed to be very modular and flexible in its lower layers. Each module is independant and connects itself to the features it wants to interact with. This means it is easy to simply remove the features that are not being used to save on bandwidth and/or performance. Kits are use this to exist as differnet configurations of okwolo with a variety of modifications, but always using the same api wrapper. For example, the lite kit totally drops the advanced state management and uses a simplified pathname matcher in the router.
+Okwolo is designed so that all functionality is provided by swappable modules. These modules can be used to add, modify or remove any features of the resulting apps. Kits represent different combinations of these modules which can be used to satisfy a wide variety of use cases. It is important to note that the order of modules can be important, especially in cases where one module depends on another. (ex. state and state.handler)
 
-## `standard` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
+This document lists three useful configurations and lists their included modules diffed with the default standard kit. All kits can be found in their transpiled/minified/gzipped forms in the [dist folder](https://github.com/okwolo/okwolo/blob/master/dist). Most of the tools available to modules are also available after the app is instantiated and that the kit pattern exists primarily for development ergonomics.
 
-> `require('okwolo');` or `require('okwolo/kits/standard');`
+## standard [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
 
-```diff
-  okwolo-dom
-  okwolo-router
-  okwolo-state
-  okwolo-history
-```
+> `require('okwolo');` or `require('okwolo/src/kits/standard');`
 
-| | transpiled | transpiled + minified |
-|---|---|---|
-| browser | [dist/standard.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/standard.js) | [dist/standard.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/standard.min.js) |
-
-## `lite` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
-
-> `require('okwolo/kits/lite');`
+Standard is the default kit and it includes the fullest set of features. Notably, the router uses the familiar matching logic from [express](https://www.npmjs.com/package/express) and the state can be manipulated using actions, watchers, middleware and undo/redo.
 
 ```diff
-  okwolo-dom
-- okwolo-router
-+ okwolo-lite-router
-- okwolo-state
-- okwolo-history
+  view
+  view.build
+  view.dom
+  state
+  state.handler
+  state.handler.history
+  router
+  router.register
+  router.fetch
 ```
 
-`lite-router` is a simpler router which only supports url params. (`/user/:id/profile`)
+## lite [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
 
-| | transpiled | transpiled + minified |
-|---|---|---|
-| browser | [dist/lite.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/lite.js) | [dist/lite.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/lite.min.js) |
+> `require('okwolo/src/kits/lite');`
 
-## `server` [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
-
-> `require('okwolo/kits/server');`
+The lite kit is a trimmed down version of okwolo for projects where bundle size is a priority. It drops the advanced state management provided by the state handler and uses a simplified route registering module. This means that actions are not supported and that path params are the only special syntax understood by the router.
 
 ```diff
-- okwolo-dom
-+ okwolo-render-to-string
-- okwolo-router
-- okwolo-state
-- okwolo-history
+  view
+  view.build
+  view.dom
+  state
+- state.handler
+- state.handler.history
+  router
+- router.register
++ router.register.lite
+  router.fetch
 ```
 
-Can render to a string by giving a callback as the render target.
+## server [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
+
+> `require('okwolo/src/kits/server');`
+
+The server kit is meant to be used as a server-side rendering tool. Since it is only concerned with producing html from state, there is no need for the router module or the elabotate state handling. The following example shows the minimal setup.
 
 ```javascript
-const app = okwolo();
+// target is a callback which will receive the rendered html.
+const app = okwolo((htmlString) => {
+    // ...
+});
 
+// app will not render without state
 app.setState({
     // ...
 })
@@ -61,12 +63,17 @@ app(() => () => (
         // ...
     ]]
 ));
-
-app.use({target: (htmlString) => {
-    // ...
-}})
 ```
 
-| | transpiled | transpiled + minified |
-|---|---|---|
-| browser | [dist/server.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.js) | [dist/server.min.js](https://raw.githubusercontent.com/okwolo/okwolo/master/dist/server.min.js) |
+```diff
+  view
+  view.build
+- view.dom
++ view.string
+  state
+- state.handler
+- state.handler.history
+- router
+- router.register
+- router.fetch
+```
