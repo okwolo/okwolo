@@ -1,8 +1,6 @@
 # Blobs
 
-Okwolo and its modules all have a `use` function which takes a single object as argument called a blob. Blobs are very powerful since they are understood by all modules and allow access to deeper layers than the top level api.
-
-A blob can have as many unique keys as necessary. Each key will be tested on each module to determine if that module supports it. The value assigned to each key can be a single object, or an array of objects (ex. adding multiple actions at once). This library is purposefully built to handle the addition of blobs in any order and at any time in an application's lifecycle.
+Okwolo apps have a `use` function which takes a single object as argument called a blob. Blobs are powerful configuration objects which all modules can listen for. This allows for customization far beyond what is available in the api. This library is purposefully built to handle the addition of blobs at any time in an application's lifecycle.
 
 Here is an example of a blob that adds two watchers and adds a route.
 
@@ -13,7 +11,7 @@ app.use({
 });
 ````
 
-Named blobs are an extension of regular blobs that ensure that the blob is only ever used once in a single app instance. This can be done by simply adding a "name" key to a blob and using it as before.
+Blobs can also be named in order to ensure that they are only ever used once in a single app instance. This can be done by simply adding a "name" key.
 
 ````javascript
 let myPlugin = {
@@ -25,15 +23,7 @@ app.use(myPlugin);
 app.use(myPlugin); // will not add the middleware again
 ````
 
-## Comprehensive list of blob keys
-
-| module         | recognized keys                                                                 |
-|----------------|---------------------------------------------------------------------------------|
-| @okwolo/state  | `name`, `action`, `watcher`, `middleware`                                       |
-| @okwolo/router | `name`, `route`, `base`                                                         |
-| @okwolo/dom    | `name`, `target`, `builder`, `draw`, `update`, `build`, `prebuild`, `postbuild` |
-
-### `action`
+## `action`
 
 ````javascript
 let action = {type, target, handler}
@@ -65,24 +55,82 @@ app.act('REMOVE_HOBBY', 0);
 app.getState(); // {name: 'John', hobbies: ['gardening']}
 ````
 
-### `watcher`
+## `base`
 
 ````javascript
-let watcher = watcher
-  // watcher: function that gets called after each state change [(state, actionType, params) => ...]
+let base = base
+  // base: string specifying the base url of the page(s)
 ````
 
-Watchers cannot modify the state since they are given a copy, but they can issue more actions.
+````javascript
+let base = '/subdir/myapp';
+
+app.use({base});
+
+app.redirect('/users');
+  // navigates to '/subdir/myapp/users'
+  // matches routes for '/users'
+````
+
+## `build`
 
 ````javascript
-let watcher = (state, actionType, params) => {
-    console.log(`action of type ${actionType} was performed`);
+let build = build
+  // build: function that creates VDOM out of the return value of an element [(element) => vdom]
+````
+
+````javascript
+let element = (               =>        let vdom = {
+    ['div#title', {}, [       =>            tagName: 'div',
+        'Hello World!',       =>            attributes: {
+    ]]                        =>                id: 'title',
+);                            =>            },
+                              =>            children: [
+                              =>                {
+                              =>                    text: 'Hello World!',
+                              =>                },
+                              =>            ],
+                              =>        };
+````
+
+## `builder`
+
+````javascript
+let builder = builder
+  // builder: function which creates an element out of state [(state) => element]
+````
+
+````javascript
+let builder = (state) => (
+    ['div | background-color: red;', {} [
+       ['span.title', {} [
+           state.title,
+       ]]
+    ]]
+);
+
+app.use(builder);
+````
+
+## `draw`
+
+````javascript
+let draw = draw
+  // draw: function that handles the initial drawing to a new target [(target, vdom) => ... vdom]
+````
+
+Using this blob key will override the default draw function.
+
+````javascript
+let draw = (target, vdom) => {
+    target.innerHTML = magicallyStringify(vdom);
+    return vdom;
 };
 
-app.use({watcher});
+app.use({draw})
 ````
 
-### `middleware`
+## `middleware`
 
 ````javascript
 let middleware = middleware
@@ -107,7 +155,33 @@ let middlware = (next, state, actionType, params) => {
 app.use({middleware});
 ````
 
-### `route`
+## `postbuild`
+
+````javascript
+let postbuild = postbuild
+  // postbuild: function to manipulate the vdom created by the build function [(vdom) => ... vdom]
+````
+
+## `prebuild`
+
+````javascript
+let prebuild = prebuild
+  // prebuild: function to manipulate elements before they are passed to build [(element) => ... element]
+````
+
+Here is an example which wraps the app in a div.
+
+````javascript
+let prebuild = (original) => (
+    ['div | width: 100vw;', {},
+        original,
+    ]
+);
+
+app.use({prebuild});
+````
+
+## `route`
 
 ````javascript
 let route = {path, handler}
@@ -126,24 +200,7 @@ let route = {
 app.redirect('/user/123/profile');
 ````
 
-### `base`
-
-````javascript
-let base = base
-  // base: string specifying the base url of the page(s)
-````
-
-````javascript
-let base = '/subdir/myapp';
-
-app.use({base});
-
-app.redirect('/users');
-  // navigates to '/subdir/myapp/users'
-  // matches routes for '/users'
-````
-
-### `target`
+## `target`
 
 ````javascript
 let target = target
@@ -156,44 +213,7 @@ let target = document.querySelector('.app-wrapper');
 app.use({target});
 ````
 
-### `builder`
-
-````javascript
-let builder = builder
-  // builder: function which creates an element out of state [(state) => element]
-````
-
-````javascript
-let builder = (state) => (
-    ['div | background-color: red;', {} [
-       ['span.title', {} [
-           state.title,
-       ]]
-    ]]
-);
-
-app.use(builder);
-````
-
-### `draw`
-
-````javascript
-let draw = draw
-  // draw: function that handles the initial drawing to a new target [(target, vdom) => ... vdom]
-````
-
-Using this blob key will override the default draw function.
-
-````javascript
-let draw = (target, vdom) => {
-    target.innerHTML = magicallyStringify(vdom);
-    return vdom;
-};
-
-app.use({draw})
-````
-
-### `update`
+## `update`
 
 ````javascript
 let update = update
@@ -220,49 +240,19 @@ app.use({
 })
 ````
 
-### `build`
+## `watcher`
 
 ````javascript
-let build = build
-  // build: function that creates VDOM out of the return value of an element [(element) => vdom]
+let watcher = watcher
+  // watcher: function that gets called after each state change [(state, actionType, params) => ...]
 ````
 
-````javascript
-let element = (               =>        let vdom = {
-    ['div#title', {}, [       =>            tagName: 'div',
-        'Hello World!',       =>            attributes: {
-    ]]                        =>                id: 'title',
-);                            =>            },
-                              =>            children: [
-                              =>                {
-                              =>                    text: 'Hello World!',
-                              =>                },
-                              =>            ],
-                              =>        };
-````
-
-### `prebuild`
+Watchers cannot modify the state since they are given a copy, but they can issue more actions.
 
 ````javascript
-let prebuild = prebuild
-  // prebuild: function to manipulate elements before they are passed to build [(element) => ... element]
-````
+let watcher = (state, actionType, params) => {
+    console.log(`action of type ${actionType} was performed`);
+};
 
-Here is an example which wraps the app in a div.
-
-````javascript
-let prebuild = (original) => (
-    ['div | width: 100vw;', {},
-        original,
-    ]
-);
-
-app.use({prebuild});
-````
-
-### `postbuild`
-
-````javascript
-let postbuild = postbuild
-  // postbuild: function to manipulate the vdom created by the build function [(vdom) => ... vdom]
+app.use({watcher});
 ````

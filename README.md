@@ -10,12 +10,11 @@
 
 `okwolo` is a small framework made to jumpstart projects by solving common web application challenges. The default okwolo package includes state management, layout and routing functionality. All modules have a common `.use` function that accepts okwolo's configuration objects called blobs.
 
-| Documentation links | |
-|---|---|
-| top level api | [`/docs/api`](https://github.com/okwolo/okwolo/blob/master/docs/api.md) |
-| element syntax | [`/docs/syntax`](https://github.com/okwolo/okwolo/blob/master/docs/syntax.md) |
-| kits | [`/docs/kits`](https://github.com/okwolo/okwolo/blob/master/docs/kits.md) |
-| blobs | [`/docs/blobs`](https://github.com/okwolo/okwolo/blob/master/docs/blobs.md) |
+# Documentation
+
+| [top level api](https://github.com/okwolo/okwolo/blob/master/docs/api.md) | [element syntax](https://github.com/okwolo/okwolo/blob/master/docs/syntax.md) | [kits](https://github.com/okwolo/okwolo/blob/master/docs/kits.md) | [blobs](https://github.com/okwolo/okwolo/blob/master/docs/blobs.md) |
+|---|---|---|---|
+
 
 # Example
 
