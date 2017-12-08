@@ -39,6 +39,7 @@
     "eslint-config-google": "^0.9.1",
     "globby": "^6.1.0",
     "gulp": "^3.9.1",
+    "gulp-replace": "^0.6.1",
     "jest": "^21.2.1",
     "jest-serializer-html-string": "^1.0.1",
     "lodash": "^4.17.4",
