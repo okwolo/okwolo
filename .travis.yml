@@ -1,13 +1,13 @@
 language: node_js
 
 node_js:
-  - "node"
+    - "node"
 
 after_success: "npm run codecov"
 
 cache:
-  directories:
-    - "node_modules"
+    directories:
+        - "node_modules"
 
 notifications:
-  email: false
+    email: false

@@ -1,62 +1,62 @@
 {
-  "name": "okwolo",
-  "version": "1.2.0",
-  "description": "light javascript framework to build web applications",
-  "main": "src/index.js",
-  "browser": "okwolo.js",
-  "types": "src/index.d.ts",
-  "keywords": [
-    "okwolo",
-    "vdom",
-    "router",
-    "state"
-  ],
-  "license": "MIT",
-  "scripts": {
-    "publish": "webpack && gulp prepublish && npm publish && gulp clean",
-    "test": "run-s test:*",
-    "test:eslint": "eslint **/*.js",
-    "test:jest": "jest",
-    "test:build": "run-s build",
-    "codecov": "jest --coverage && codecov",
-    "build": "webpack"
-  },
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/okwolo/okwolo.git"
-  },
-  "dependencies": {
-    "path-to-regexp": "^2.1.0"
-  },
-  "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.1",
-    "codecov": "^3.0.0",
-    "compression-webpack-plugin": "^1.0.1",
-    "del": "^3.0.0",
-    "eslint": "^4.9.0",
-    "eslint-config-google": "^0.9.1",
-    "globby": "^6.1.0",
-    "gulp": "^3.9.1",
-    "gulp-replace": "^0.6.1",
-    "jest": "^21.2.1",
-    "jest-serializer-html-string": "^1.0.1",
-    "lodash": "^4.17.4",
-    "npm-run-all": "^4.1.1",
-    "uglifyjs-webpack-plugin": "^1.0.1",
-    "webpack": "^3.7.1"
-  },
-  "jest": {
-    "testMatch": [
-      "**/test/**/!(test.setup).js"
+    "name": "okwolo",
+    "version": "1.2.0",
+    "description": "light javascript framework to build web applications",
+    "main": "src/index.js",
+    "browser": "okwolo.js",
+    "types": "src/index.d.ts",
+    "keywords": [
+        "okwolo",
+        "vdom",
+        "router",
+        "state"
     ],
-    "setupTestFrameworkScriptFile": "./test/test.setup.js",
-    "snapshotSerializers": [
-      "jest-serializer-html-string"
+    "license": "MIT",
+    "scripts": {
+        "publish": "webpack && gulp prepublish && npm publish && gulp clean",
+        "test": "run-s test:*",
+        "test:eslint": "eslint **/*.js",
+        "test:jest": "jest",
+        "test:build": "run-s build",
+        "codecov": "jest --coverage && codecov",
+        "build": "webpack"
+    },
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/okwolo/okwolo.git"
+    },
+    "dependencies": {
+        "path-to-regexp": "^2.1.0"
+    },
+    "devDependencies": {
+        "babel-core": "^6.26.0",
+        "babel-loader": "^7.1.2",
+        "babel-preset-env": "^1.6.1",
+        "codecov": "^3.0.0",
+        "compression-webpack-plugin": "^1.0.1",
+        "del": "^3.0.0",
+        "eslint": "^4.9.0",
+        "eslint-config-google": "^0.9.1",
+        "globby": "^6.1.0",
+        "gulp": "^3.9.1",
+        "gulp-replace": "^0.6.1",
+        "jest": "^21.2.1",
+        "jest-serializer-html-string": "^1.0.1",
+        "lodash": "^4.17.4",
+        "npm-run-all": "^4.1.1",
+        "uglifyjs-webpack-plugin": "^1.0.1",
+        "webpack": "^3.7.1"
+    },
+    "jest": {
+        "testMatch": [
+            "**/test/**/!(test.setup).js"
+        ],
+        "setupTestFrameworkScriptFile": "./test/test.setup.js",
+        "snapshotSerializers": [
+            "jest-serializer-html-string"
+        ]
+    },
+    "eslintIgnore": [
+        "dist/"
     ]
-  },
-  "eslintIgnore": [
-    "dist/"
-  ]
 }
