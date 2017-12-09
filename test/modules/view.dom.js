@@ -151,7 +151,7 @@ describe('view.dom', () => {
                 app.use({builder: () => ['test|height:2px;', {style: 'width: 2px;'}]});
                 await sleep();
                 expect(wrapper.innerHTML)
-                    .toBe('<test style="width: 2px; height: 2px;"></test>');
+                    .toBe('<test style="height: 2px; width: 2px;"></test>');
             });
 
             it('should read the children from the third element in the array', async () => {

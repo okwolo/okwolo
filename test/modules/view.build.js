@@ -1,0 +1,257 @@
+'use strict';
+
+const vb = require('../../src/modules/view.build');
+
+let build;
+
+o(
+    ({use}) => use.on('build', (b) => build = b),
+    vb,
+);
+
+describe('view.build', () => {
+    it('should accept null', () => {
+        const element = null;
+        const vdom = {
+            text: '',
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should accept booleans', () => {
+        const element1 = true;
+        const element2 = false;
+        const vdom = {
+            text: '',
+        };
+        expect(build(element1))
+            .toEqual(vdom);
+        expect(build(element2))
+            .toEqual(vdom);
+    });
+
+    it('should accept numbers', () => {
+        const element = 42;
+        const vdom = {
+            text: '42',
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should accept text', () => {
+        const element = 'test string';
+        const vdom = {
+            text: 'test string',
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should accept tags', () => {
+        const element = ['div', {}, []];
+        const vdom = {
+            tagName: 'div',
+            attributes: {},
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should recur over child elements', () => {
+        const element = (
+            ['div', {}, [
+                ['div'],
+                'test',
+            ]]
+        );
+        const vdom = {
+            tagName: 'div',
+            attributes: {},
+            children: [
+                {
+                    tagName: 'div',
+                    attributes: {},
+                    children: [],
+                },
+                {
+                    text: 'test',
+                },
+            ],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should accept components', () => {
+        const element = [() => 'test'];
+        const vdom = {
+            text: 'test',
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should reject other types', () => {
+        const element = undefined;
+        expect(() => build(element))
+            .toThrow(/type/g);
+    });
+
+    it('should give error context about the broken element\'s parent', () => {
+        const element1 = undefined;
+        const element2 = ['div.test', {}, [{}]];
+        expect(() => build(element1))
+            .toThrow(/root/g);
+        expect(() => build(element2))
+            .toThrow(/div\.test/g);
+    });
+
+    it('should pass props and children to components', () => {
+        const component = ({test, children}) => {
+            expect(test)
+                .toBeTruthy();
+            expect(children)
+                .toEqual(['test']);
+            return 'test';
+        };
+        const element = [component, {test: true}, ['test']];
+        const vdom = {
+            text: 'test',
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should reject invalid element tag', () => {
+        const element = [{}];
+        expect(() => build(element))
+            .toThrow(/tag.*string[^]*\{\}/g);
+    });
+
+    it('should reject invalid element attributes', () => {
+        const element = ['div', 'attributes1'];
+        expect(() => build(element))
+            .toThrow(/attributes.*object[^]*attributes1/g);
+    });
+
+    it('should reject invalid element children', () => {
+        const element = ['div', 'attributes1'];
+        expect(() => build(element))
+            .toThrow(/attributes.*object[^]*attributes1/g);
+    });
+
+    it('should accept omitted children', () => {
+        const element = ['div', {}];
+        const vdom = {
+            tagName: 'div',
+            attributes: {},
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should accept omitted attributes', () => {
+        const element = ['div'];
+        const vdom = {
+            tagName: 'div',
+            attributes: {},
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should reject invalid component props', () => {
+        const element = [() => 'test', 'props1'];
+        expect(() => build(element))
+            .toThrow(/props.*object[^]*props1/g);
+    });
+
+    it('should reject invalid component children', () => {
+        const element = [() => 'test', {}, 'children1'];
+        expect(() => build(element))
+            .toThrow(/children.*array[^]*children1/g);
+    });
+
+    it('should extract element\'s id from the tag', () => {
+        const element = ['div#id'];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                id: 'id',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should prioritize attribute\'s id', () => {
+        const element = ['div#id1', {id: 'id2'}];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                id: 'id2',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should extract element\'s className(s) from the tag', () => {
+        const element = ['div.class1.class2'];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                className: 'class1 class2',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should combine classNames form the tag and the attributes', () => {
+        const element = ['div.class1', {className: 'class2'}];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                className: 'class2 class1',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should extract element\'s styles from the tag', () => {
+        const element = ['div | width: 2px;'];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                style: 'width: 2px;',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+
+    it('should place attribute\'s styles after tag\'s', () => {
+        const element = ['div | width: 2px;', {style: 'width: 4px;'}];
+        const vdom = {
+            tagName: 'div',
+            attributes: {
+                style: 'width: 2px;width: 4px;',
+            },
+            children: [],
+        };
+        expect(build(element))
+            .toEqual(vdom);
+    });
+});
