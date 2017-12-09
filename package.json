@@ -49,11 +49,14 @@
   },
   "jest": {
     "testMatch": [
-      "**/test/**/*.js"
+      "**/test/**/!(test.setup).js"
     ],
-    "setupTestFrameworkScriptFile": "./test.setup.js",
+    "setupTestFrameworkScriptFile": "./test/test.setup.js",
     "snapshotSerializers": [
       "jest-serializer-html-string"
     ]
-  }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
 }

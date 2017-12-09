@@ -1,6 +1,6 @@
 'use strict';
 
-const core = require('./src/core');
+const core = require('../src/core');
 
 // global function to facilitate testing modules
 window.wrapper = document.createElement('div');

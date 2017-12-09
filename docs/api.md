@@ -7,7 +7,7 @@ okwolo(target[, window]);
   // window: window object can be specified if needed
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/okwolo.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/okwolo.js)
 
 #
 
@@ -20,7 +20,7 @@ app(route, init);
   // init: function that returns an element builder function [(routeParams) => (state) => element]
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/app.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/app.js)
 
 #
 
@@ -32,7 +32,7 @@ app.setState(updater);
   // updater: function that returns the new state [(currentState) => ... newState]
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/setstate.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/setstate.js)
 
 #
 
@@ -41,7 +41,7 @@ app.setState(updater);
 app.getState();
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/getstate.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/getstate.js)
 
 #
 
@@ -52,7 +52,7 @@ app.redirect(path[, params]);
   // params: object to be passed to the route handler
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/redirect.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/redirect.js)
 
 #
 
@@ -63,7 +63,7 @@ app.show(path[, params]);
   // params: object to be passed to the route handler
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/show.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/show.js)
 
 #
 
@@ -76,7 +76,7 @@ app.act(action);
   // action: function that returns the new state [(currentState) => ... newState]
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/act.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/act.js)
 
 #
 
@@ -86,7 +86,7 @@ app.use(blob);
   // blob: the blob to be added
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/use.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/use.js)
 
 #
 
@@ -95,7 +95,7 @@ app.use(blob);
 app.update();
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/update.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/update.js)
 
 #
 
@@ -104,7 +104,7 @@ app.update();
 app.undo();
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/undo.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/undo.js)
 
 #
 
@@ -113,4 +113,4 @@ app.undo();
 app.redo();
 ````
 
-[example](https://github.com/okwolo/okwolo/blob/master/examples/redo.js)
+[example](https://github.com/okwolo/okwolo/blob/master/docs/examples/redo.js)
