@@ -75,30 +75,39 @@ module.exports = function () {
     var isDefined = function isDefined(value) {
         return value !== undefined;
     };
+
     var isNull = function isNull(value) {
         return value === null;
     };
+
     var isArray = function isArray(value) {
         return Array.isArray(value);
     };
+
     var isFunction = function isFunction(value) {
         return typeof value === 'function';
     };
+
     var isString = function isString(value) {
         return typeof value === 'string';
     };
+
     var isNumber = function isNumber(value) {
         return typeof value === 'number';
     };
+
     var isBoolean = function isBoolean(value) {
         return typeof value === 'boolean';
     };
+
     var isObject = function isObject(value) {
         return !!value && value.constructor === Object;
     };
+
     var isNode = function isNode(value) {
         return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
     };
+
     var isRegExp = function isRegExp(value) {
         return value instanceof RegExp;
     };
@@ -128,13 +137,18 @@ module.exports = function () {
 
         var print = function print(obj) {
             // formatted printing of any culript value. it uses a custom
-            // replacer function to handle functions and print them instead
-            // of ignoring them. the output is also formatted and indented
-            // to four spaces from the left.
-            return '\n>>> ' + String(JSON.stringify(obj, function (key, value) {
+            // replacer function to handle functions and print them correctly
+            var stringified = JSON.stringify(obj, function (key, value) {
                 return typeof value === 'function' ? value.toString() : value;
-            }, 2)).replace(/\n/g, '\n    ');
+            }, 2);
+
+            // stringified value is passed through the String constructor to
+            // correct for the "undefined" case. each line is then indented.
+            var indented = String(stringified).replace(/\n/g, '\n    ');
+
+            return '\n>>> ' + indented;
         };
+
         if (!assertion) {
             throw new Error('@okwolo.' + message + culprits.map(print).join(''));
         }
@@ -276,7 +290,7 @@ var _require = __webpack_require__(0)(),
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '1.3.0';
+var version = '2.0.0';
 
 module.exports = function (_ref) {
     var _ref$modules = _ref.modules,
@@ -537,6 +551,8 @@ var classnames = function classnames() {
 // will build a vdom structure from the output of the app's builder funtions. this
 // output must be valid element syntax, or an expception will be thrown.
 var build = function build(element) {
+    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['root'];
+
     // boolean values will produce no visible output to make it easier to use inline
     // logical expressions without worrying about unexpected strings on the page.
     if (isBoolean(element)) {
@@ -558,7 +574,7 @@ var build = function build(element) {
     }
 
     // the only remaining element types are formatted as arrays.
-    assert(isArray(element), 'view.build : vdom object is not a recognized type', element);
+    assert(isArray(element), 'view.build : vdom object is not a recognized type', ancestry, element);
 
     // early recursive return when the element is seen to be have the component syntax.
     if (isFunction(element[0])) {
@@ -571,11 +587,11 @@ var build = function build(element) {
             _element2$2 = _element2[2],
             _children = _element2$2 === undefined ? [] : _element2$2;
 
-        assert(isObject(props), 'view.build : component\'s props is not an object', element, props);
-        assert(isArray(_children), 'view.build : component\'s children is not an array', element, _children);
+        assert(isObject(props), 'view.build : component\'s props is not an object', ancestry, element, props);
+        assert(isArray(_children), 'view.build : component\'s children is not an array', ancestry, element, _children);
         // the component function is called with an object containing the props
         // and an extra key with the children of this element.
-        return build(component(Object.assign({}, props, { children: _children })));
+        return build(component(Object.assign({}, props, { children: _children }), ancestry));
     }
 
     var _element3 = element,
@@ -586,15 +602,15 @@ var build = function build(element) {
         _element4$2 = _element4[2],
         children = _element4$2 === undefined ? [] : _element4$2;
 
-    assert(isString(tagType), 'view.build : tag property is not a string', element, tagType);
-    assert(isObject(attributes), 'view.build : attributes is not an object', element, attributes);
-    assert(isArray(children), 'view.build : children of vdom object is not an array', element, children);
+    assert(isString(tagType), 'view.build : tag property is not a string', ancestry, element, tagType);
+    assert(isObject(attributes), 'view.build : attributes is not an object', ancestry, element, attributes);
+    assert(isArray(children), 'view.build : children of vdom object is not an array', ancestry, element, children);
 
     // regular expression to capture values from the shorthand element tag syntax.
     // it allows each section to be seperated by any amount of spaces, but enforces
     // the order of the capture groups (tagName #id .className | style)
     var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-    assert(isArray(match), 'view.build : tag property cannot be parsed', tagType);
+    assert(isArray(match), 'view.build : tag property cannot be parsed', ancestry, tagType);
     // first element is not needed since it is the entire matched string. default
     // values are not used to avoid adding blank attributes to the nodes.
 
@@ -624,14 +640,18 @@ var build = function build(element) {
             style = (style + ';').replace(/;;$/g, ';');
             // styles defined in the attributes are given priority by being
             // placed after the ones from the tag.
-            attributes.style += style + attributes.style;
+            attributes.style = style + attributes.style;
         }
     }
+
+    ancestry.push(tagType);
 
     return {
         tagName: tagName,
         attributes: attributes,
-        children: children.map(build)
+        children: children.map(function (child) {
+            return build(child, ancestry);
+        })
     };
 };
 

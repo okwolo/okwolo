@@ -3,14 +3,23 @@
 module.exports = () => {
     // all typechecks must always return a boolean value.
     const isDefined = (value) => value !== undefined;
+
     const isNull = (value) => value === null;
+
     const isArray = (value) => Array.isArray(value);
+
     const isFunction = (value) => typeof value === 'function';
+
     const isString = (value) => typeof value === 'string';
+
     const isNumber = (value) => typeof value === 'number';
+
     const isBoolean = (value) => typeof value === 'boolean';
+
     const isObject = (value) => (!!value) && (value.constructor === Object);
+
     const isNode = (value) => !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
+
     const isRegExp = (value) => value instanceof RegExp;
 
     // there cannot be any assumptions about the environment globals so
@@ -32,15 +41,21 @@ module.exports = () => {
     const assert = (assertion, message, ...culprits) => {
         const print = (obj) => {
             // formatted printing of any culript value. it uses a custom
-            // replacer function to handle functions and print them instead
-            // of ignoring them. the output is also formatted and indented
-            // to four spaces from the left.
-            return '\n>>> ' + String(JSON.stringify(obj, (key, value) => {
+            // replacer function to handle functions and print them correctly
+            const stringified = JSON.stringify(obj, (key, value) => {
                 return (typeof value === 'function')
                     ? value.toString()
                     : value;
-            }, 2)).replace(/\n/g, '\n    ');
+            }, 2);
+
+            // stringified value is passed through the String constructor to
+            // correct for the "undefined" case. each line is then indented.
+            const indented = String(stringified)
+                .replace(/\n/g, '\n    ');
+
+            return `\n>>> ${indented}`;
         };
+
         if (!assertion) {
             throw new Error(`@okwolo.${message}${culprits.map(print).join('')}`);
         }
