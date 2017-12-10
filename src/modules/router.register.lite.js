@@ -1,5 +1,7 @@
 'use strict';
 
+// @fires use #register [router]
+
 const keyPattern = /:\w+/g;
 
 // creates a regex pattern from an input path string. all tags are replaced by a

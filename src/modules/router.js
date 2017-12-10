@@ -1,5 +1,16 @@
 'use strict';
 
+// @fires   emit #redirect [router]
+// @fires   emit #show     [router]
+// @fires   use  #api      [core]
+// @fires   use  #primary  [core]
+// @listens emit #redirect
+// @listens emit #show
+// @listens use  #base
+// @listens use  #fetch
+// @listens use  #register
+// @listens use  #route
+
 const {assert, isString, isObject, isFunction, makeQueue} = require('../utils')();
 
 module.exports = ({emit, use}, global) => {

@@ -1,5 +1,7 @@
 'use strict';
 
+// @fires use #fetch [router]
+
 module.exports = ({use}) => {
     // the store's initial value is undefined so it needs to be defaulted
     // to an empty array. this function should be the one doing the action

@@ -126,6 +126,20 @@ module.exports = function () {
         return JSON.parse(JSON.stringify(obj));
     };
 
+    // internal function that wraps JSON.stringify
+    var prettyPrint = function prettyPrint(obj) {
+        // uses a custom replacer to correctly handle functions
+        var stringified = JSON.stringify(obj, function (key, value) {
+            return typeof value === 'function' ? value.toString() : value;
+        }, 2);
+
+        // stringified value is passed through the String constructor to
+        // correct for the "undefined" case. each line is then indented.
+        var indented = String(stringified).replace(/\n/g, '\n    ');
+
+        return '\n>>> ' + indented;
+    };
+
     // will throw an error containing the message and the culprits if the
     // assertion is falsy. the message is expected to contain information
     // about the location of the error followed by a meaningful error message.
@@ -135,22 +149,8 @@ module.exports = function () {
             culprits[_key - 2] = arguments[_key];
         }
 
-        var print = function print(obj) {
-            // formatted printing of any culript value. it uses a custom
-            // replacer function to handle functions and print them correctly
-            var stringified = JSON.stringify(obj, function (key, value) {
-                return typeof value === 'function' ? value.toString() : value;
-            }, 2);
-
-            // stringified value is passed through the String constructor to
-            // correct for the "undefined" case. each line is then indented.
-            var indented = String(stringified).replace(/\n/g, '\n    ');
-
-            return '\n>>> ' + indented;
-        };
-
         if (!assertion) {
-            throw new Error('@okwolo.' + message + culprits.map(print).join(''));
+            throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
         }
     };
 
@@ -373,6 +373,19 @@ module.exports = function (_ref) {
 "use strict";
 
 
+// @fires   emit #update  [view]
+// @fires   use  #api     [core]
+// @fires   use  #primary [core]
+// @listens emit #state
+// @listens emit #update
+// @listens use  #build
+// @listens use  #builder
+// @listens use  #draw
+// @listens use  #postbuild
+// @listens use  #prebuild
+// @listens use  #target
+// @listens use  #update
+
 var _require = __webpack_require__(0)(),
     assert = _require.assert,
     isDefined = _require.isDefined,
@@ -513,6 +526,8 @@ module.exports = function (_ref) {
 
 "use strict";
 
+
+// @fires use #build [view]
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
@@ -671,6 +686,9 @@ module.exports = function (_ref) {
 "use strict";
 
 
+// @fires use #draw   [view]
+// @fires use #update [view]
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 var _require = __webpack_require__(0)(),
@@ -770,6 +788,12 @@ module.exports = function (_ref) {
 
 "use strict";
 
+
+// @fires   emit #state   [state]
+// @fires   use  #api     [core]
+// @fires   use  #handler [state]
+// @listens emit #state
+// @listens use  #handler
 
 var _require = __webpack_require__(0)(),
     assert = _require.assert,

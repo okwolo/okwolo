@@ -1,5 +1,8 @@
 'use strict';
 
+// @fires use #draw   [view]
+// @fires use #update [view]
+
 const {assert, isDefined, isNode, isFunction} = require('../utils')();
 
 // shallow diff of two objects which returns an array of keys where the value is

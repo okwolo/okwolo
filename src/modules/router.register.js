@@ -1,5 +1,7 @@
 'use strict';
 
+// @fires use #register [router]
+
 // this is the same library that is used in by express to match routes.
 const pathToRegexp = require('path-to-regexp');
 

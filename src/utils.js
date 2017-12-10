@@ -34,30 +34,30 @@ module.exports = () => {
         return JSON.parse(JSON.stringify(obj));
     };
 
+    // internal function that wraps JSON.stringify
+    const prettyPrint = (obj) => {
+        // uses a custom replacer to correctly handle functions
+        const stringified = JSON.stringify(obj, (key, value) => {
+            return (typeof value === 'function')
+                ? value.toString()
+                : value;
+        }, 2);
+
+        // stringified value is passed through the String constructor to
+        // correct for the "undefined" case. each line is then indented.
+        const indented = String(stringified)
+            .replace(/\n/g, '\n    ');
+
+        return `\n>>> ${indented}`;
+    };
+
     // will throw an error containing the message and the culprits if the
     // assertion is falsy. the message is expected to contain information
     // about the location of the error followed by a meaningful error message.
     // (ex. "router.redirect : url is not a string")
     const assert = (assertion, message, ...culprits) => {
-        const print = (obj) => {
-            // formatted printing of any culript value. it uses a custom
-            // replacer function to handle functions and print them correctly
-            const stringified = JSON.stringify(obj, (key, value) => {
-                return (typeof value === 'function')
-                    ? value.toString()
-                    : value;
-            }, 2);
-
-            // stringified value is passed through the String constructor to
-            // correct for the "undefined" case. each line is then indented.
-            const indented = String(stringified)
-                .replace(/\n/g, '\n    ');
-
-            return `\n>>> ${indented}`;
-        };
-
         if (!assertion) {
-            throw new Error(`@okwolo.${message}${culprits.map(print).join('')}`);
+            throw new Error(`@okwolo.${message}${culprits.map(prettyPrint).join('')}`);
         }
     };
 

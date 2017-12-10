@@ -1,5 +1,10 @@
 'use strict';
 
+// @fires emit #act     [state.handler]
+// @fires use  #api     [core]
+// @fires use  #action  [state.handler]
+// @fires use  #watcher [state.handler]
+
 module.exports = ({emit, use}) => {
     const resetActionType = '__RESET__';
     // reference to the initial value is kept in order to be able to check if the

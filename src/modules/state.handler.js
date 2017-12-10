@@ -1,5 +1,15 @@
 'use strict';
 
+// @fires   emit #state   [state]
+// @fires   emit #act     [state]
+// @fires   use  #action  [state.handler]
+// @fires   use  #api     [core]
+// @fires   use  #handler [state]
+// @listens emit #act
+// @listens use  #action
+// @listens use  #middleware
+// @listens use  #watcher
+
 const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils')();
 
 module.exports = ({emit, use}) => {

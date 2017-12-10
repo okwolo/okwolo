@@ -2,7 +2,7 @@
     "name": "okwolo",
     "version": "1.2.0",
     "description": "light javascript framework to build web applications",
-    "main": "src/index.js",
+    "main": "src/kits/standard.js",
     "browser": "okwolo.js",
     "types": "src/index.d.ts",
     "keywords": [

@@ -1,5 +1,18 @@
 'use strict';
 
+// @fires   emit #update  [view]
+// @fires   use  #api     [core]
+// @fires   use  #primary [core]
+// @listens emit #state
+// @listens emit #update
+// @listens use  #build
+// @listens use  #builder
+// @listens use  #draw
+// @listens use  #postbuild
+// @listens use  #prebuild
+// @listens use  #target
+// @listens use  #update
+
 const {assert, isDefined, isFunction} = require('../utils')();
 
 module.exports = ({emit, use}) => {

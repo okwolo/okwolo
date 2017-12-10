@@ -1,6 +1,6 @@
 'use strict';
 
-const standard = require('../../src/');
+const standard = require('../../src/kits/standard');
 
 let wrapper;
 
