@@ -241,6 +241,119 @@ describe('view.dom', () => {
                     .toBe('<b>b</b>');
             });
 
+            it('should correctly add tag elements', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        ['first', {key: 'key2'}],
+                        ['fourth'],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<first></first>' +
+                            '<fourth></fourth>' +
+                        '</div>'
+                    );
+                app.emit({state: (
+                    ['div', {}, [
+                        ['first', {key: 'key1'}],
+                        ['second', {key: 'key2'}],
+                        ['third', {key: 'key3'}],
+                        ['fourth', {key: 'key4'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<first></first>' +
+                            '<second></second>' +
+                            '<third></third>' +
+                            '<fourth></fourth>' +
+                        '</div>'
+                    );
+            });
+
+            it('should correctly add text elements', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        'first',
+                        'fourth',
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            'first' +
+                            'fourth' +
+                        '</div>'
+                    );
+                app.emit({state: (
+                    ['div', {}, [
+                        'first',
+                        'second',
+                        'third',
+                        'fourth',
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            'first' +
+                            'second' +
+                            'third' +
+                            'fourth' +
+                        '</div>'
+                    );
+            });
+
+            it('should correctly add mixed elements', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        'first',
+                        ['third', {key: 'key1'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            'first' +
+                            '<third></third>' +
+                        '</div>'
+                    );
+                app.emit({state: (
+                    ['div', {}, [
+                        'first',
+                        'second',
+                        ['third', {key: 'key1'}],
+                        ['fourth'],
+                        'fifth',
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            'first' +
+                            'second' +
+                            '<third></third>' +
+                            '<fourth></fourth>' +
+                            'fifth' +
+                        '</div>'
+                    );
+            });
+
             it('should not replace elements when the tagName doesn\'t change', async () => {
                 const app = o(v, vb, vd);
                 app.use({builder: (s) => ['div' + s]});
@@ -318,6 +431,31 @@ describe('view.dom', () => {
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test5');
+            });
+
+            it('should diff according to the element keys', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        ['div.first', {key: 'first'}],
+                        ['div.second', {key: 'second'}],
+                    ]]
+                )});
+                await sleep();
+                const first = wrapper.querySelector('.first');
+                const second = wrapper.querySelector('.second');
+                app.emit({state: (
+                    ['div', {}, [
+                        ['div.second', {key: 'second'}],
+                        ['div.first', {key: 'first'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.querySelector('.first'))
+                    .toBe(first);
+                expect(wrapper.querySelector('.second'))
+                    .toBe(second);
             });
         });
     });

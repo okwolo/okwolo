@@ -26,7 +26,7 @@ const classnames = (...args) => {
 
 // will build a vdom structure from the output of the app's builder funtions. this
 // output must be valid element syntax, or an expception will be thrown.
-const build = (element, ancestry = ['root']) => {
+const build = (element, ancestry = 'root') => {
     // boolean values will produce no visible output to make it easier to use inline
     // logical expressions without worrying about unexpected strings on the page.
     if (isBoolean(element)) {
@@ -61,10 +61,10 @@ const build = (element, ancestry = ['root']) => {
         return build(component(Object.assign({}, props, {children}), ancestry));
     }
 
-    let [tagType, attributes = {}, children = []] = element;
+    let [tagType, attributes = {}, childList = []] = element;
     assert(isString(tagType), 'view.build : tag property is not a string', ancestry, element, tagType);
     assert(isObject(attributes), 'view.build : attributes is not an object', ancestry, element, attributes);
-    assert(isArray(children), 'view.build : children of vdom object is not an array', ancestry, element, children);
+    assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry, element, childList);
 
     // regular expression to capture values from the shorthand element tag syntax.
     // it allows each section to be seperated by any amount of spaces, but enforces
@@ -100,14 +100,32 @@ const build = (element, ancestry = ['root']) => {
         }
     }
 
-    ancestry.push(tagType);
+    // ancestry is recorded to give more context to error messages
+    ancestry += ` -> ${tagType}`;
+
+    // childList is converted to a children object with each child having its
+    // own key. the child order is also recorded.
+    const children = {};
+    const childOrder = [];
+    childList.forEach((childElement, key) => {
+        const child = build(childElement, ancestry);
+        // a key attribute will override the default array index key.
+        if (child.attributes && 'key' in child.attributes) {
+            key = child.attributes.key;
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key', ancestry, key);
+        }
+        // keys are normalized to strings to properly compare them.
+        key = String(key);
+        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        childOrder.push(key);
+        children[key] = child;
+    });
 
     return {
         tagName,
         attributes,
-        children: children.map((child) => {
-            return build(child, ancestry);
-        }),
+        children,
+        childOrder,
     };
 };
 

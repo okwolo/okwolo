@@ -41,7 +41,7 @@ const renderToString = (target, _vdom) => {
         // the input of this function can be assumed to be proper vdom syntax
         // since it has already been parsed and "transpiled" by the dom
         // module's "build" blob.
-        let {tagName, attributes = {}, children = []} = vdom;
+        let {tagName, attributes = {}, children = {}, childOrder = []} = vdom;
         const formattedAttributes = Object.keys(attributes)
             .map((key) => {
                 // since the class attribute is written as className in the
@@ -57,10 +57,11 @@ const renderToString = (target, _vdom) => {
         tagName = tagName.toLowerCase();
         // early return in the case the element is a recognized singleton.
         // there it also checks that the element does not have descendents.
-        if (isDefined(singletons[tagName]) && children.length < 1) {
+        if (isDefined(singletons[tagName]) && childOrder.length < 1) {
             return [`<${`${tagName} ${formattedAttributes}`.trim()} />`];
         }
-        const contents = children
+        const contents = childOrder
+            .map((key) => children[key])
             // cannot use a simple map because render returns an array of lines
             // which all need to be indented.
             .reduce((acc, child) => acc.concat(render(child)), [])

@@ -33,9 +33,8 @@ module.exports = ({use}, global) => {
         const element = global.document.createElement(velem.tagName);
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
-        // all children are rendered and immediately appended into the parent node
-        // in the same order that they appear in the children array.
-        Object.keys(velem.children).forEach((key) => {
+        // all children are rendered and immediately appended into the parent node.
+        velem.childOrder.forEach((key) => {
             const {DOM} = render(velem.children[key]);
             element.appendChild(DOM);
         });
@@ -59,32 +58,35 @@ module.exports = ({use}, global) => {
 
     // updates the existing vdom object and its html nodes to be consistent with
     // the new vdom object.
-    const update = (target, newVdom, vdom) => {
+    const update = (target, newVDOM, VDOM) => {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make
         // modifications to the vdom object in place.
-        const _update = (original, successor, originalParent, parentIndex) => {
-            // covers an uncommon edge case.
-            if (!isDefined(original) && !isDefined(successor)) {
-                return;
-            }
-
+        const _update = (original, successor, parent, parentKey) => {
             // lack of original element implies the successor is a new element.
             if (!isDefined(original)) {
-                originalParent.children[parentIndex] = render(successor);
-                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
+                parent.children[parentKey] = render(successor);
+                const parentPosition = parent.childOrder.indexOf(parentKey);
+                const nextElement = parent.children[parent.childOrder[parentPosition + 1]];
+                parent.DOM.insertBefore(
+                    parent.children[parentKey].DOM,
+                    nextElement ? nextElement.DOM : null,
+                );
                 return;
             }
 
             // lack of successor element implies the original is being removed.
             if (!isDefined(successor)) {
-                originalParent.DOM.removeChild(original.DOM);
-                delete originalParent.children[parentIndex];
+                parent.DOM.removeChild(original.DOM);
+                delete parent.children[parentKey];
                 return;
             }
+
+            // TODO rearrange children
+            original.childOrder = successor.childOrder;
 
             // if the element's tagName has changed, the whole element must be
             // replaced. this will also capture the case where an html node is
@@ -93,7 +95,7 @@ module.exports = ({use}, global) => {
             if (original.tagName !== successor.tagName) {
                 const oldDOM = original.DOM;
                 const newVDOM = render(successor);
-                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                parent.DOM.replaceChild(newVDOM.DOM, oldDOM);
                 // this technique is used to modify the vdom object in place.
                 // both the text element and the tag element props are reset
                 // since the types are not recorded.
@@ -103,6 +105,7 @@ module.exports = ({use}, global) => {
                     tagName: undefined,
                     attributes: undefined,
                     children: undefined,
+                    childOrder: undefined,
                 }, newVDOM);
                 return;
             }
@@ -124,18 +127,20 @@ module.exports = ({use}, global) => {
                 original.DOM[key] = successor.attributes[key];
             });
 
-            const max = Math.max(original.children.length, successor.children.length);
-            for (let i = 0; i < max; ++i) {
-                _update(original.children[i], successor.children[i], original, i);
-            }
+            // accumulate all child keys from both the original node and the
+            // successor node. each child is then recursively updated.
+            const childKeys = Object.keys(Object.assign({}, original.children, successor.children));
+            childKeys.forEach((key) => {
+                _update(original.children[key], successor.children[key], original, key);
+            });
         };
 
         global.requestAnimationFrame(() => {
-            _update(vdom, newVdom, {DOM: target, children: [vdom]}, 0);
+            _update(VDOM, newVDOM, {DOM: target, children: {root: VDOM}}, 'root');
         });
 
         // TODO vdom object is modified after being returned.
-        return vdom;
+        return VDOM;
     };
 
     use({

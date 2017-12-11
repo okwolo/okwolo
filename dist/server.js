@@ -569,7 +569,7 @@ var classnames = function classnames() {
 // will build a vdom structure from the output of the app's builder funtions. this
 // output must be valid element syntax, or an expception will be thrown.
 var build = function build(element) {
-    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['root'];
+    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'root';
 
     // boolean values will produce no visible output to make it easier to use inline
     // logical expressions without worrying about unexpected strings on the page.
@@ -618,11 +618,11 @@ var build = function build(element) {
         _element4$ = _element4[1],
         attributes = _element4$ === undefined ? {} : _element4$,
         _element4$2 = _element4[2],
-        children = _element4$2 === undefined ? [] : _element4$2;
+        childList = _element4$2 === undefined ? [] : _element4$2;
 
     assert(isString(tagType), 'view.build : tag property is not a string', ancestry, element, tagType);
     assert(isObject(attributes), 'view.build : attributes is not an object', ancestry, element, attributes);
-    assert(isArray(children), 'view.build : children of vdom object is not an array', ancestry, element, children);
+    assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry, element, childList);
 
     // regular expression to capture values from the shorthand element tag syntax.
     // it allows each section to be seperated by any amount of spaces, but enforces
@@ -662,14 +662,32 @@ var build = function build(element) {
         }
     }
 
-    ancestry.push(tagType);
+    // ancestry is recorded to give more context to error messages
+    ancestry += ' -> ' + tagType;
+
+    // childList is converted to a children object with each child having its
+    // own key. the child order is also recorded.
+    var children = {};
+    var childOrder = [];
+    childList.forEach(function (childElement, key) {
+        var child = build(childElement, ancestry);
+        // a key attribute will override the default array index key.
+        if (child.attributes && 'key' in child.attributes) {
+            key = child.attributes.key;
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key', ancestry, key);
+        }
+        // keys are normalized to strings to properly compare them.
+        key = String(key);
+        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        childOrder.push(key);
+        children[key] = child;
+    });
 
     return {
         tagName: tagName,
         attributes: attributes,
-        children: children.map(function (child) {
-            return build(child, ancestry);
-        })
+        children: children,
+        childOrder: childOrder
     };
 };
 
@@ -740,7 +758,9 @@ var renderToString = function renderToString(target, _vdom) {
             _vdom$attributes = vdom.attributes,
             attributes = _vdom$attributes === undefined ? {} : _vdom$attributes,
             _vdom$children = vdom.children,
-            children = _vdom$children === undefined ? [] : _vdom$children;
+            children = _vdom$children === undefined ? {} : _vdom$children,
+            _vdom$childOrder = vdom.childOrder,
+            childOrder = _vdom$childOrder === undefined ? [] : _vdom$childOrder;
 
         var formattedAttributes = Object.keys(attributes).map(function (key) {
             // since the class attribute is written as className in the
@@ -755,10 +775,12 @@ var renderToString = function renderToString(target, _vdom) {
         tagName = tagName.toLowerCase();
         // early return in the case the element is a recognized singleton.
         // there it also checks that the element does not have descendents.
-        if (isDefined(singletons[tagName]) && children.length < 1) {
+        if (isDefined(singletons[tagName]) && childOrder.length < 1) {
             return ['<' + (tagName + ' ' + formattedAttributes).trim() + ' />'];
         }
-        var contents = children
+        var contents = childOrder.map(function (key) {
+            return children[key];
+        })
         // cannot use a simple map because render returns an array of lines
         // which all need to be indented.
         .reduce(function (acc, child) {

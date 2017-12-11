@@ -54,7 +54,8 @@ describe('view.build', () => {
         const vdom = {
             tagName: 'div',
             attributes: {},
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -70,15 +71,20 @@ describe('view.build', () => {
         const vdom = {
             tagName: 'div',
             attributes: {},
-            children: [
-                {
+            children: {
+                '0': {
                     tagName: 'div',
                     attributes: {},
-                    children: [],
+                    children: {},
+                    childOrder: [],
                 },
-                {
+                '1': {
                     text: 'test',
                 },
+            },
+            childOrder: [
+                '0',
+                '1',
             ],
         };
         expect(build(element))
@@ -137,6 +143,62 @@ describe('view.build', () => {
             .toThrow(/attributes.*object[^]*attributes1/g);
     });
 
+    it('should reject duplicate element keys', () => {
+        const element = ['div', {}, [
+            ['div', {key: 'duplicateKey'}],
+            ['div', {key: 'duplicateKey'}],
+        ]];
+        expect(() => build(element))
+            .toThrow(/duplicate.*key[^]*duplicateKey/g);
+    });
+
+    it('should reject invalid element keys', () => {
+        const element = ['div', {}, [
+            ['div', {key: {}}],
+        ]];
+        expect(() => build(element))
+            .toThrow(/invalid.*key[^]*{}/g);
+    });
+
+    it('should prioritize given keys', () => {
+        const element1 = ['div', {}, [
+            ['div'],
+        ]];
+        const element2 = ['div', {}, [
+            ['div', {key: 2}],
+        ]];
+        expect(build(element1))
+            .toEqual({
+                tagName: 'div',
+                attributes: {},
+                children: {
+                    '0': {
+                        tagName: 'div',
+                        attributes: {},
+                        children: {},
+                        childOrder: [],
+                    },
+                },
+                childOrder: ['0'],
+            });
+        expect(build(element2))
+            .toEqual({
+                tagName: 'div',
+                attributes: {},
+                children: {
+                    '2': {
+                        tagName: 'div',
+                        attributes: {
+                            key: 2,
+                        },
+                        children: {},
+                        childOrder: [],
+                    },
+                },
+                childOrder: ['2'],
+            });
+    });
+
     it('should reject invalid element children', () => {
         const element = ['div', 'attributes1'];
         expect(() => build(element))
@@ -148,7 +210,8 @@ describe('view.build', () => {
         const vdom = {
             tagName: 'div',
             attributes: {},
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -159,7 +222,8 @@ describe('view.build', () => {
         const vdom = {
             tagName: 'div',
             attributes: {},
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -184,7 +248,8 @@ describe('view.build', () => {
             attributes: {
                 id: 'id',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -197,7 +262,8 @@ describe('view.build', () => {
             attributes: {
                 id: 'id2',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -210,7 +276,8 @@ describe('view.build', () => {
             attributes: {
                 className: 'class1 class2',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -223,7 +290,8 @@ describe('view.build', () => {
             attributes: {
                 className: 'class2 class1',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -236,7 +304,8 @@ describe('view.build', () => {
             attributes: {
                 style: 'width: 2px;',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);
@@ -249,7 +318,8 @@ describe('view.build', () => {
             attributes: {
                 style: 'width: 2px;width: 4px;',
             },
-            children: [],
+            children: {},
+            childOrder: [],
         };
         expect(build(element))
             .toEqual(vdom);

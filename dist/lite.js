@@ -566,7 +566,7 @@ var classnames = function classnames() {
 // will build a vdom structure from the output of the app's builder funtions. this
 // output must be valid element syntax, or an expception will be thrown.
 var build = function build(element) {
-    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['root'];
+    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'root';
 
     // boolean values will produce no visible output to make it easier to use inline
     // logical expressions without worrying about unexpected strings on the page.
@@ -615,11 +615,11 @@ var build = function build(element) {
         _element4$ = _element4[1],
         attributes = _element4$ === undefined ? {} : _element4$,
         _element4$2 = _element4[2],
-        children = _element4$2 === undefined ? [] : _element4$2;
+        childList = _element4$2 === undefined ? [] : _element4$2;
 
     assert(isString(tagType), 'view.build : tag property is not a string', ancestry, element, tagType);
     assert(isObject(attributes), 'view.build : attributes is not an object', ancestry, element, attributes);
-    assert(isArray(children), 'view.build : children of vdom object is not an array', ancestry, element, children);
+    assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry, element, childList);
 
     // regular expression to capture values from the shorthand element tag syntax.
     // it allows each section to be seperated by any amount of spaces, but enforces
@@ -659,14 +659,32 @@ var build = function build(element) {
         }
     }
 
-    ancestry.push(tagType);
+    // ancestry is recorded to give more context to error messages
+    ancestry += ' -> ' + tagType;
+
+    // childList is converted to a children object with each child having its
+    // own key. the child order is also recorded.
+    var children = {};
+    var childOrder = [];
+    childList.forEach(function (childElement, key) {
+        var child = build(childElement, ancestry);
+        // a key attribute will override the default array index key.
+        if (child.attributes && 'key' in child.attributes) {
+            key = child.attributes.key;
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key', ancestry, key);
+        }
+        // keys are normalized to strings to properly compare them.
+        key = String(key);
+        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        childOrder.push(key);
+        children[key] = child;
+    });
 
     return {
         tagName: tagName,
         attributes: attributes,
-        children: children.map(function (child) {
-            return build(child, ancestry);
-        })
+        children: children,
+        childOrder: childOrder
     };
 };
 
@@ -724,9 +742,8 @@ module.exports = function (_ref, global) {
         var element = global.document.createElement(velem.tagName);
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
-        // all children are rendered and immediately appended into the parent node
-        // in the same order that they appear in the children array.
-        Object.keys(velem.children).forEach(function (key) {
+        // all children are rendered and immediately appended into the parent node.
+        velem.childOrder.forEach(function (key) {
             var _render = render(velem.children[key]),
                 DOM = _render.DOM;
 
@@ -752,32 +769,32 @@ module.exports = function (_ref, global) {
 
     // updates the existing vdom object and its html nodes to be consistent with
     // the new vdom object.
-    var update = function update(target, newVdom, vdom) {
+    var update = function update(target, newVDOM, VDOM) {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
         // recursive function to update an element according to new state. the
         // parent and the element's parent index must be passed in order to make
         // modifications to the vdom object in place.
-        var _update = function _update(original, successor, originalParent, parentIndex) {
-            // covers an uncommon edge case.
-            if (!isDefined(original) && !isDefined(successor)) {
-                return;
-            }
-
+        var _update = function _update(original, successor, parent, parentKey) {
             // lack of original element implies the successor is a new element.
             if (!isDefined(original)) {
-                originalParent.children[parentIndex] = render(successor);
-                originalParent.DOM.appendChild(originalParent.children[parentIndex].DOM);
+                parent.children[parentKey] = render(successor);
+                var parentPosition = parent.childOrder.indexOf(parentKey);
+                var nextElement = parent.children[parent.childOrder[parentPosition + 1]];
+                parent.DOM.insertBefore(parent.children[parentKey].DOM, nextElement ? nextElement.DOM : null);
                 return;
             }
 
             // lack of successor element implies the original is being removed.
             if (!isDefined(successor)) {
-                originalParent.DOM.removeChild(original.DOM);
-                delete originalParent.children[parentIndex];
+                parent.DOM.removeChild(original.DOM);
+                delete parent.children[parentKey];
                 return;
             }
+
+            // TODO rearrange children
+            original.childOrder = successor.childOrder;
 
             // if the element's tagName has changed, the whole element must be
             // replaced. this will also capture the case where an html node is
@@ -785,8 +802,8 @@ module.exports = function (_ref, global) {
             // object will not contain a tagName.
             if (original.tagName !== successor.tagName) {
                 var oldDOM = original.DOM;
-                var newVDOM = render(successor);
-                originalParent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+                var _newVDOM = render(successor);
+                parent.DOM.replaceChild(_newVDOM.DOM, oldDOM);
                 // this technique is used to modify the vdom object in place.
                 // both the text element and the tag element props are reset
                 // since the types are not recorded.
@@ -795,8 +812,9 @@ module.exports = function (_ref, global) {
                     text: undefined,
                     tagName: undefined,
                     attributes: undefined,
-                    children: undefined
-                }, newVDOM);
+                    children: undefined,
+                    childOrder: undefined
+                }, _newVDOM);
                 return;
             }
 
@@ -817,18 +835,20 @@ module.exports = function (_ref, global) {
                 original.DOM[key] = successor.attributes[key];
             });
 
-            var max = Math.max(original.children.length, successor.children.length);
-            for (var i = 0; i < max; ++i) {
-                _update(original.children[i], successor.children[i], original, i);
-            }
+            // accumulate all child keys from both the original node and the
+            // successor node. each child is then recursively updated.
+            var childKeys = Object.keys(Object.assign({}, original.children, successor.children));
+            childKeys.forEach(function (key) {
+                _update(original.children[key], successor.children[key], original, key);
+            });
         };
 
         global.requestAnimationFrame(function () {
-            _update(vdom, newVdom, { DOM: target, children: [vdom] }, 0);
+            _update(VDOM, newVDOM, { DOM: target, children: { root: VDOM } }, 'root');
         });
 
         // TODO vdom object is modified after being returned.
-        return vdom;
+        return VDOM;
     };
 
     use({
