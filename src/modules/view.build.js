@@ -107,7 +107,9 @@ const build = (element, ancestry = 'root') => {
     // own key. the child order is also recorded.
     const children = {};
     const childOrder = [];
-    childList.forEach((childElement, key) => {
+    for (let i = 0; i < childList.length; ++i) {
+        const childElement = childList[i];
+        let key = i;
         const child = build(childElement, ancestry);
         // a key attribute will override the default array index key.
         if (child.attributes && 'key' in child.attributes) {
@@ -117,10 +119,10 @@ const build = (element, ancestry = 'root') => {
         }
         // keys are normalized to strings to properly compare them.
         key = String(key);
-        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        assert(!children[key], 'view.build : duplicate child key', ancestry, key);
         childOrder.push(key);
         children[key] = child;
-    });
+    }
 
     return {
         tagName,

@@ -129,12 +129,16 @@ module.exports = () => {
                 }
                 names[name] = true;
             }
-            Object.keys(event).forEach((key) => {
+            const handlerKeys = Object.keys(event);
+            for (let i = 0; i < handlerKeys.length; ++i) {
+                const key = handlerKeys[i];
                 if (!isDefined(handlers[key])) {
-                    return;
+                    continue;
                 }
-                handlers[key].forEach((handler) => handler(event[key]));
-            });
+                for (let j = 0; j < handlers[key].length; ++j) {
+                    handlers[key][j](event[key]);
+                }
+            }
         };
 
         return Object.assign(handle, {on});

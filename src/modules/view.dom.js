@@ -52,14 +52,20 @@ const longestChain = (original, successor) => {
 // since there is no reliable way to compare function equality, they are always
 // considered to be different.
 const diff = (original, successor) => {
-    return Object.keys(Object.assign({}, original, successor)).filter((key) => {
+    const keys = Object.keys(Object.assign({}, original, successor));
+    const modifiedKeys = [];
+    for (let i = 0; i < keys.length; ++i) {
+        const key = keys[i];
         const valueOriginal = original[key];
         const valueSuccessor = successor[key];
         if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            return true;
+            modifiedKeys.push(key);
         }
-        return valueOriginal !== valueSuccessor;
-    });
+        if (valueOriginal !== valueSuccessor) {
+            modifiedKeys.push(key);
+        }
+    }
+    return modifiedKeys;
 };
 
 module.exports = ({use}, global) => {
@@ -76,10 +82,11 @@ module.exports = ({use}, global) => {
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
         // all children are rendered and immediately appended into the parent node.
-        velem.childOrder.forEach((key) => {
+        for (let i = 0; i < velem.childOrder.length; ++i) {
+            const key = velem.childOrder[i];
             const {DOM} = render(velem.children[key]);
             element.appendChild(DOM);
-        });
+        }
         velem.DOM = element;
         return velem;
     };
@@ -156,10 +163,11 @@ module.exports = ({use}, global) => {
             }
 
             const attributesDiff = diff(original.attributes, successor.attributes);
-            attributesDiff.forEach((key) => {
+            for (let i = 0; i < attributesDiff.length; ++i) {
+                const key = attributesDiff[i];
                 original.attributes[key] = successor.attributes[key];
                 original.DOM[key] = successor.attributes[key];
-            });
+            }
 
             original.childOrder = successor.childOrder;
 
@@ -170,7 +178,8 @@ module.exports = ({use}, global) => {
             // accumulate all child keys from both the original node and the
             // successor node. each child is then recursively updated.
             const childKeys = Object.keys(Object.assign({}, original.children, successor.children));
-            childKeys.forEach((key) => {
+            for (let i = 0; i < childKeys.length; ++i) {
+                const key = childKeys[i];
                 // new elements are moved to the end of the list to reflect
                 // their current position in the dom.
                 if (!original.children[key]) {
@@ -178,7 +187,7 @@ module.exports = ({use}, global) => {
                     childOrder.push(key);
                 }
                 _update(original.children[key], successor.children[key], original, key);
-            });
+            }
 
             // the remainder of this function handles the reordering of the
             // node's children. current order in the dom is diffed agains the
@@ -195,15 +204,17 @@ module.exports = ({use}, global) => {
             // in one position in the dom. this means that moving a node
             // implicitly removes it from its original position.
             const startKeys = successor.childOrder.slice(0, start);
-            startKeys.reverse().forEach((key) => {
+            for (let i = startKeys.length - 1; i >= 0; --i) {
+                const key = startKeys[i];
                 original.DOM.insertBefore(original.children[key].DOM, original.DOM.firstChild);
-            });
+            }
 
             // elements after the "correct" chain are appended to the parent.
             const endKeys = successor.childOrder.slice(end + 1, Infinity);
-            endKeys.forEach((key) => {
+            for (let i = 0; i < endKeys.length; ++i) {
+                const key = endKeys[i];
                 original.DOM.appendChild(original.children[key].DOM);
-            });
+            }
         };
 
         global.requestAnimationFrame(() => {

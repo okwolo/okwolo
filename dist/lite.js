@@ -223,14 +223,16 @@ module.exports = function () {
                 }
                 names[name] = true;
             }
-            Object.keys(event).forEach(function (key) {
+            var handlerKeys = Object.keys(event);
+            for (var i = 0; i < handlerKeys.length; ++i) {
+                var key = handlerKeys[i];
                 if (!isDefined(handlers[key])) {
-                    return;
+                    continue;
                 }
-                handlers[key].forEach(function (handler) {
-                    return handler(event[key]);
-                });
-            });
+                for (var j = 0; j < handlers[key].length; ++j) {
+                    handlers[key][j](event[key]);
+                }
+            }
         };
 
         return Object.assign(handle, { on: on });
@@ -669,7 +671,9 @@ var build = function build(element) {
     // own key. the child order is also recorded.
     var children = {};
     var childOrder = [];
-    childList.forEach(function (childElement, key) {
+    for (var i = 0; i < childList.length; ++i) {
+        var childElement = childList[i];
+        var key = i;
         var child = build(childElement, ancestry);
         // a key attribute will override the default array index key.
         if (child.attributes && 'key' in child.attributes) {
@@ -679,10 +683,10 @@ var build = function build(element) {
         }
         // keys are normalized to strings to properly compare them.
         key = String(key);
-        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        assert(!children[key], 'view.build : duplicate child key', ancestry, key);
         childOrder.push(key);
         children[key] = child;
-    });
+    }
 
     return {
         tagName: tagName,
@@ -763,14 +767,20 @@ var longestChain = function longestChain(original, successor) {
 // since there is no reliable way to compare function equality, they are always
 // considered to be different.
 var diff = function diff(original, successor) {
-    return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
+    var keys = Object.keys(Object.assign({}, original, successor));
+    var modifiedKeys = [];
+    for (var i = 0; i < keys.length; ++i) {
+        var key = keys[i];
         var valueOriginal = original[key];
         var valueSuccessor = successor[key];
         if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            return true;
+            modifiedKeys.push(key);
         }
-        return valueOriginal !== valueSuccessor;
-    });
+        if (valueOriginal !== valueSuccessor) {
+            modifiedKeys.push(key);
+        }
+    }
+    return modifiedKeys;
 };
 
 module.exports = function (_ref, global) {
@@ -789,12 +799,14 @@ module.exports = function (_ref, global) {
         // attributes are added onto the node.
         Object.assign(element, velem.attributes);
         // all children are rendered and immediately appended into the parent node.
-        velem.childOrder.forEach(function (key) {
+        for (var i = 0; i < velem.childOrder.length; ++i) {
+            var key = velem.childOrder[i];
+
             var _render = render(velem.children[key]),
                 DOM = _render.DOM;
 
             element.appendChild(DOM);
-        });
+        }
         velem.DOM = element;
         return velem;
     };
@@ -871,10 +883,11 @@ module.exports = function (_ref, global) {
             }
 
             var attributesDiff = diff(original.attributes, successor.attributes);
-            attributesDiff.forEach(function (key) {
+            for (var i = 0; i < attributesDiff.length; ++i) {
+                var key = attributesDiff[i];
                 original.attributes[key] = successor.attributes[key];
                 original.DOM[key] = successor.attributes[key];
-            });
+            }
 
             original.childOrder = successor.childOrder;
 
@@ -885,15 +898,16 @@ module.exports = function (_ref, global) {
             // accumulate all child keys from both the original node and the
             // successor node. each child is then recursively updated.
             var childKeys = Object.keys(Object.assign({}, original.children, successor.children));
-            childKeys.forEach(function (key) {
+            for (var _i = 0; _i < childKeys.length; ++_i) {
+                var _key = childKeys[_i];
                 // new elements are moved to the end of the list to reflect
                 // their current position in the dom.
-                if (!original.children[key]) {
-                    childOrder.splice(childOrder.indexOf(key), 1);
-                    childOrder.push(key);
+                if (!original.children[_key]) {
+                    childOrder.splice(childOrder.indexOf(_key), 1);
+                    childOrder.push(_key);
                 }
-                _update(original.children[key], successor.children[key], original, key);
-            });
+                _update(original.children[_key], successor.children[_key], original, _key);
+            }
 
             // the remainder of this function handles the reordering of the
             // node's children. current order in the dom is diffed agains the
@@ -915,15 +929,17 @@ module.exports = function (_ref, global) {
 
 
             var startKeys = successor.childOrder.slice(0, start);
-            startKeys.reverse().forEach(function (key) {
-                original.DOM.insertBefore(original.children[key].DOM, original.DOM.firstChild);
-            });
+            for (var _i2 = startKeys.length - 1; _i2 >= 0; --_i2) {
+                var _key2 = startKeys[_i2];
+                original.DOM.insertBefore(original.children[_key2].DOM, original.DOM.firstChild);
+            }
 
             // elements after the "correct" chain are appended to the parent.
             var endKeys = successor.childOrder.slice(end + 1, Infinity);
-            endKeys.forEach(function (key) {
-                original.DOM.appendChild(original.children[key].DOM);
-            });
+            for (var _i3 = 0; _i3 < endKeys.length; ++_i3) {
+                var _key3 = endKeys[_i3];
+                original.DOM.appendChild(original.children[_key3].DOM);
+            }
         };
 
         global.requestAnimationFrame(function () {

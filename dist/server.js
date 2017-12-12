@@ -223,14 +223,16 @@ module.exports = function () {
                 }
                 names[name] = true;
             }
-            Object.keys(event).forEach(function (key) {
+            var handlerKeys = Object.keys(event);
+            for (var i = 0; i < handlerKeys.length; ++i) {
+                var key = handlerKeys[i];
                 if (!isDefined(handlers[key])) {
-                    return;
+                    continue;
                 }
-                handlers[key].forEach(function (handler) {
-                    return handler(event[key]);
-                });
-            });
+                for (var j = 0; j < handlers[key].length; ++j) {
+                    handlers[key][j](event[key]);
+                }
+            }
         };
 
         return Object.assign(handle, { on: on });
@@ -672,7 +674,9 @@ var build = function build(element) {
     // own key. the child order is also recorded.
     var children = {};
     var childOrder = [];
-    childList.forEach(function (childElement, key) {
+    for (var i = 0; i < childList.length; ++i) {
+        var childElement = childList[i];
+        var key = i;
         var child = build(childElement, ancestry);
         // a key attribute will override the default array index key.
         if (child.attributes && 'key' in child.attributes) {
@@ -682,10 +686,10 @@ var build = function build(element) {
         }
         // keys are normalized to strings to properly compare them.
         key = String(key);
-        assert(childOrder.indexOf(key) === -1, 'view.build : duplicate child key', ancestry, key);
+        assert(!children[key], 'view.build : duplicate child key', ancestry, key);
         childOrder.push(key);
         children[key] = child;
-    });
+    }
 
     return {
         tagName: tagName,
