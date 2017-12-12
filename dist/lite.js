@@ -336,7 +336,10 @@ module.exports = function (_ref) {
 
         // each module is instantiated.
         modules.forEach(function (_module) {
-            _module(app, global);
+            _module({
+                emit: app.emit,
+                use: app.use
+            }, global);
         });
 
         // target is used if it is defined, but this step can be deferred
@@ -671,7 +674,8 @@ var build = function build(element) {
         // a key attribute will override the default array index key.
         if (child.attributes && 'key' in child.attributes) {
             key = child.attributes.key;
-            assert(isNumber(key) || isString(key), 'view.build : invalid element key', ancestry, key);
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry, key);
+            assert(String(key).match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry, key);
         }
         // keys are normalized to strings to properly compare them.
         key = String(key);
@@ -710,12 +714,54 @@ var _require = __webpack_require__(0)(),
     isNode = _require.isNode,
     isFunction = _require.isFunction;
 
+// finds the longest commmon of equal items between two input arrays.
+// this function can make some optimizations by assuming that both
+// arrays are of equal length, that all keys are unique and that all
+// keys are found in both arrays.
+
+
+var longestChain = function longestChain(original, successor) {
+    var count = successor.length;
+    var half = count / 2;
+    // current longest chain reference is saved to compare against new
+    // contenders. the chain's index in the second argument is also kept.
+    var longest = 0;
+    var chainStart = 0;
+    for (var i = 0; i < count; ++i) {
+        var startInc = original.indexOf(successor[i]);
+        var maxInc = Math.min(count - startInc, count - i);
+        // start looking after the current index since it is already
+        // known to be equal.
+        var currentLength = 1;
+        // loop through all following values until either array is fully
+        // read or the chain of identical values is broken.
+        for (var inc = 1; inc < maxInc; ++inc) {
+            if (successor[i + inc] !== original[startInc + inc]) {
+                break;
+            }
+            currentLength += 1;
+        }
+        if (currentLength > longest) {
+            longest = currentLength;
+            chainStart = i;
+        }
+        // quick exit if a chain is found that is longer or equal to half
+        // the length of the input arrays since it means there can be no
+        // longer chains.
+        if (longest >= half) {
+            break;
+        }
+    }
+    return {
+        start: chainStart,
+        end: chainStart + longest - 1
+    };
+};
+
 // shallow diff of two objects which returns an array of keys where the value is
 // different. differences include keys who's values have been deleted or added.
 // since there is no reliable way to compare function equality, they are always
 // considered to be different.
-
-
 var diff = function diff(original, successor) {
     return Object.keys(Object.assign({}, original, successor)).filter(function (key) {
         var valueOriginal = original[key];
@@ -780,9 +826,7 @@ module.exports = function (_ref, global) {
             // lack of original element implies the successor is a new element.
             if (!isDefined(original)) {
                 parent.children[parentKey] = render(successor);
-                var parentPosition = parent.childOrder.indexOf(parentKey);
-                var nextElement = parent.children[parent.childOrder[parentPosition + 1]];
-                parent.DOM.insertBefore(parent.children[parentKey].DOM, nextElement ? nextElement.DOM : null);
+                parent.DOM.appendChild(parent.children[parentKey].DOM);
                 return;
             }
 
@@ -792,9 +836,6 @@ module.exports = function (_ref, global) {
                 delete parent.children[parentKey];
                 return;
             }
-
-            // TODO rearrange children
-            original.childOrder = successor.childOrder;
 
             // if the element's tagName has changed, the whole element must be
             // replaced. this will also capture the case where an html node is
@@ -835,16 +876,62 @@ module.exports = function (_ref, global) {
                 original.DOM[key] = successor.attributes[key];
             });
 
+            original.childOrder = successor.childOrder;
+
+            // list representing the actual order of children before being
+            // rearranged to match the desired child order.
+            var childOrder = successor.childOrder.slice();
+
             // accumulate all child keys from both the original node and the
             // successor node. each child is then recursively updated.
             var childKeys = Object.keys(Object.assign({}, original.children, successor.children));
             childKeys.forEach(function (key) {
+                // new elements are moved to the end of the list to reflect
+                // their current position in the dom.
+                if (!original.children[key]) {
+                    childOrder.splice(childOrder.indexOf(key), 1);
+                    childOrder.push(key);
+                }
                 _update(original.children[key], successor.children[key], original, key);
+            });
+
+            // the remainder of this function handles the reordering of the
+            // node's children. current order in the dom is diffed agains the
+            // correct order. as an optimization, only the longest common chain
+            // of keys is kept in place and the nodes that are supposed to be
+            // before and after are moved into position. this solution was
+            // chosen because it is a relatively cheap computation, can be
+            // implemented concisely and is compatible with the restriction that
+            // dom nodes can only be moved one at a time.
+
+            var _longestChain = longestChain(childOrder, successor.childOrder),
+                start = _longestChain.start,
+                end = _longestChain.end;
+
+            // elements before the "correct" chain are prepended to the parent.
+            // another important consideration is that dom nodes can only exist
+            // in one position in the dom. this means that moving a node
+            // implicitly removes it from its original position.
+
+
+            var startKeys = successor.childOrder.slice(0, start);
+            startKeys.reverse().forEach(function (key) {
+                original.DOM.insertBefore(original.children[key].DOM, original.DOM.firstChild);
+            });
+
+            // elements after the "correct" chain are appended to the parent.
+            var endKeys = successor.childOrder.slice(end + 1, Infinity);
+            endKeys.forEach(function (key) {
+                original.DOM.appendChild(original.children[key].DOM);
             });
         };
 
         global.requestAnimationFrame(function () {
-            _update(VDOM, newVDOM, { DOM: target, children: { root: VDOM } }, 'root');
+            try {
+                _update(VDOM, newVDOM, { DOM: target, children: { root: VDOM } }, 'root');
+            } catch (e) {
+                console.error('view.dom.update : ' + e);
+            }
         });
 
         // TODO vdom object is modified after being returned.

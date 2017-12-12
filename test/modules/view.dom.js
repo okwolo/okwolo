@@ -354,6 +354,44 @@ describe('view.dom', () => {
                     );
             });
 
+            it('should reorder keyed elements', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        ['first', {key: 'key1'}],
+                        ['second', {key: 'key2'}],
+                    ]]
+                )});
+                await sleep();
+                const first = wrapper.querySelector('first');
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<first></first>' +
+                            '<second></second>' +
+                        '</div>'
+                    );
+                app.emit({state: (
+                    ['div', {}, [
+                        ['second', {key: 'key2'}],
+                        ['third', {key: 'key3'}],
+                        ['first', {key: 'key1'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.querySelector('first'))
+                    .toBe(first);
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<second></second>' +
+                            '<third></third>' +
+                            '<first></first>' +
+                        '</div>'
+                    );
+            });
+
             it('should not replace elements when the tagName doesn\'t change', async () => {
                 const app = o(v, vb, vd);
                 app.use({builder: (s) => ['div' + s]});

@@ -112,7 +112,8 @@ const build = (element, ancestry = 'root') => {
         // a key attribute will override the default array index key.
         if (child.attributes && 'key' in child.attributes) {
             key = child.attributes.key;
-            assert(isNumber(key) || isString(key), 'view.build : invalid element key', ancestry, key);
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry, key);
+            assert(String(key).match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry, key);
         }
         // keys are normalized to strings to properly compare them.
         key = String(key);

@@ -152,12 +152,20 @@ describe('view.build', () => {
             .toThrow(/duplicate.*key[^]*duplicateKey/g);
     });
 
-    it('should reject invalid element keys', () => {
+    it('should reject invalid element key types', () => {
         const element = ['div', {}, [
             ['div', {key: {}}],
         ]];
         expect(() => build(element))
-            .toThrow(/invalid.*key[^]*{}/g);
+            .toThrow(/invalid.*key.*type[^]*{}/g);
+    });
+
+    it('should reject invalid element key characters', () => {
+        const element = ['div', {}, [
+            ['div', {key: '!@#$%^&*()'}],
+        ]];
+        expect(() => build(element))
+            .toThrow(/invalid.*character.*key[^]*\!\@\#\$\%\^\&\*\(\)/g);
     });
 
     it('should prioritize given keys', () => {

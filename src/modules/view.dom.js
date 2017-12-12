@@ -5,6 +5,48 @@
 
 const {assert, isDefined, isNode, isFunction} = require('../utils')();
 
+// finds the longest commmon of equal items between two input arrays.
+// this function can make some optimizations by assuming that both
+// arrays are of equal length, that all keys are unique and that all
+// keys are found in both arrays.
+const longestChain = (original, successor) => {
+    const count = successor.length;
+    const half = count / 2;
+    // current longest chain reference is saved to compare against new
+    // contenders. the chain's index in the second argument is also kept.
+    let longest = 0;
+    let chainStart = 0;
+    for (let i = 0; i < count; ++i) {
+        const startInc = original.indexOf(successor[i]);
+        const maxInc = Math.min(count - startInc, count - i);
+        // start looking after the current index since it is already
+        // known to be equal.
+        let currentLength = 1;
+        // loop through all following values until either array is fully
+        // read or the chain of identical values is broken.
+        for (let inc = 1; inc < maxInc; ++inc) {
+            if (successor[i + inc] !== original[startInc + inc]) {
+                break;
+            }
+            currentLength += 1;
+        }
+        if (currentLength > longest) {
+            longest = currentLength;
+            chainStart = i;
+        }
+        // quick exit if a chain is found that is longer or equal to half
+        // the length of the input arrays since it means there can be no
+        // longer chains.
+        if (longest >= half) {
+            break;
+        }
+    }
+    return {
+        start: chainStart,
+        end: chainStart + longest - 1,
+    };
+};
+
 // shallow diff of two objects which returns an array of keys where the value is
 // different. differences include keys who's values have been deleted or added.
 // since there is no reliable way to compare function equality, they are always
@@ -69,12 +111,7 @@ module.exports = ({use}, global) => {
             // lack of original element implies the successor is a new element.
             if (!isDefined(original)) {
                 parent.children[parentKey] = render(successor);
-                const parentPosition = parent.childOrder.indexOf(parentKey);
-                const nextElement = parent.children[parent.childOrder[parentPosition + 1]];
-                parent.DOM.insertBefore(
-                    parent.children[parentKey].DOM,
-                    nextElement ? nextElement.DOM : null,
-                );
+                parent.DOM.appendChild(parent.children[parentKey].DOM);
                 return;
             }
 
@@ -84,9 +121,6 @@ module.exports = ({use}, global) => {
                 delete parent.children[parentKey];
                 return;
             }
-
-            // TODO rearrange children
-            original.childOrder = successor.childOrder;
 
             // if the element's tagName has changed, the whole element must be
             // replaced. this will also capture the case where an html node is
@@ -127,16 +161,57 @@ module.exports = ({use}, global) => {
                 original.DOM[key] = successor.attributes[key];
             });
 
+            original.childOrder = successor.childOrder;
+
+            // list representing the actual order of children before being
+            // rearranged to match the desired child order.
+            const childOrder = successor.childOrder.slice();
+
             // accumulate all child keys from both the original node and the
             // successor node. each child is then recursively updated.
             const childKeys = Object.keys(Object.assign({}, original.children, successor.children));
             childKeys.forEach((key) => {
+                // new elements are moved to the end of the list to reflect
+                // their current position in the dom.
+                if (!original.children[key]) {
+                    childOrder.splice(childOrder.indexOf(key), 1);
+                    childOrder.push(key);
+                }
                 _update(original.children[key], successor.children[key], original, key);
+            });
+
+            // the remainder of this function handles the reordering of the
+            // node's children. current order in the dom is diffed agains the
+            // correct order. as an optimization, only the longest common chain
+            // of keys is kept in place and the nodes that are supposed to be
+            // before and after are moved into position. this solution was
+            // chosen because it is a relatively cheap computation, can be
+            // implemented concisely and is compatible with the restriction that
+            // dom nodes can only be moved one at a time.
+            const {start, end} = longestChain(childOrder, successor.childOrder);
+
+            // elements before the "correct" chain are prepended to the parent.
+            // another important consideration is that dom nodes can only exist
+            // in one position in the dom. this means that moving a node
+            // implicitly removes it from its original position.
+            const startKeys = successor.childOrder.slice(0, start);
+            startKeys.reverse().forEach((key) => {
+                original.DOM.insertBefore(original.children[key].DOM, original.DOM.firstChild);
+            });
+
+            // elements after the "correct" chain are appended to the parent.
+            const endKeys = successor.childOrder.slice(end + 1, Infinity);
+            endKeys.forEach((key) => {
+                original.DOM.appendChild(original.children[key].DOM);
             });
         };
 
         global.requestAnimationFrame(() => {
-            _update(VDOM, newVDOM, {DOM: target, children: {root: VDOM}}, 'root');
+            try {
+                _update(VDOM, newVDOM, {DOM: target, children: {root: VDOM}}, 'root');
+            } catch (e) {
+                console.error('view.dom.update : ' + e);
+            }
         });
 
         // TODO vdom object is modified after being returned.

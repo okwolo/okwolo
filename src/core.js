@@ -44,7 +44,10 @@ module.exports = ({modules = [], options = {}}) => {
 
         // each module is instantiated.
         modules.forEach((_module) => {
-            _module(app, global);
+            _module({
+                emit: app.emit,
+                use: app.use,
+            }, global);
         });
 
         // target is used if it is defined, but this step can be deferred
