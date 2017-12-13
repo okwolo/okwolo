@@ -4,7 +4,9 @@ Okwolo is designed so that all functionality is provided by swappable modules. T
 
 This document lists three useful configurations and lists their included modules diffed with the default standard kit. All kits can be found in their transpiled/minified/gzipped forms in the [dist folder](https://github.com/okwolo/okwolo/blob/master/dist). Most of the tools available to modules are also available after the app is instantiated and that the kit pattern exists primarily for development ergonomics.
 
-## standard [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
+## standard
+
+[![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz)
 
 > `require('okwolo');` or `require('okwolo/standard');`
 
@@ -22,7 +24,9 @@ Standard is the default kit and it includes the fullest set of features. Notably
   router.fetch
 ```
 
-## lite [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
+## lite
+
+[![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/lite.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/lite.min.js.gz)
 
 > `require('okwolo/lite');`
 
@@ -41,7 +45,9 @@ The lite kit is a trimmed down version of okwolo for projects where bundle size 
   router.fetch
 ```
 
-## server [![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
+## server
+
+[![gzipped size](https://img.shields.io/github/size/okwolo/okwolo/dist/server.min.js.gz.svg)](https://github.com/okwolo/okwolo/blob/master/dist/server.min.js.gz)
 
 > `require('okwolo/server');`
 

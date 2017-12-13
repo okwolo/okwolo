@@ -1,7 +1,6 @@
 debug.log
 node_modules/
-okwolo.min.js
+./okwolo*.js
 _*.html
 coverage/
-okwolo.js
 package-lock.json
