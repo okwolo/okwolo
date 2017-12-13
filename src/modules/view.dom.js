@@ -169,24 +169,29 @@ module.exports = ({use}, global) => {
                 original.DOM[key] = successor.attributes[key];
             }
 
-            original.childOrder = successor.childOrder;
+            // list representing the actual order of children in the dom. it is
+            // used later to rearrange nodes to match the desired child order.
+            const childOrder = original.childOrder.slice();
 
-            // list representing the actual order of children before being
-            // rearranged to match the desired child order.
-            const childOrder = successor.childOrder.slice();
+            original.childOrder = successor.childOrder;
 
             // accumulate all child keys from both the original node and the
             // successor node. each child is then recursively updated.
             const childKeys = Object.keys(Object.assign({}, original.children, successor.children));
             for (let i = 0; i < childKeys.length; ++i) {
                 const key = childKeys[i];
-                // new elements are moved to the end of the list to reflect
-                // their current position in the dom.
+                // new elements are moved to the end of the list.
                 if (!original.children[key]) {
-                    childOrder.splice(childOrder.indexOf(key), 1);
                     childOrder.push(key);
+                // deleted elements are removed from the list.
+                } else if (!successor.children[key]) {
+                    childOrder.splice(childOrder.indexOf(key), 1);
                 }
                 _update(original.children[key], successor.children[key], original, key);
+            }
+
+            if (!childOrder.length) {
+                return;
             }
 
             // the remainder of this function handles the reordering of the

@@ -354,6 +354,52 @@ describe('view.dom', () => {
                     );
             });
 
+            it('should be able to swap keyed elements', async () => {
+                const app = o(v, vb, vd);
+                app.use({builder: (s) => s});
+                app.emit({state: (
+                    ['div', {}, [
+                        ['first', {key: 'key1'}],
+                        ['second', {key: 'key2'}],
+                        ['third', {key: 'key3'}],
+                        ['fourth', {key: 'key4'}],
+                        ['fifth', {key: 'key5'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<first></first>' +
+                            '<second></second>' +
+                            '<third></third>' +
+                            '<fourth></fourth>' +
+                            '<fifth></fifth>' +
+                        '</div>'
+                    );
+                app.emit({state: (
+                    ['div', {}, [
+                        ['first', {key: 'key1'}],
+                        ['fourth', {key: 'key4'}],
+                        ['third', {key: 'key3'}],
+                        ['second', {key: 'key2'}],
+                        ['fifth', {key: 'key5'}],
+                    ]]
+                )});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe(
+                        '<div>' +
+                            '<first></first>' +
+                            '<fourth></fourth>' +
+                            '<third></third>' +
+                            '<second></second>' +
+                            '<fifth></fifth>' +
+                        '</div>'
+                    );
+
+            });
+
             it('should reorder keyed elements', async () => {
                 const app = o(v, vb, vd);
                 app.use({builder: (s) => s});
