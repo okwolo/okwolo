@@ -71,6 +71,7 @@ describe('state.handler', () => {
                                 .toBe(i);
                         }
                         done();
+                        return s;
                     }));
                     app.emit({act: {type: 'TEST'}});
                 });

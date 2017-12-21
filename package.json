@@ -13,10 +13,10 @@
     "license": "MIT",
     "scripts": {
         "publish": "webpack && gulp prepublish && npm publish && gulp clean",
-        "test": "run-s test:* gulp:*",
+        "test": "run-s test:*",
         "test:eslint": "eslint **/*.js",
         "test:jest": "jest",
-        "test:build": "run-s build",
+        "test:build": "run-s build gulp:*",
         "codecov": "jest --coverage && codecov",
         "build": "webpack",
         "gulp:prepublish": "gulp prepublish",
@@ -49,6 +49,7 @@
         "webpack": "^3.10.0"
     },
     "jest": {
+        "testURL": "http://www.example.com/",
         "testMatch": [
             "**/test/**/!(test.setup).js"
         ],

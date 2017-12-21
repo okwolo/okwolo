@@ -397,7 +397,6 @@ describe('view.dom', () => {
                             '<fifth></fifth>' +
                         '</div>'
                     );
-
             });
 
             it('should reorder keyed elements', async () => {
