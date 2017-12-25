@@ -25,7 +25,6 @@ gulp.task('clean', () => {
 
     return del([
         ...kits,
-        './okwolo*.js',
         './coverage',
         './npm-debug.log',
         './package-lock.json',

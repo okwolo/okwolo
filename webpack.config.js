@@ -21,20 +21,6 @@ const kit = (name) => ([
 ]);
 
 const bundles = [
-    {
-        name: 'browser',
-        entry: './src/kits/standard.js',
-        output: 'okwolo.js',
-        minified: false,
-        gzipped: false,
-    },
-    {
-        name: 'browser:minified',
-        entry: './src/kits/standard.js',
-        output: 'okwolo.min.js',
-        minified: true,
-        gzipped: false,
-    },
     ...kit('standard'),
     ...kit('lite'),
     ...kit('server'),

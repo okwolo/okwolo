@@ -2,8 +2,7 @@
     "name": "okwolo",
     "version": "2.0.0",
     "description": "light javascript framework to build web applications",
-    "main": "src/kits/standard.js",
-    "browser": "okwolo.js",
+    "main": "src/index.js",
     "keywords": [
         "okwolo",
         "vdom",
