@@ -8,8 +8,6 @@
 // @listens use  #build
 // @listens use  #builder
 // @listens use  #draw
-// @listens use  #postbuild
-// @listens use  #prebuild
 // @listens use  #target
 // @listens use  #update
 
@@ -19,8 +17,6 @@ module.exports = ({emit, use}) => {
     let target;
     let builder;
     let build;
-    let prebuild;
-    let postbuild;
     let draw;
     let update;
 
@@ -39,13 +35,7 @@ module.exports = ({emit, use}) => {
     // calling this function.
     const create = (state) => {
         let temp = builder(state);
-        if (prebuild) {
-            temp = prebuild(temp);
-        }
         temp = build(temp);
-        if (postbuild) {
-            temp = postbuild(temp);
-        }
         return temp;
     };
 
@@ -75,18 +65,6 @@ module.exports = ({emit, use}) => {
     use.on('build', (_build) => {
         assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
         build = _build;
-        emit({update: false});
-    });
-
-    use.on('prebuild', (newPrebuild) => {
-        assert(isFunction(newPrebuild), 'view.use.prebuild : new prebuild is not a function', newPrebuild);
-        prebuild = newPrebuild;
-        emit({update: false});
-    });
-
-    use.on('postbuild', (newPostbuild) => {
-        assert(isFunction(newPostbuild), 'view.use.postbuild : new postbuild is not a function', newPostbuild);
-        postbuild = newPostbuild;
         emit({update: false});
     });
 

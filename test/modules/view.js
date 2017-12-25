@@ -73,10 +73,6 @@ describe('view', () => {
                 .toThrow(Error);
             expect(() => app.use({build: [() => ({text: 'test'})]}))
                 .toThrow(Error);
-            expect(() => app.use({prebuild: [() => 'test']}))
-                .toThrow(Error);
-            expect(() => app.use({postbuild: [() => ({text: 'test'})]}))
-                .toThrow(Error);
         });
 
         describe('target', () => {
@@ -202,75 +198,6 @@ describe('view', () => {
                     expect(element)
                         .toEqual('test');
                     return {text: 'changed'};
-                }});
-                await sleep();
-                expect(wrapper.innerHTML)
-                    .toBe('changed');
-            });
-        });
-
-        describe('prebuild', () => {
-            it('should reject malformed prebuild', () => {
-                const app = o(v, vb, vd);
-                expect(() => app.use({prebuild: {}}))
-                    .toThrow(/prebuild/g);
-            });
-
-            it('should trigger an update', async () => {
-                const app = o(v, vb, vd);
-                const test = jest.fn();
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({prebuild: () => {
-                    test();
-                    return 'test';
-                }});
-                await sleep();
-                expect(test)
-                    .toHaveBeenCalled();
-            });
-
-            it('should receive the builder\'s output and be able to edit it', async () => {
-                const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({prebuild: (element) => {
-                    expect(element)
-                        .toEqual('test');
-                    return ['div.test'];
-                }});
-                await sleep();
-                expect(wrapper.innerHTML)
-                    .toBe('<div class="test"></div>');
-            });
-        });
-
-        describe('postbuild', () => {
-            it('should reject malformed postbuild', () => {
-                const app = o(v, vb, vd);
-                expect(() => app.use({postbuild: {}}))
-                    .toThrow(/postbuild/g);
-            });
-
-            it('should trigger an update', async () => {
-                const app = o(v, vb, vd);
-                const test = jest.fn();
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({postbuild: test});
-                await sleep();
-                expect(test)
-                    .toHaveBeenCalled();
-            });
-
-            it('should receive the built vdom and be able to edit it', async () => {
-                const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({postbuild: (vdom) => {
-                    expect(vdom)
-                        .toEqual({text: 'test'});
-                    return Object.assign({}, vdom, {text: 'changed'});
                 }});
                 await sleep();
                 expect(wrapper.innerHTML)

@@ -155,32 +155,6 @@ let middlware = (next, state, actionType, params) => {
 app.use({middleware});
 ````
 
-## `postbuild`
-
-````javascript
-let postbuild = postbuild
-  // postbuild: function to manipulate the vdom created by the build function [(vdom) => ... vdom]
-````
-
-## `prebuild`
-
-````javascript
-let prebuild = prebuild
-  // prebuild: function to manipulate elements before they are passed to build [(element) => ... element]
-````
-
-Here is an example which wraps the app in a div.
-
-````javascript
-let prebuild = (original) => (
-    ['div | width: 100vw;', {},
-        original,
-    ]
-);
-
-app.use({prebuild});
-````
-
 ## `route`
 
 ````javascript

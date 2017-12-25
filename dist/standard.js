@@ -383,8 +383,6 @@ module.exports = function (_ref) {
 // @listens use  #build
 // @listens use  #builder
 // @listens use  #draw
-// @listens use  #postbuild
-// @listens use  #prebuild
 // @listens use  #target
 // @listens use  #update
 
@@ -400,8 +398,6 @@ module.exports = function (_ref) {
     var target = void 0;
     var builder = void 0;
     var build = void 0;
-    var prebuild = void 0;
-    var postbuild = void 0;
     var draw = void 0;
     var update = void 0;
 
@@ -420,13 +416,7 @@ module.exports = function (_ref) {
     // calling this function.
     var create = function create(state) {
         var temp = builder(state);
-        if (prebuild) {
-            temp = prebuild(temp);
-        }
         temp = build(temp);
-        if (postbuild) {
-            temp = postbuild(temp);
-        }
         return temp;
     };
 
@@ -456,18 +446,6 @@ module.exports = function (_ref) {
     use.on('build', function (_build) {
         assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
         build = _build;
-        emit({ update: false });
-    });
-
-    use.on('prebuild', function (newPrebuild) {
-        assert(isFunction(newPrebuild), 'view.use.prebuild : new prebuild is not a function', newPrebuild);
-        prebuild = newPrebuild;
-        emit({ update: false });
-    });
-
-    use.on('postbuild', function (newPostbuild) {
-        assert(isFunction(newPostbuild), 'view.use.postbuild : new postbuild is not a function', newPostbuild);
-        postbuild = newPostbuild;
         emit({ update: false });
     });
 
