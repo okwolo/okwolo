@@ -82,6 +82,27 @@ module.exports = ({emit, use}) => {
     // succesfully create and render.
     let canDraw = false;
 
+    // logs an error if the view has not been drawn after the delay since
+    // the first time it was called. the update event calls this function
+    // each time it cannot draw.
+    let delay = 3000;
+    let waitTimer = null;
+    let waiting = () => {
+        if (waitTimer) {
+            return;
+        }
+        waitTimer = setTimeout(() => {
+            // formatting all blocking variables into an error message.
+            const vals = {build, builder, state, target};
+            Object.keys(vals)
+                .forEach((key) => {
+                    vals[key] = vals[key] ? 'ok' : 'waiting';
+                });
+            // assertion error in the timeout will not interrupt execution.
+            assert(canDraw, `view : still waiting to draw after ${Math.round(delay/1000)}s`, vals);
+        }, delay);
+    };
+
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
@@ -93,7 +114,7 @@ module.exports = ({emit, use}) => {
             if (isDefined(target) && isDefined(builder) && isDefined(state) && isDefined(build)) {
                 canDraw = true;
             } else {
-                return;
+                return waiting();
             }
         }
         if (!force && hasDrawn) {
