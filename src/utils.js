@@ -64,7 +64,7 @@ module.exports.isBrowser = () => typeof window !== 'undefined';
 
 module.exports.deepCopy = (obj) => {
     // undefined value would otherwise throw an error at parsing time.
-    if (!isDefined(obj)) {
+    if (obj === undefined) {
         return undefined;
     }
     return JSON.parse(JSON.stringify(obj));

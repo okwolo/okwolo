@@ -116,7 +116,7 @@ describe('router', () => {
         });
     });
 
-    describe('use', () => {
+    describe('blobs', () => {
         describe('route', () => {
             it('should reject malformed paths', () => {
                 const app = o(r);

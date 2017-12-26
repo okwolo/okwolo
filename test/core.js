@@ -52,7 +52,15 @@ describe('core', () => {
             .toBeInstanceOf(Function);
     });
 
+    describe('on/send', () => {
+        // TODO
+    });
+
     describe('use', () => {
+        it('should accept objects', () => {
+            // TODO
+        });
+
         describe('api', () => {
             it('should change the app\'s api', () => {
                 const app = core({})();

@@ -1,11 +1,11 @@
 'use strict';
 
-// @fires emit #act     [state.handler]
-// @fires use  #api     [core]
-// @fires use  #action  [state.handler]
-// @fires use  #watcher [state.handler]
+// @fires act          [state.handler]
+// @fires blob.api     [core]
+// @fires blob.action  [state.handler]
+// @fires blob.watcher [state.handler]
 
-module.exports = ({emit, use}) => {
+module.exports = ({on, send}) => {
     const resetActionType = '__RESET__';
     // reference to the initial value is kept in order to be able to check if the
     // state has been changes using triple-equals comparison.
@@ -22,7 +22,7 @@ module.exports = ({emit, use}) => {
     // can be useful for trivial interactions which should not be replayed.
     const ignorePrefix = '*';
 
-    use({action: {
+    send('blob.action', {
         type: 'UNDO',
         target: [],
         handler: () => {
@@ -35,9 +35,9 @@ module.exports = ({emit, use}) => {
                 return current;
             }
         },
-    }});
+    });
 
-    use({action: {
+    send('blob.action', {
         type: 'REDO',
         target: [],
         handler: () => {
@@ -48,11 +48,11 @@ module.exports = ({emit, use}) => {
                 return current;
             }
         },
-    }});
+    });
 
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
-    use({action: {
+    send('blob.action', {
         type: resetActionType,
         target: [],
         handler: () => {
@@ -60,11 +60,11 @@ module.exports = ({emit, use}) => {
             future = [];
             return current;
         },
-    }});
+    });
 
     // this watcher will monitor state changes and update what is stored within
     // this function.
-    use({watcher: (state, type) => {
+    send('blob.watcher', (state, type) => {
         if (type === resetActionType || type[0] === ignorePrefix) {
             return;
         }
@@ -82,12 +82,12 @@ module.exports = ({emit, use}) => {
         // it is assumed that the value given to this watcher is a copy of the
         // current state who's reference is not exposed enywhere else.
         current = state;
-    }});
+    });
 
     // expose undo/redo using helper functions and plug into the state module
     // to monitor the app's state.
-    use({api: {
-        undo: () => emit({act: {type: 'UNDO'}}),
-        redo: () => emit({act: {type: 'REDO'}}),
-    }});
+    send('blob.api', {
+        undo: () => send('action', {type: 'UNDO'}),
+        redo: () => send('action', {type: 'REDO'}),
+    });
 };

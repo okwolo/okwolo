@@ -1,18 +1,26 @@
 'use strict';
 
-// @fires   emit #state   [state]
-// @fires   emit #act     [state]
-// @fires   use  #action  [state.handler]
-// @fires   use  #api     [core]
-// @fires   use  #handler [state]
-// @listens emit #act
-// @listens use  #action
-// @listens use  #middleware
-// @listens use  #watcher
+// @fires   state        [state]
+// @fires   act          [state]
+// @fires   blob.action  [state.handler]
+// @fires   blob.api     [core]
+// @fires   blob.handler [state]
+// @listens act
+// @listens blob.action
+// @listens blob.middleware
+// @listens blob.watcher
 
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils');
+const {
+    assert,
+    deepCopy,
+    isArray,
+    isDefined,
+    isFunction,
+    isString,
+    makeQueue,
+} = require('../utils');
 
-module.exports = ({emit, use}) => {
+module.exports = ({on, send}) => {
     // this module defines an action which overrides the whole state while
     // giving visibility to the middleware and watchers.
     const overrideActionType = 'SET_STATE';
@@ -90,7 +98,7 @@ module.exports = ({emit, use}) => {
 
         // other modules can listen for the state event to be updated when
         // it changes (ex. the rendering process).
-        emit({state: deepCopy(newState)});
+        send('state', deepCopy(newState));
 
         watchers.forEach((watcher) => {
             watcher(deepCopy(newState), type, params);
@@ -127,17 +135,17 @@ module.exports = ({emit, use}) => {
     };
 
     // actions can be added in batches by using an array.
-    use.on('action', (action) => {
+    on('blob.action', (action) => {
         [].concat(action).forEach((item = {}) => {
             const {type, handler, target} = item;
-            assert(isString(type), 'state.use.action : action\'s type is not a string', item, type);
-            assert(isFunction(handler), `state.use.action : handler for action ${type} is not a function`, item, handler);
+            assert(isString(type), 'on.blob.action : action\'s type is not a string', item, type);
+            assert(isFunction(handler), `on.blob.action : handler for action ${type} is not a function`, item, handler);
             if (isArray(target)) {
                 target.forEach((address) => {
-                    assert(isString(address), `state.use.action : target of action ${type} is not an array of strings`, item, target);
+                    assert(isString(address), `on.blob.action : target of action ${type} is not an array of strings`, item, target);
                 });
             } else {
-                assert(isFunction(target), `state.use.action : target of action ${type} is not valid`, target);
+                assert(isFunction(target), `on.blob.action : target of action ${type} is not valid`, target);
             }
             if (actions[type] === undefined) {
                 actions[type] = [item];
@@ -148,25 +156,25 @@ module.exports = ({emit, use}) => {
     });
 
     // middleware can be added in batches by using an array.
-    use.on('middleware', (_middleware) => {
+    on('blob.middleware', (_middleware) => {
         [].concat(_middleware).forEach((item) => {
-            assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
+            assert(isFunction(item), 'on.blob.middleware : middleware is not a function', item);
             middleware.push(item);
         });
     });
 
     // watchers can be added in batches by using an array.
-    use.on('watcher', (watcher) => {
+    on('blob.watcher', (watcher) => {
         [].concat(watcher).forEach((item) => {
-            assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
+            assert(isFunction(item), 'on.blob.watcher : watcher is not a function', item);
             watchers.push(item);
         });
     });
 
-    emit.on('act', ({type, params = {}} = {}) => {
+    on('action', ({type, params = {}} = {}) => {
         // the only action that does not need the state to have already
-        // been changed is SET_STATE.
-        assert(stateHasBeenOverwritten || type === overrideActionType, 'act : cannot act on state before it has been overrwritten');
+        // been changed is the override action.
+        assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overrwritten');
         stateHasBeenOverwritten = true;
         assert(isString(type), 'state.act : action type is not a string', type);
         // the queue will make all actions wait to be ran sequentially.
@@ -176,22 +184,22 @@ module.exports = ({emit, use}) => {
     });
 
     // expose module's features to the app.
-    use({api: {
-        act: (type, params) => emit({act: {type, params}}),
-    }});
+    send('blob.api', {
+        act: (type, params) => send('action', {type, params}),
+    });
 
     // action is used to override state in order to give visibility to
     // watchers and middleware.
-    use({action: {
+    send('blob.action', {
         type: overrideActionType,
         target: [],
         handler: (state, params) => params,
-    }});
+    });
 
-    use({handler: (reader) => {
+    send('blob.handler', (reader) => {
         readState = reader;
         return (newState) => {
-            emit({act: {type: overrideActionType, params: newState}});
+            send('action', {type: overrideActionType, params: newState});
         };
-    }});
+    });
 };

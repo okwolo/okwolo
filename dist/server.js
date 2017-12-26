@@ -70,191 +70,129 @@
 "use strict";
 
 
-module.exports = function () {
-    // all typechecks must always return a boolean value.
-    var isDefined = function isDefined(value) {
-        return value !== undefined;
-    };
+// internal function that wraps JSON.stringify
 
-    var isNull = function isNull(value) {
-        return value === null;
-    };
+var prettyPrint = function prettyPrint(obj) {
+    // uses a custom replacer to correctly handle functions
+    var stringified = JSON.stringify(obj, function (key, value) {
+        return typeof value === 'function' ? value.toString() : value;
+    }, 2);
 
-    var isArray = function isArray(value) {
-        return Array.isArray(value);
-    };
+    // stringified value is passed through the String constructor to
+    // correct for the "undefined" case. each line is then indented.
+    var indented = String(stringified).replace(/\n/g, '\n    ');
 
-    var isFunction = function isFunction(value) {
-        return typeof value === 'function';
-    };
+    return '\n>>> ' + indented;
+};
 
-    var isString = function isString(value) {
-        return typeof value === 'string';
-    };
+// all typechecks should only return bools.
+module.exports.isDefined = function (value) {
+    return value !== undefined;
+};
 
-    var isNumber = function isNumber(value) {
-        return typeof value === 'number';
-    };
+module.exports.isNull = function (value) {
+    return value === null;
+};
 
-    var isBoolean = function isBoolean(value) {
-        return typeof value === 'boolean';
-    };
+module.exports.isArray = function (value) {
+    return Array.isArray(value);
+};
 
-    var isObject = function isObject(value) {
-        return !!value && value.constructor === Object;
-    };
+module.exports.isFunction = function (value) {
+    return typeof value === 'function';
+};
 
-    var isNode = function isNode(value) {
-        return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
-    };
+module.exports.isString = function (value) {
+    return typeof value === 'string';
+};
 
-    var isRegExp = function isRegExp(value) {
-        return value instanceof RegExp;
-    };
+module.exports.isNumber = function (value) {
+    return typeof value === 'number';
+};
 
-    // there cannot be any assumptions about the environment globals so
-    // node's process should not be used.
-    var isBrowser = function isBrowser() {
-        return typeof window !== 'undefined';
-    };
+module.exports.isBoolean = function (value) {
+    return typeof value === 'boolean';
+};
 
-    var deepCopy = function deepCopy(obj) {
-        // undefined value would otherwise throw an error at parsing time.
-        if (!isDefined(obj)) {
-            return undefined;
+module.exports.isObject = function (value) {
+    return !!value && value.constructor === Object;
+};
+
+module.exports.isNode = function (value) {
+    return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
+};
+
+module.exports.isRegExp = function (value) {
+    return value instanceof RegExp;
+};
+
+// there cannot be any assumptions about the environment globals so
+// node's process should not be used.
+module.exports.isBrowser = function () {
+    return typeof window !== 'undefined';
+};
+
+module.exports.deepCopy = function (obj) {
+    // undefined value would otherwise throw an error at parsing time.
+    if (obj === undefined) {
+        return undefined;
+    }
+    return JSON.parse(JSON.stringify(obj));
+};
+
+// will throw an error containing the message and the culprits if the
+// assertion is falsy. the message is expected to contain information
+// about the location of the error followed by a meaningful error message.
+// (ex. "router.redirect : url is not a string")
+module.exports.assert = function (assertion, message) {
+    for (var _len = arguments.length, culprits = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+        culprits[_key - 2] = arguments[_key];
+    }
+
+    if (!assertion) {
+        console.log('\x1b[35mabc\x1b[0m');
+        var f = '\x1b[35m';
+        var err = '@okwolo.' + message;
+        err.replace(/(@okwolo(:?\..+)*) : (.*)/g, function () {});
+        throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
+    }
+};
+
+// this function will create a queue object which can be used to defer
+// the execution of functions.
+module.exports.makeQueue = function () {
+    var queue = [];
+
+    // runs the first function in the queue if it exists. this specifically
+    // does not call done or remove the function from the queue since there
+    // is no knowledge about whether or not the function has completed. this
+    // means that the queue will wait for a done signal before running any
+    // other element.
+    var run = function run() {
+        var func = queue[0];
+        if (func) {
+            func();
         }
-        return JSON.parse(JSON.stringify(obj));
     };
 
-    // internal function that wraps JSON.stringify
-    var prettyPrint = function prettyPrint(obj) {
-        // uses a custom replacer to correctly handle functions
-        var stringified = JSON.stringify(obj, function (key, value) {
-            return typeof value === 'function' ? value.toString() : value;
-        }, 2);
-
-        // stringified value is passed through the String constructor to
-        // correct for the "undefined" case. each line is then indented.
-        var indented = String(stringified).replace(/\n/g, '\n    ');
-
-        return '\n>>> ' + indented;
-    };
-
-    // will throw an error containing the message and the culprits if the
-    // assertion is falsy. the message is expected to contain information
-    // about the location of the error followed by a meaningful error message.
-    // (ex. "router.redirect : url is not a string")
-    var assert = function assert(assertion, message) {
-        for (var _len = arguments.length, culprits = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-            culprits[_key - 2] = arguments[_key];
-        }
-
-        if (!assertion) {
-            throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
-        }
-    };
-
-    // this function will create a queue object which can be used to defer
-    // the execution of functions.
-    var makeQueue = function makeQueue() {
-        var queue = [];
-
-        // runs the first function in the queue if it exists. this specifically
-        // does not call done or remove the function from the queue since there
-        // is no knowledge about whether or not the function has completed. this
-        // means that the queue will wait for a done signal before running any
-        // other element.
-        var run = function run() {
-            var func = queue[0];
-            if (isDefined(func)) {
-                func();
-            }
-        };
-
-        // adds a function to the queue and calls run if the queue was empty.
-        var add = function add(func) {
-            assert(isFunction(func), 'utils.makeQueue.add : added objects must be a function', func);
-            queue.push(func);
-            if (queue.length === 1) {
-                run();
-            }
-        };
-
-        // removes the first element from the queue and calls run. note that
-        // it is not possible to pre-call done in order to have multiple
-        // functions execute immediately.
-        var done = function done() {
-            // calling shift on an empty array does nothing.
-            queue.shift();
+    // adds a function to the queue and calls run if the queue was empty.
+    var add = function add(func) {
+        queue.push(func);
+        if (queue.length === 1) {
             run();
-        };
-
-        return { add: add, done: done };
+        }
     };
 
-    // a bus construct created by this function is exposed by the use interface.
-    // in this context, the term event is used instead of blob.
-    var makeBus = function makeBus() {
-        // stores arrays of handlers for each event key.
-        var handlers = {};
-        // stores names from named events to enforce uniqueness.
-        var names = {};
-
-        // attaches a handler to a specific event key.
-        var on = function on(type, handler) {
-            assert(isString(type), 'utils.bus : handler type is not a string', type);
-            assert(isFunction(handler), 'utils.bus : handler is not a function', handler);
-            if (!isDefined(handlers[type])) {
-                handlers[type] = [];
-            }
-            handlers[type].push(handler);
-        };
-
-        // accepts events and invokes the appropriate handlers for each key.
-        var handle = function handle(event) {
-            assert(isObject(event), 'utils.bus : event is not an object', event);
-            var name = event.name;
-
-            if (isDefined(name)) {
-                assert(isString(name), 'utils.bus : event name is not a string', name);
-                // early return if the name has been used before.
-                if (isDefined(names[name])) {
-                    return;
-                }
-                names[name] = true;
-            }
-            var handlerKeys = Object.keys(event);
-            for (var i = 0; i < handlerKeys.length; ++i) {
-                var key = handlerKeys[i];
-                if (!isDefined(handlers[key])) {
-                    continue;
-                }
-                for (var j = 0; j < handlers[key].length; ++j) {
-                    handlers[key][j](event[key]);
-                }
-            }
-        };
-
-        return Object.assign(handle, { on: on });
+    // removes the first element from the queue and calls run. note that
+    // it is not possible to pre-call done in order to have multiple
+    // functions execute immediately.
+    var done = function done() {
+        // calling shift on an empty array does nothing.
+        queue.shift();
+        run();
     };
 
-    return {
-        deepCopy: deepCopy,
-        assert: assert,
-        isDefined: isDefined,
-        isNull: isNull,
-        isArray: isArray,
-        isFunction: isFunction,
-        isString: isString,
-        isNumber: isNumber,
-        isBoolean: isBoolean,
-        isObject: isObject,
-        isNode: isNode,
-        isRegExp: isRegExp,
-        isBrowser: isBrowser,
-        makeQueue: makeQueue,
-        makeBus: makeBus
-    };
+    return { add: add, done: done };
 };
 
 /***/ }),
@@ -267,10 +205,7 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4),
-    // since the blobs are added sequentially, the draw and update functions
-    // in the view module will be overwritten.
-    __webpack_require__(5), __webpack_require__(6)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6)],
     options: {
         kit: 'server',
         browser: false
@@ -284,24 +219,95 @@ module.exports = core({
 "use strict";
 
 
-var _require = __webpack_require__(0)(),
-    isFunction = _require.isFunction,
-    isDefined = _require.isDefined,
-    isObject = _require.isObject,
+var _require = __webpack_require__(0),
     assert = _require.assert,
+    isArray = _require.isArray,
     isBrowser = _require.isBrowser,
-    makeBus = _require.makeBus;
+    isDefined = _require.isDefined,
+    isFunction = _require.isFunction,
+    isObject = _require.isObject,
+    isString = _require.isString;
 
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '2.0.1';
+var version = '3.0.0';
+
+var makeBus = function makeBus() {
+    // stores arrays of handlers for each event key.
+    var handlers = {};
+    // stores names from named events to enforce uniqueness.
+    var names = {};
+
+    // attaches a handler to a specific event key.
+    var on = function on(type, handler) {
+        assert(isString(type), 'on : handler type is not a string', type);
+        assert(isFunction(handler), 'on : handler is not a function', handler);
+        if (!isDefined(handlers[type])) {
+            handlers[type] = [];
+        }
+        handlers[type].push(handler);
+    };
+
+    var send = function send(type) {
+        for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            args[_key - 1] = arguments[_key];
+        }
+
+        assert(isString(type), 'send : event type is not a string', type);
+        var eventHandlers = handlers[type];
+        if (!isArray(eventHandlers)) {
+            return;
+        }
+        for (var i = 0; i < eventHandlers.length; ++i) {
+            eventHandlers[i].apply(eventHandlers, args);
+        }
+    };
+
+    var use = function use(blob) {
+        for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+            args[_key2 - 1] = arguments[_key2];
+        }
+
+        // scopes event type to being a blob.
+        if (isString(blob)) {
+            send.apply(undefined, ['blob.' + blob].concat(args));
+            return;
+        }
+
+        assert(isObject(blob), 'use : blob is not an object', blob);
+
+        var name = blob.name;
+
+        if (isDefined(name)) {
+            assert(isString(name), 'utils.bus : blob name is not a string', name);
+            // early return if the name has been used before.
+            if (isDefined(names[name])) {
+                return;
+            }
+            names[name] = true;
+        }
+
+        // sending all blob keys.
+        var keys = Object.keys(blob);
+        for (var i = 0; i < keys.length; ++i) {
+            var key = keys[i];
+            send('blob.' + key, blob[key]);
+        }
+    };
+
+    return { on: on, send: send, use: use };
+};
 
 module.exports = function (_ref) {
     var _ref$modules = _ref.modules,
         modules = _ref$modules === undefined ? [] : _ref$modules,
         _ref$options = _ref.options,
         options = _ref$options === undefined ? {} : _ref$options;
+
+    assert(false, 'test : test');
+    assert(isArray(modules), 'core : passed modules must be an array');
+    assert(isObject(options), 'core : passed options must be an object');
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
@@ -326,31 +332,30 @@ module.exports = function (_ref) {
             return primary.apply(undefined, arguments);
         };
 
-        app.emit = makeBus();
-        app.use = makeBus();
+        Object.assign(app, makeBus());
 
-        app.use.on('api', function (api) {
-            assert(isObject(api), 'core.use.api : additional api is not an object', api);
+        app.on('blob.api', function (api) {
+            assert(isObject(api), 'on.blob.api : additional api is not an object', api);
             Object.assign(app, api);
         });
 
-        app.use.on('primary', function (_primary) {
-            assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
+        app.on('blob.primary', function (_primary) {
+            assert(isFunction(_primary), 'on.blob.primary : primary is not a function', _primary);
             primary = _primary;
         });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
             _module({
-                emit: app.emit,
-                use: app.use
+                on: app.on,
+                send: app.send
             }, global);
         });
 
         // target is used if it is defined, but this step can be deferred
         // if it is not convenient to pass the target on app creation.
         if (isDefined(target)) {
-            app.use({ target: target });
+            app.use('target', target);
         }
 
         return app;
@@ -389,7 +394,7 @@ module.exports = function (_ref) {
 // @listens use  #target
 // @listens use  #update
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
@@ -536,7 +541,7 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isNull = _require.isNull,
@@ -715,7 +720,7 @@ module.exports = function (_ref) {
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
@@ -817,20 +822,20 @@ module.exports = function (_ref) {
 "use strict";
 
 
-// @fires   emit #state   [state]
-// @fires   use  #api     [core]
-// @fires   use  #handler [state]
-// @listens emit #state
-// @listens use  #handler
+// @fires   state        [state]
+// @fires   blob.api     [core]
+// @fires   blob.handler [state]
+// @listens state
+// @listens blob.handler
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     deepCopy = _require.deepCopy,
     isFunction = _require.isFunction;
 
 module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
+    var on = _ref.on,
+        send = _ref.send;
 
     // reference to initial state is kept to be able to track whether it
     // has changed using strict equality.
@@ -840,25 +845,25 @@ module.exports = function (_ref) {
     var handler = void 0;
 
     // current state is monitored and stored.
-    emit.on('state', function (newState) {
+    on('state', function (newState) {
         state = newState;
     });
 
-    use.on('handler', function (handlerGen) {
-        assert(isFunction(handlerGen), 'state.use.handler : handler generator is not a function', handlerGen);
+    on('blob.handler', function (handlerGen) {
+        assert(isFunction(handlerGen), 'on.blob.handler : handler generator is not a function', handlerGen);
         // handler generator is given direct access to the state.
         var _handler = handlerGen(function () {
             return state;
         });
-        assert(isFunction(_handler), 'state.use.handler : handler from generator is not a function', _handler);
+        assert(isFunction(_handler), 'on.blob.handler : handler from generator is not a function', _handler);
         handler = _handler;
     });
 
-    use({ handler: function handler() {
-            return function (newState) {
-                emit({ state: newState });
-            };
-        } });
+    send('blob.handler', function () {
+        return function (newState) {
+            send('state', newState);
+        };
+    });
 
     var setState = function setState(replacement) {
         var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
@@ -871,10 +876,10 @@ module.exports = function (_ref) {
     };
 
     // expose module's features to the app.
-    use({ api: {
-            setState: setState,
-            getState: getState
-        } });
+    send('blob.api', {
+        setState: setState,
+        getState: getState
+    });
 };
 
 /***/ })

@@ -70,191 +70,129 @@
 "use strict";
 
 
-module.exports = function () {
-    // all typechecks must always return a boolean value.
-    var isDefined = function isDefined(value) {
-        return value !== undefined;
-    };
+// internal function that wraps JSON.stringify
 
-    var isNull = function isNull(value) {
-        return value === null;
-    };
+var prettyPrint = function prettyPrint(obj) {
+    // uses a custom replacer to correctly handle functions
+    var stringified = JSON.stringify(obj, function (key, value) {
+        return typeof value === 'function' ? value.toString() : value;
+    }, 2);
 
-    var isArray = function isArray(value) {
-        return Array.isArray(value);
-    };
+    // stringified value is passed through the String constructor to
+    // correct for the "undefined" case. each line is then indented.
+    var indented = String(stringified).replace(/\n/g, '\n    ');
 
-    var isFunction = function isFunction(value) {
-        return typeof value === 'function';
-    };
+    return '\n>>> ' + indented;
+};
 
-    var isString = function isString(value) {
-        return typeof value === 'string';
-    };
+// all typechecks should only return bools.
+module.exports.isDefined = function (value) {
+    return value !== undefined;
+};
 
-    var isNumber = function isNumber(value) {
-        return typeof value === 'number';
-    };
+module.exports.isNull = function (value) {
+    return value === null;
+};
 
-    var isBoolean = function isBoolean(value) {
-        return typeof value === 'boolean';
-    };
+module.exports.isArray = function (value) {
+    return Array.isArray(value);
+};
 
-    var isObject = function isObject(value) {
-        return !!value && value.constructor === Object;
-    };
+module.exports.isFunction = function (value) {
+    return typeof value === 'function';
+};
 
-    var isNode = function isNode(value) {
-        return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
-    };
+module.exports.isString = function (value) {
+    return typeof value === 'string';
+};
 
-    var isRegExp = function isRegExp(value) {
-        return value instanceof RegExp;
-    };
+module.exports.isNumber = function (value) {
+    return typeof value === 'number';
+};
 
-    // there cannot be any assumptions about the environment globals so
-    // node's process should not be used.
-    var isBrowser = function isBrowser() {
-        return typeof window !== 'undefined';
-    };
+module.exports.isBoolean = function (value) {
+    return typeof value === 'boolean';
+};
 
-    var deepCopy = function deepCopy(obj) {
-        // undefined value would otherwise throw an error at parsing time.
-        if (!isDefined(obj)) {
-            return undefined;
+module.exports.isObject = function (value) {
+    return !!value && value.constructor === Object;
+};
+
+module.exports.isNode = function (value) {
+    return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
+};
+
+module.exports.isRegExp = function (value) {
+    return value instanceof RegExp;
+};
+
+// there cannot be any assumptions about the environment globals so
+// node's process should not be used.
+module.exports.isBrowser = function () {
+    return typeof window !== 'undefined';
+};
+
+module.exports.deepCopy = function (obj) {
+    // undefined value would otherwise throw an error at parsing time.
+    if (obj === undefined) {
+        return undefined;
+    }
+    return JSON.parse(JSON.stringify(obj));
+};
+
+// will throw an error containing the message and the culprits if the
+// assertion is falsy. the message is expected to contain information
+// about the location of the error followed by a meaningful error message.
+// (ex. "router.redirect : url is not a string")
+module.exports.assert = function (assertion, message) {
+    for (var _len = arguments.length, culprits = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+        culprits[_key - 2] = arguments[_key];
+    }
+
+    if (!assertion) {
+        console.log('\x1b[35mabc\x1b[0m');
+        var f = '\x1b[35m';
+        var err = '@okwolo.' + message;
+        err.replace(/(@okwolo(:?\..+)*) : (.*)/g, function () {});
+        throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
+    }
+};
+
+// this function will create a queue object which can be used to defer
+// the execution of functions.
+module.exports.makeQueue = function () {
+    var queue = [];
+
+    // runs the first function in the queue if it exists. this specifically
+    // does not call done or remove the function from the queue since there
+    // is no knowledge about whether or not the function has completed. this
+    // means that the queue will wait for a done signal before running any
+    // other element.
+    var run = function run() {
+        var func = queue[0];
+        if (func) {
+            func();
         }
-        return JSON.parse(JSON.stringify(obj));
     };
 
-    // internal function that wraps JSON.stringify
-    var prettyPrint = function prettyPrint(obj) {
-        // uses a custom replacer to correctly handle functions
-        var stringified = JSON.stringify(obj, function (key, value) {
-            return typeof value === 'function' ? value.toString() : value;
-        }, 2);
-
-        // stringified value is passed through the String constructor to
-        // correct for the "undefined" case. each line is then indented.
-        var indented = String(stringified).replace(/\n/g, '\n    ');
-
-        return '\n>>> ' + indented;
-    };
-
-    // will throw an error containing the message and the culprits if the
-    // assertion is falsy. the message is expected to contain information
-    // about the location of the error followed by a meaningful error message.
-    // (ex. "router.redirect : url is not a string")
-    var assert = function assert(assertion, message) {
-        for (var _len = arguments.length, culprits = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-            culprits[_key - 2] = arguments[_key];
-        }
-
-        if (!assertion) {
-            throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
-        }
-    };
-
-    // this function will create a queue object which can be used to defer
-    // the execution of functions.
-    var makeQueue = function makeQueue() {
-        var queue = [];
-
-        // runs the first function in the queue if it exists. this specifically
-        // does not call done or remove the function from the queue since there
-        // is no knowledge about whether or not the function has completed. this
-        // means that the queue will wait for a done signal before running any
-        // other element.
-        var run = function run() {
-            var func = queue[0];
-            if (isDefined(func)) {
-                func();
-            }
-        };
-
-        // adds a function to the queue and calls run if the queue was empty.
-        var add = function add(func) {
-            assert(isFunction(func), 'utils.makeQueue.add : added objects must be a function', func);
-            queue.push(func);
-            if (queue.length === 1) {
-                run();
-            }
-        };
-
-        // removes the first element from the queue and calls run. note that
-        // it is not possible to pre-call done in order to have multiple
-        // functions execute immediately.
-        var done = function done() {
-            // calling shift on an empty array does nothing.
-            queue.shift();
+    // adds a function to the queue and calls run if the queue was empty.
+    var add = function add(func) {
+        queue.push(func);
+        if (queue.length === 1) {
             run();
-        };
-
-        return { add: add, done: done };
+        }
     };
 
-    // a bus construct created by this function is exposed by the use interface.
-    // in this context, the term event is used instead of blob.
-    var makeBus = function makeBus() {
-        // stores arrays of handlers for each event key.
-        var handlers = {};
-        // stores names from named events to enforce uniqueness.
-        var names = {};
-
-        // attaches a handler to a specific event key.
-        var on = function on(type, handler) {
-            assert(isString(type), 'utils.bus : handler type is not a string', type);
-            assert(isFunction(handler), 'utils.bus : handler is not a function', handler);
-            if (!isDefined(handlers[type])) {
-                handlers[type] = [];
-            }
-            handlers[type].push(handler);
-        };
-
-        // accepts events and invokes the appropriate handlers for each key.
-        var handle = function handle(event) {
-            assert(isObject(event), 'utils.bus : event is not an object', event);
-            var name = event.name;
-
-            if (isDefined(name)) {
-                assert(isString(name), 'utils.bus : event name is not a string', name);
-                // early return if the name has been used before.
-                if (isDefined(names[name])) {
-                    return;
-                }
-                names[name] = true;
-            }
-            var handlerKeys = Object.keys(event);
-            for (var i = 0; i < handlerKeys.length; ++i) {
-                var key = handlerKeys[i];
-                if (!isDefined(handlers[key])) {
-                    continue;
-                }
-                for (var j = 0; j < handlers[key].length; ++j) {
-                    handlers[key][j](event[key]);
-                }
-            }
-        };
-
-        return Object.assign(handle, { on: on });
+    // removes the first element from the queue and calls run. note that
+    // it is not possible to pre-call done in order to have multiple
+    // functions execute immediately.
+    var done = function done() {
+        // calling shift on an empty array does nothing.
+        queue.shift();
+        run();
     };
 
-    return {
-        deepCopy: deepCopy,
-        assert: assert,
-        isDefined: isDefined,
-        isNull: isNull,
-        isArray: isArray,
-        isFunction: isFunction,
-        isString: isString,
-        isNumber: isNumber,
-        isBoolean: isBoolean,
-        isObject: isObject,
-        isNode: isNode,
-        isRegExp: isRegExp,
-        isBrowser: isBrowser,
-        makeQueue: makeQueue,
-        makeBus: makeBus
-    };
+    return { add: add, done: done };
 };
 
 /***/ }),
@@ -267,7 +205,9 @@ module.exports = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(9), __webpack_require__(10), __webpack_require__(12)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8),
+    // router placed after view to override blob.primary.
+    __webpack_require__(9), __webpack_require__(10), __webpack_require__(12)],
     options: {
         kit: 'standard',
         browser: true
@@ -281,24 +221,95 @@ module.exports = core({
 "use strict";
 
 
-var _require = __webpack_require__(0)(),
-    isFunction = _require.isFunction,
-    isDefined = _require.isDefined,
-    isObject = _require.isObject,
+var _require = __webpack_require__(0),
     assert = _require.assert,
+    isArray = _require.isArray,
     isBrowser = _require.isBrowser,
-    makeBus = _require.makeBus;
+    isDefined = _require.isDefined,
+    isFunction = _require.isFunction,
+    isObject = _require.isObject,
+    isString = _require.isString;
 
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '2.0.1';
+var version = '3.0.0';
+
+var makeBus = function makeBus() {
+    // stores arrays of handlers for each event key.
+    var handlers = {};
+    // stores names from named events to enforce uniqueness.
+    var names = {};
+
+    // attaches a handler to a specific event key.
+    var on = function on(type, handler) {
+        assert(isString(type), 'on : handler type is not a string', type);
+        assert(isFunction(handler), 'on : handler is not a function', handler);
+        if (!isDefined(handlers[type])) {
+            handlers[type] = [];
+        }
+        handlers[type].push(handler);
+    };
+
+    var send = function send(type) {
+        for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            args[_key - 1] = arguments[_key];
+        }
+
+        assert(isString(type), 'send : event type is not a string', type);
+        var eventHandlers = handlers[type];
+        if (!isArray(eventHandlers)) {
+            return;
+        }
+        for (var i = 0; i < eventHandlers.length; ++i) {
+            eventHandlers[i].apply(eventHandlers, args);
+        }
+    };
+
+    var use = function use(blob) {
+        for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+            args[_key2 - 1] = arguments[_key2];
+        }
+
+        // scopes event type to being a blob.
+        if (isString(blob)) {
+            send.apply(undefined, ['blob.' + blob].concat(args));
+            return;
+        }
+
+        assert(isObject(blob), 'use : blob is not an object', blob);
+
+        var name = blob.name;
+
+        if (isDefined(name)) {
+            assert(isString(name), 'utils.bus : blob name is not a string', name);
+            // early return if the name has been used before.
+            if (isDefined(names[name])) {
+                return;
+            }
+            names[name] = true;
+        }
+
+        // sending all blob keys.
+        var keys = Object.keys(blob);
+        for (var i = 0; i < keys.length; ++i) {
+            var key = keys[i];
+            send('blob.' + key, blob[key]);
+        }
+    };
+
+    return { on: on, send: send, use: use };
+};
 
 module.exports = function (_ref) {
     var _ref$modules = _ref.modules,
         modules = _ref$modules === undefined ? [] : _ref$modules,
         _ref$options = _ref.options,
         options = _ref$options === undefined ? {} : _ref$options;
+
+    assert(false, 'test : test');
+    assert(isArray(modules), 'core : passed modules must be an array');
+    assert(isObject(options), 'core : passed options must be an object');
 
     // if it is needed to define the window but not yet add a target, the first
     // argument can be set to undefined.
@@ -323,31 +334,30 @@ module.exports = function (_ref) {
             return primary.apply(undefined, arguments);
         };
 
-        app.emit = makeBus();
-        app.use = makeBus();
+        Object.assign(app, makeBus());
 
-        app.use.on('api', function (api) {
-            assert(isObject(api), 'core.use.api : additional api is not an object', api);
+        app.on('blob.api', function (api) {
+            assert(isObject(api), 'on.blob.api : additional api is not an object', api);
             Object.assign(app, api);
         });
 
-        app.use.on('primary', function (_primary) {
-            assert(isFunction(_primary), 'core.use.primary : primary is not a function', _primary);
+        app.on('blob.primary', function (_primary) {
+            assert(isFunction(_primary), 'on.blob.primary : primary is not a function', _primary);
             primary = _primary;
         });
 
         // each module is instantiated.
         modules.forEach(function (_module) {
             _module({
-                emit: app.emit,
-                use: app.use
+                on: app.on,
+                send: app.send
             }, global);
         });
 
         // target is used if it is defined, but this step can be deferred
         // if it is not convenient to pass the target on app creation.
         if (isDefined(target)) {
-            app.use({ target: target });
+            app.use('target', target);
         }
 
         return app;
@@ -375,6 +385,419 @@ module.exports = function (_ref) {
 "use strict";
 
 
+// @fires   state        [state]
+// @fires   blob.api     [core]
+// @fires   blob.handler [state]
+// @listens state
+// @listens blob.handler
+
+var _require = __webpack_require__(0),
+    assert = _require.assert,
+    deepCopy = _require.deepCopy,
+    isFunction = _require.isFunction;
+
+module.exports = function (_ref) {
+    var on = _ref.on,
+        send = _ref.send;
+
+    // reference to initial state is kept to be able to track whether it
+    // has changed using strict equality.
+    var initial = {};
+    var state = initial;
+
+    var handler = void 0;
+
+    // current state is monitored and stored.
+    on('state', function (newState) {
+        state = newState;
+    });
+
+    on('blob.handler', function (handlerGen) {
+        assert(isFunction(handlerGen), 'on.blob.handler : handler generator is not a function', handlerGen);
+        // handler generator is given direct access to the state.
+        var _handler = handlerGen(function () {
+            return state;
+        });
+        assert(isFunction(_handler), 'on.blob.handler : handler from generator is not a function', _handler);
+        handler = _handler;
+    });
+
+    send('blob.handler', function () {
+        return function (newState) {
+            send('state', newState);
+        };
+    });
+
+    var setState = function setState(replacement) {
+        var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
+        handler(newState);
+    };
+
+    var getState = function getState() {
+        assert(state !== initial, 'state.getState : cannot get state before it has been set');
+        return deepCopy(state);
+    };
+
+    // expose module's features to the app.
+    send('blob.api', {
+        setState: setState,
+        getState: getState
+    });
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// @fires   state        [state]
+// @fires   act          [state]
+// @fires   blob.action  [state.handler]
+// @fires   blob.api     [core]
+// @fires   blob.handler [state]
+// @listens act
+// @listens blob.action
+// @listens blob.middleware
+// @listens blob.watcher
+
+var _require = __webpack_require__(0),
+    assert = _require.assert,
+    deepCopy = _require.deepCopy,
+    isArray = _require.isArray,
+    isDefined = _require.isDefined,
+    isFunction = _require.isFunction,
+    isString = _require.isString,
+    makeQueue = _require.makeQueue;
+
+module.exports = function (_ref) {
+    var on = _ref.on,
+        send = _ref.send;
+
+    // this module defines an action which overrides the whole state while
+    // giving visibility to the middleware and watchers.
+    var overrideActionType = 'SET_STATE';
+
+    var stateHasBeenOverwritten = false;
+
+    // actions is a map where actions are stored in an array at their type key.
+    var actions = {};
+    var middleware = [];
+    var watchers = [];
+
+    // this queue is used to ensure that an action, the middleware and the
+    // watchers all get called before a second action can be done. this is
+    // relevant in the case where an action is called from within a watcher.
+    // it does not however support waiting for any async code.
+    var queue = makeQueue();
+
+    // the real value is set after this module's handshake with the state
+    // module when the state handler is registered.
+    var readState = function readState() {
+        return undefined;
+    };
+
+    var execute = function execute(state, type, params) {
+        // this value will represent the state after executing the action(s).
+        // it must be copied since all the middleware functions can still
+        // potentially have access to it.
+        var newState = deepCopy(state);
+        assert(isDefined(actions[type]), 'state.handler : action type \'' + type + '\' was not found');
+
+        // action types with multiple actions are executed in the order they are added.
+        actions[type].forEach(function (currentAction) {
+            var targetAddress = currentAction.target;
+
+            // if the target is a function, it is executed with the current state.
+            if (isFunction(targetAddress)) {
+                targetAddress = targetAddress(deepCopy(state), params);
+                // since the typechecks cannot be ran when the action is added,
+                // they need to be done during the action.
+                assert(isArray(targetAddress), 'state.handler : dynamic target of action ' + type + ' is not an array', targetAddress);
+                targetAddress.forEach(function (address) {
+                    assert(isString(address), 'state.handler : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
+                });
+            }
+
+            // the target is the object being passed to the action handler.
+            // it must be copied since any previous actions can still access it.
+            var target = deepCopy(newState);
+
+            // an empty array means the entire state object is the target.
+            if (targetAddress.length === 0) {
+                newState = currentAction.handler(target, params);
+                assert(isDefined(newState), 'state.handler : result of action ' + type + ' on target @state is undefined');
+            }
+
+            // reference will be the variable which keeps track of the current
+            // layer at which the address is. it is initially equal to the new
+            // state since that is the value that needs to be modified.
+            var reference = newState;
+            targetAddress.forEach(function (key, i) {
+                assert(isDefined(target[key]), 'state.handler : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
+                if (i < targetAddress.length - 1) {
+                    // both the reference to the "actual" state and the target
+                    // dummy copy are traversed at the same time.
+                    target = target[key];
+                    reference = reference[key];
+                    return;
+                }
+
+                // when the end of the address array is reached, the target
+                // has been found and can be used by the handler.
+                var newValue = currentAction.handler(target[key], params);
+                assert(isDefined(newValue), 'state.handler : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
+                reference[key] = newValue;
+            });
+        });
+
+        // other modules can listen for the state event to be updated when
+        // it changes (ex. the rendering process).
+        send('state', deepCopy(newState));
+
+        watchers.forEach(function (watcher) {
+            watcher(deepCopy(newState), type, params);
+        });
+
+        // this will signal the queue that the next action can be started.
+        queue.done();
+    };
+
+    var apply = function apply(state, type, params) {
+        // base function executes the action after all middleware has been used.
+        var funcs = [function () {
+            var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
+
+            var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
+
+            var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
+
+            execute(_state, _type, _params);
+        }];
+
+        // this code will create an array where all elements are funtions which
+        // call the closest function with a lower index. the returned values for
+        // the state, action type and params are also passed down to the next
+        // function in the chain.
+        middleware.reverse().forEach(function (currentMiddleware, index) {
+            funcs[index + 1] = function () {
+                var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
+
+                var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
+
+                var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
+
+                // arguments are updated with the output of previous middleware.
+                state = _state;
+                type = _type;
+                params = _params;
+                currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
+            };
+        });
+
+        // the funcs array is initialized with an extra element which makes it
+        // one longer than middleware. therefore, using the length of middleware
+        // is looking for the last element in the array of functions.
+        funcs[middleware.length](state, type, params);
+    };
+
+    // actions can be added in batches by using an array.
+    on('blob.action', function (action) {
+        [].concat(action).forEach(function () {
+            var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var type = item.type,
+                handler = item.handler,
+                target = item.target;
+
+            assert(isString(type), 'on.blob.action : action\'s type is not a string', item, type);
+            assert(isFunction(handler), 'on.blob.action : handler for action ' + type + ' is not a function', item, handler);
+            if (isArray(target)) {
+                target.forEach(function (address) {
+                    assert(isString(address), 'on.blob.action : target of action ' + type + ' is not an array of strings', item, target);
+                });
+            } else {
+                assert(isFunction(target), 'on.blob.action : target of action ' + type + ' is not valid', target);
+            }
+            if (actions[type] === undefined) {
+                actions[type] = [item];
+                return;
+            }
+            actions[type].push(item);
+        });
+    });
+
+    // middleware can be added in batches by using an array.
+    on('blob.middleware', function (_middleware) {
+        [].concat(_middleware).forEach(function (item) {
+            assert(isFunction(item), 'on.blob.middleware : middleware is not a function', item);
+            middleware.push(item);
+        });
+    });
+
+    // watchers can be added in batches by using an array.
+    on('blob.watcher', function (watcher) {
+        [].concat(watcher).forEach(function (item) {
+            assert(isFunction(item), 'on.blob.watcher : watcher is not a function', item);
+            watchers.push(item);
+        });
+    });
+
+    on('action', function () {
+        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            type = _ref2.type,
+            _ref2$params = _ref2.params,
+            params = _ref2$params === undefined ? {} : _ref2$params;
+
+        // the only action that does not need the state to have already
+        // been changed is SET_STATE.
+        assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overrwritten');
+        stateHasBeenOverwritten = true;
+        assert(isString(type), 'state.act : action type is not a string', type);
+        // the queue will make all actions wait to be ran sequentially.
+        queue.add(function () {
+            apply(readState(), type, params);
+        });
+    });
+
+    // expose module's features to the app.
+    send('blob.api', {
+        act: function act(type, params) {
+            return send('act', { type: type, params: params });
+        }
+    });
+
+    // action is used to override state in order to give visibility to
+    // watchers and middleware.
+    send('blob.action', {
+        type: overrideActionType,
+        target: [],
+        handler: function handler(state, params) {
+            return params;
+        }
+    });
+
+    send('handler', function (reader) {
+        readState = reader;
+        return function (newState) {
+            send('action', { type: overrideActionType, params: newState });
+        };
+    });
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// @fires act          [state.handler]
+// @fires blob.api     [core]
+// @fires blob.action  [state.handler]
+// @fires blob.watcher [state.handler]
+
+module.exports = function (_ref) {
+    var on = _ref.on,
+        send = _ref.send;
+
+    var resetActionType = '__RESET__';
+    // reference to the initial value is kept in order to be able to check if the
+    // state has been changes using triple-equals comparison.
+    var initial = {};
+
+    var past = [];
+    var current = initial;
+    var future = [];
+
+    // used to enforce the maximum number of past states that can be returned to.
+    var historyLength = 20;
+
+    // action types which begin with * will not be registered in the history. this
+    // can be useful for trivial interactions which should not be replayed.
+    var ignorePrefix = '*';
+
+    send('blob.action', {
+        type: 'UNDO',
+        target: [],
+        handler: function handler() {
+            // can only undo if there is at least one previous state which
+            // isin't the initial one.
+            if (past.length > 0 && past[past.length - 1] !== initial) {
+                future.push(current);
+                return past.pop();
+            } else {
+                return current;
+            }
+        }
+    });
+
+    send('blob.action', {
+        type: 'REDO',
+        target: [],
+        handler: function handler() {
+            if (future.length > 0) {
+                past.push(current);
+                return future.pop();
+            } else {
+                return current;
+            }
+        }
+    });
+
+    // reset action can be used to wipe history when, for example, an application
+    // changes to a different page with a different state structure.
+    send('blob.action', {
+        type: resetActionType,
+        target: [],
+        handler: function handler() {
+            past = [];
+            future = [];
+            return current;
+        }
+    });
+
+    // this watcher will monitor state changes and update what is stored within
+    // this function.
+    send('blob.watcher', function (state, type) {
+        if (type === resetActionType || type[0] === ignorePrefix) {
+            return;
+        }
+        if (type !== 'UNDO' && type !== 'REDO') {
+            // adding an action to the stack invalidates anything in the "future".
+            future = [];
+            past.push(current);
+            // state history must be kept within the desired maximum length.
+            if (past.length > historyLength + 1) {
+                past.shift();
+            }
+        }
+
+        // objects stored into current will be moved to the past/future stacks.
+        // it is assumed that the value given to this watcher is a copy of the
+        // current state who's reference is not exposed enywhere else.
+        current = state;
+    });
+
+    // expose undo/redo using helper functions and plug into the state module
+    // to monitor the app's state.
+    send('blob.api', {
+        undo: function undo() {
+            return send('action', { type: 'UNDO' });
+        },
+        redo: function redo() {
+            return send('action', { type: 'REDO' });
+        }
+    });
+};
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 // @fires   emit #update  [view]
 // @fires   use  #api     [core]
 // @fires   use  #primary [core]
@@ -386,7 +809,7 @@ module.exports = function (_ref) {
 // @listens use  #target
 // @listens use  #update
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isFunction = _require.isFunction;
@@ -521,7 +944,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 4 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -533,7 +956,7 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isNull = _require.isNull,
@@ -701,7 +1124,7 @@ module.exports = function (_ref) {
 };
 
 /***/ }),
-/* 5 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -710,7 +1133,7 @@ module.exports = function (_ref) {
 // @fires use #draw   [view]
 // @fires use #update [view]
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
     isNode = _require.isNode,
@@ -964,446 +1387,33 @@ module.exports = function (_ref, global) {
 };
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-// @fires   emit #state   [state]
-// @fires   use  #api     [core]
-// @fires   use  #handler [state]
-// @listens emit #state
-// @listens use  #handler
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    deepCopy = _require.deepCopy,
-    isFunction = _require.isFunction;
-
-module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
-
-    // reference to initial state is kept to be able to track whether it
-    // has changed using strict equality.
-    var initial = {};
-    var state = initial;
-
-    var handler = void 0;
-
-    // current state is monitored and stored.
-    emit.on('state', function (newState) {
-        state = newState;
-    });
-
-    use.on('handler', function (handlerGen) {
-        assert(isFunction(handlerGen), 'state.use.handler : handler generator is not a function', handlerGen);
-        // handler generator is given direct access to the state.
-        var _handler = handlerGen(function () {
-            return state;
-        });
-        assert(isFunction(_handler), 'state.use.handler : handler from generator is not a function', _handler);
-        handler = _handler;
-    });
-
-    use({ handler: function handler() {
-            return function (newState) {
-                emit({ state: newState });
-            };
-        } });
-
-    var setState = function setState(replacement) {
-        var newState = isFunction(replacement) ? replacement(deepCopy(state)) : replacement;
-        handler(newState);
-    };
-
-    var getState = function getState() {
-        assert(state !== initial, 'state.getState : cannot get state before it has been set');
-        return deepCopy(state);
-    };
-
-    // expose module's features to the app.
-    use({ api: {
-            setState: setState,
-            getState: getState
-        } });
-};
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-// @fires   emit #state   [state]
-// @fires   emit #act     [state]
-// @fires   use  #action  [state.handler]
-// @fires   use  #api     [core]
-// @fires   use  #handler [state]
-// @listens emit #act
-// @listens use  #action
-// @listens use  #middleware
-// @listens use  #watcher
-
-var _require = __webpack_require__(0)(),
-    assert = _require.assert,
-    deepCopy = _require.deepCopy,
-    makeQueue = _require.makeQueue,
-    isDefined = _require.isDefined,
-    isArray = _require.isArray,
-    isFunction = _require.isFunction,
-    isString = _require.isString;
-
-module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
-
-    // this module defines an action which overrides the whole state while
-    // giving visibility to the middleware and watchers.
-    var overrideActionType = 'SET_STATE';
-
-    var stateHasBeenOverwritten = false;
-
-    // actions is a map where actions are stored in an array at their type key.
-    var actions = {};
-    var middleware = [];
-    var watchers = [];
-
-    // this queue is used to ensure that an action, the middleware and the
-    // watchers all get called before a second action can be done. this is
-    // relevant in the case where an action is called from within a watcher.
-    // it does not however support waiting for any async code.
-    var queue = makeQueue();
-
-    // the real value is set after this module's handshake with the state
-    // module when the state handler is registered.
-    var readState = function readState() {
-        return undefined;
-    };
-
-    var execute = function execute(state, type, params) {
-        // this value will represent the state after executing the action(s).
-        // it must be copied since all the middleware functions can still
-        // potentially have access to it.
-        var newState = deepCopy(state);
-        assert(isDefined(actions[type]), 'state.handler : action type \'' + type + '\' was not found');
-
-        // action types with multiple actions are executed in the order they are added.
-        actions[type].forEach(function (currentAction) {
-            var targetAddress = currentAction.target;
-
-            // if the target is a function, it is executed with the current state.
-            if (isFunction(targetAddress)) {
-                targetAddress = targetAddress(deepCopy(state), params);
-                // since the typechecks cannot be ran when the action is added,
-                // they need to be done during the action.
-                assert(isArray(targetAddress), 'state.handler : dynamic target of action ' + type + ' is not an array', targetAddress);
-                targetAddress.forEach(function (address) {
-                    assert(isString(address), 'state.handler : dynamic target of action ' + type + ' is not an array of strings', targetAddress);
-                });
-            }
-
-            // the target is the object being passed to the action handler.
-            // it must be copied since any previous actions can still access it.
-            var target = deepCopy(newState);
-
-            // an empty array means the entire state object is the target.
-            if (targetAddress.length === 0) {
-                newState = currentAction.handler(target, params);
-                assert(isDefined(newState), 'state.handler : result of action ' + type + ' on target @state is undefined');
-            }
-
-            // reference will be the variable which keeps track of the current
-            // layer at which the address is. it is initially equal to the new
-            // state since that is the value that needs to be modified.
-            var reference = newState;
-            targetAddress.forEach(function (key, i) {
-                assert(isDefined(target[key]), 'state.handler : target of action ' + type + ' does not exist: @state.' + targetAddress.slice(0, i + 1).join('.'));
-                if (i < targetAddress.length - 1) {
-                    // both the reference to the "actual" state and the target
-                    // dummy copy are traversed at the same time.
-                    target = target[key];
-                    reference = reference[key];
-                    return;
-                }
-
-                // when the end of the address array is reached, the target
-                // has been found and can be used by the handler.
-                var newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), 'state.handler : result of action ' + type + ' on target @state.' + targetAddress.join('.') + ' is undefined');
-                reference[key] = newValue;
-            });
-        });
-
-        // other modules can listen for the state event to be updated when
-        // it changes (ex. the rendering process).
-        emit({ state: deepCopy(newState) });
-
-        watchers.forEach(function (watcher) {
-            watcher(deepCopy(newState), type, params);
-        });
-
-        // this will signal the queue that the next action can be started.
-        queue.done();
-    };
-
-    var apply = function apply(state, type, params) {
-        // base function executes the action after all middleware has been used.
-        var funcs = [function () {
-            var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
-
-            var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
-
-            var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
-
-            execute(_state, _type, _params);
-        }];
-
-        // this code will create an array where all elements are funtions which
-        // call the closest function with a lower index. the returned values for
-        // the state, action type and params are also passed down to the next
-        // function in the chain.
-        middleware.reverse().forEach(function (currentMiddleware, index) {
-            funcs[index + 1] = function () {
-                var _state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : state;
-
-                var _type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : type;
-
-                var _params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : params;
-
-                // arguments are updated with the output of previous middleware.
-                state = _state;
-                type = _type;
-                params = _params;
-                currentMiddleware(funcs[index], deepCopy(_state), _type, _params);
-            };
-        });
-
-        // the funcs array is initialized with an extra element which makes it
-        // one longer than middleware. therefore, using the length of middleware
-        // is looking for the last element in the array of functions.
-        funcs[middleware.length](state, type, params);
-    };
-
-    // actions can be added in batches by using an array.
-    use.on('action', function (action) {
-        [].concat(action).forEach(function () {
-            var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-            var type = item.type,
-                handler = item.handler,
-                target = item.target;
-
-            assert(isString(type), 'state.use.action : action\'s type is not a string', item, type);
-            assert(isFunction(handler), 'state.use.action : handler for action ' + type + ' is not a function', item, handler);
-            if (isArray(target)) {
-                target.forEach(function (address) {
-                    assert(isString(address), 'state.use.action : target of action ' + type + ' is not an array of strings', item, target);
-                });
-            } else {
-                assert(isFunction(target), 'state.use.action : target of action ' + type + ' is not valid', target);
-            }
-            if (actions[type] === undefined) {
-                actions[type] = [item];
-                return;
-            }
-            actions[type].push(item);
-        });
-    });
-
-    // middleware can be added in batches by using an array.
-    use.on('middleware', function (_middleware) {
-        [].concat(_middleware).forEach(function (item) {
-            assert(isFunction(item), 'state.use.middleware : middleware is not a function', item);
-            middleware.push(item);
-        });
-    });
-
-    // watchers can be added in batches by using an array.
-    use.on('watcher', function (watcher) {
-        [].concat(watcher).forEach(function (item) {
-            assert(isFunction(item), 'state.use.watcher : watcher is not a function', item);
-            watchers.push(item);
-        });
-    });
-
-    emit.on('act', function () {
-        var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            type = _ref2.type,
-            _ref2$params = _ref2.params,
-            params = _ref2$params === undefined ? {} : _ref2$params;
-
-        // the only action that does not need the state to have already
-        // been changed is SET_STATE.
-        assert(stateHasBeenOverwritten || type === overrideActionType, 'act : cannot act on state before it has been overrwritten');
-        stateHasBeenOverwritten = true;
-        assert(isString(type), 'state.act : action type is not a string', type);
-        // the queue will make all actions wait to be ran sequentially.
-        queue.add(function () {
-            apply(readState(), type, params);
-        });
-    });
-
-    // expose module's features to the app.
-    use({ api: {
-            act: function act(type, params) {
-                return emit({ act: { type: type, params: params } });
-            }
-        } });
-
-    // action is used to override state in order to give visibility to
-    // watchers and middleware.
-    use({ action: {
-            type: overrideActionType,
-            target: [],
-            handler: function handler(state, params) {
-                return params;
-            }
-        } });
-
-    use({ handler: function handler(reader) {
-            readState = reader;
-            return function (newState) {
-                emit({ act: { type: overrideActionType, params: newState } });
-            };
-        } });
-};
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-// @fires emit #act     [state.handler]
-// @fires use  #api     [core]
-// @fires use  #action  [state.handler]
-// @fires use  #watcher [state.handler]
-
-module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
-
-    var resetActionType = '__RESET__';
-    // reference to the initial value is kept in order to be able to check if the
-    // state has been changes using triple-equals comparison.
-    var initial = {};
-
-    var past = [];
-    var current = initial;
-    var future = [];
-
-    // used to enforce the maximum number of past states that can be returned to.
-    var historyLength = 20;
-
-    // action types which begin with * will not be registered in the history. this
-    // can be useful for trivial interactions which should not be replayed.
-    var ignorePrefix = '*';
-
-    use({ action: {
-            type: 'UNDO',
-            target: [],
-            handler: function handler() {
-                // can only undo if there is at least one previous state which
-                // isin't the initial one.
-                if (past.length > 0 && past[past.length - 1] !== initial) {
-                    future.push(current);
-                    return past.pop();
-                } else {
-                    return current;
-                }
-            }
-        } });
-
-    use({ action: {
-            type: 'REDO',
-            target: [],
-            handler: function handler() {
-                if (future.length > 0) {
-                    past.push(current);
-                    return future.pop();
-                } else {
-                    return current;
-                }
-            }
-        } });
-
-    // reset action can be used to wipe history when, for example, an application
-    // changes to a different page with a different state structure.
-    use({ action: {
-            type: resetActionType,
-            target: [],
-            handler: function handler() {
-                past = [];
-                future = [];
-                return current;
-            }
-        } });
-
-    // this watcher will monitor state changes and update what is stored within
-    // this function.
-    use({ watcher: function watcher(state, type) {
-            if (type === resetActionType || type[0] === ignorePrefix) {
-                return;
-            }
-            if (type !== 'UNDO' && type !== 'REDO') {
-                // adding an action to the stack invalidates anything in the "future".
-                future = [];
-                past.push(current);
-                // state history must be kept within the desired maximum length.
-                if (past.length > historyLength + 1) {
-                    past.shift();
-                }
-            }
-
-            // objects stored into current will be moved to the past/future stacks.
-            // it is assumed that the value given to this watcher is a copy of the
-            // current state who's reference is not exposed enywhere else.
-            current = state;
-        } });
-
-    // expose undo/redo using helper functions and plug into the state module
-    // to monitor the app's state.
-    use({ api: {
-            undo: function undo() {
-                return emit({ act: { type: 'UNDO' } });
-            },
-            redo: function redo() {
-                return emit({ act: { type: 'REDO' } });
-            }
-        } });
-};
-
-/***/ }),
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-// @fires   emit #redirect [router]
-// @fires   emit #show     [router]
-// @fires   use  #api      [core]
-// @fires   use  #primary  [core]
-// @listens emit #redirect
-// @listens emit #show
-// @listens use  #base
-// @listens use  #fetch
-// @listens use  #register
-// @listens use  #route
+// @fires   redirect     [router]
+// @fires   show         [router]
+// @fires   blob.api     [core]
+// @fires   blob.primary [core]
+// @listens redirect
+// @listens show
+// @listens blob.base
+// @listens blob.fetch
+// @listens blob.register
+// @listens blob.route
 
-var _require = __webpack_require__(0)(),
+var _require = __webpack_require__(0),
     assert = _require.assert,
-    isString = _require.isString,
-    isObject = _require.isObject,
     isFunction = _require.isFunction,
+    isObject = _require.isObject,
+    isString = _require.isString,
     makeQueue = _require.makeQueue;
 
 module.exports = function (_ref, global) {
-    var emit = _ref.emit,
-        use = _ref.use;
+    var on = _ref.on,
+        send = _ref.send;
 
     // will check is the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
@@ -1453,46 +1463,43 @@ module.exports = function (_ref, global) {
         safeFetch(currentPath);
     };
 
-    use.on('route', function () {
+    on('blob.route', function () {
         var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             path = _ref2.path,
             handler = _ref2.handler;
 
-        assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
-        assert(isFunction(register), 'route.use.route : register is not a function', register);
+        assert(isString(path), 'on.blob.route : path is not a string', path);
+        assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
+        assert(isFunction(register), 'on.blob.route : register is not a function', register);
         store = register(store, path, handler);
         if (!hasMatched) {
             hasMatched = !!safeFetch(currentPath);
         }
     });
 
-    use.on('base', function (base) {
-        assert(isString(base), 'router.use.base : base url is not a string', base);
+    on('blob.base', function (base) {
+        assert(isString(base), 'on.blob.base : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         safeFetch(currentPath);
     });
 
-    use.on('register', function (_register) {
-        assert(isFunction(_register), 'router.use.register : register is not a function', register);
+    on('blob.register', function (_register) {
+        assert(isFunction(_register), 'on.blob.register : register is not a function', register);
         register = _register;
     });
 
-    use.on('fetch', function (_fetch) {
-        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
+    on('blob.fetch', function (_fetch) {
+        assert(isFunction(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
         fetch = _fetch;
     });
 
     // fetch wrapper that makes the browser aware of the url change
-    emit.on('redirect', function () {
-        var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref3.path,
-            _ref3$params = _ref3.params,
-            params = _ref3$params === undefined ? {} : _ref3$params;
+    on('redirect', function (path) {
+        var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        assert(isString(path), 'router.redirect : path is not a string', path);
-        assert(isObject(params), 'router.redirect : params is not an object', params);
+        assert(isString(path), 'on.redirect : path is not a string', path);
+        assert(isObject(params), 'on.redirect : params is not an object', params);
         // queue used so that route handlers that call route handlers behave
         // as expected. (sequentially)
         queue.add(function () {
@@ -1503,22 +1510,19 @@ module.exports = function (_ref, global) {
                 // the path given to pushState. which means it needs to be removed here.
                 global.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
-                console.log('@okwolo/router:: path changed to\n>>> ' + currentPath);
+                console.log('@okwolo : path changed to\n>>> ' + currentPath);
             }
             safeFetch(currentPath, params);
             queue.done();
         });
     });
 
-    // this will act like a redirect, but will not change the browser's url.
-    emit.on('show', function () {
-        var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            path = _ref4.path,
-            _ref4$params = _ref4.params,
-            params = _ref4$params === undefined ? {} : _ref4$params;
+    // show acts like a redirect, but will not change the browser's url.
+    on('show', function (path) {
+        var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        assert(isString(path), 'router.show : path is not a string', path);
-        assert(isObject(params), 'router.show : params is not an object', params);
+        assert(isString(path), 'on.show : path is not a string', path);
+        assert(isObject(params), 'on.show : params is not an object', params);
         // queue used so that route handlers that call route handlers behave
         // as expected. (sequentially)
         queue.add(function () {
@@ -1528,29 +1532,29 @@ module.exports = function (_ref, global) {
     });
 
     // expose module's features to the app.
-    use({ api: {
-            redirect: function redirect(path, params) {
-                return emit({ redirect: { path: path, params: params } });
-            },
-            show: function show(path, params) {
-                return emit({ show: { path: path, params: params } });
-            }
-        } });
+    send('blob.api', {
+        redirect: function redirect(path, params) {
+            return send('redirect', path, params);
+        },
+        show: function show(path, params) {
+            return send('show', path, params);
+        }
+    });
 
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
-    use({ primary: function primary(path, builder) {
-            if (isFunction(path)) {
-                use({ builder: path() });
-                return;
+    send('blob.primary', function (path, builder) {
+        if (isFunction(path)) {
+            send('blob.builder', path());
+            return;
+        }
+        send('blob.route', {
+            path: path,
+            handler: function handler(params) {
+                send('blob.builder', builder(params));
             }
-            use({ route: {
-                    path: path,
-                    handler: function handler(params) {
-                        use({ builder: builder(params) });
-                    }
-                } });
-        } });
+        });
+    });
 };
 
 /***/ }),
@@ -1560,14 +1564,14 @@ module.exports = function (_ref, global) {
 "use strict";
 
 
-// @fires use #register [router]
+// @fires blob.register [router]
 
 // this is the same library that is used in by express to match routes.
 
 var pathToRegexp = __webpack_require__(11);
 
 module.exports = function (_ref) {
-    var use = _ref.use;
+    var send = _ref.send;
 
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
@@ -1586,7 +1590,7 @@ module.exports = function (_ref) {
         return store;
     };
 
-    use({ register: register });
+    send('blob.register', register);
 };
 
 /***/ }),
@@ -1973,10 +1977,10 @@ function pathToRegexp (path, keys, options) {
 "use strict";
 
 
-// @fires use #fetch [router]
+// @fires blob.fetch [router]
 
 module.exports = function (_ref) {
-    var use = _ref.use;
+    var send = _ref.send;
 
     // the store's initial value is undefined so it needs to be defaulted
     // to an empty array. this function should be the one doing the action
@@ -2011,7 +2015,7 @@ module.exports = function (_ref) {
         return found;
     };
 
-    use({ fetch: fetch });
+    send('blob.fetch', fetch);
 };
 
 /***/ })

@@ -12,12 +12,12 @@ const testAction = (handler, target) => {
 };
 
 describe('state.handler', () => {
-    describe('emit', () => {
-        describe('act', () => {
+    describe('events', () => {
+        describe('action', () => {
             it('should require both action type', () => {
                 const app = o(s, sh);
                 app.setState({});
-                expect(() => app.emit({act: {}}))
+                expect(() => app.send('action', {}))
                     .toThrow(/type/);
             });
 
@@ -25,7 +25,7 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 app.setState({});
                 app.use(testAction());
-                expect(app.emit({act: {type: 'TEST'}}))
+                expect(app.send('action', {type: 'TEST'}))
                     .toBe(undefined);
             });
 
@@ -37,7 +37,7 @@ describe('state.handler', () => {
                     test(state + params);
                     return state;
                 }));
-                app.emit({act: {type: 'TEST', params: 'b'}});
+                app.send('action', {type: 'TEST', params: 'b'});
                 expect(test)
                     .toHaveBeenCalledWith('ab');
             });
@@ -46,9 +46,9 @@ describe('state.handler', () => {
                 const test = jest.fn();
                 const app = o(s, sh);
                 app.setState({});
-                app.use({middleware: () => {}});
+                app.send('blob.middleware', () => {});
                 app.use(testAction(test));
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test)
                     .toHaveBeenCalledTimes(0);
             });
@@ -60,10 +60,10 @@ describe('state.handler', () => {
                     let callOrder = [];
                     let numTests = 2 + Math.floor(Math.random()*8);
                     for (let i = 0; i < numTests; ++i) {
-                        app.use({middleware: (next, state, type, params) => {
+                        app.send('blob.middleware', (next, state, type, params) => {
                             callOrder.push(i);
                             setTimeout(next, Math.random()*numTests*2);
-                        }});
+                        });
                     }
                     app.use(testAction((s) => {
                         for (let i = 0; i < numTests; ++i) {
@@ -73,21 +73,21 @@ describe('state.handler', () => {
                         done();
                         return s;
                     }));
-                    app.emit({act: {type: 'TEST'}});
+                    app.send('action', {type: 'TEST'});
                 });
 
                 it('should allow middleware to override all params', () => {
                     const test = jest.fn();
                     const app = o(s, sh);
                     app.setState(0);
-                    app.use({middleware: (next, state, type, params) => {
+                    app.send('blob.middleware', (next, state, type, params) => {
                         next(++state, 'TEST', ++params);
-                    }});
+                    });
                     app.use(testAction((state, params) => {
                         test(state, params);
                         return state;
                     }));
-                    app.emit({act: {type: 'NOT_TEST', params: 1}});
+                    app.send('action', {type: 'NOT_TEST', params: 1});
                     expect(test)
                         .toHaveBeenCalledWith(1, 2);
                 });
@@ -96,19 +96,19 @@ describe('state.handler', () => {
                     const app = o(s, sh);
                     let originalState = {};
                     app.setState(originalState);
-                    app.use({middleware: (next, state) => {
+                    app.send('blob.middleware', (next, state) => {
                         expect(state)
                             .not.toBe(originalState);
-                    }});
+                    });
                     app.use(testAction());
-                    app.emit({act: {type: 'TEST'}});
+                    app.send('action', {type: 'TEST'});
                 });
 
-                describe('emit', () => {
+                describe('action', () => {
                     it('should reject unknown actions', () => {
                         const app = o(s, sh);
                         app.setState({});
-                        expect(() => app.emit({act: {type: 'TEST'}}))
+                        expect(() => app.send('action', {type: 'TEST'}))
                             .toThrow(/action[^]*not[^]found/);
                     });
 
@@ -121,7 +121,7 @@ describe('state.handler', () => {
                                 .not.toBe(originalState);
                             return state;
                         }));
-                        app.emit({act: {type: 'TEST'}});
+                        app.send('action', {type: 'TEST'});
                     });
 
                     it('should provide the right target to the action handlers', () => {
@@ -132,13 +132,13 @@ describe('state.handler', () => {
                                 .toBe('success!');
                             return target;
                         }, ['a', 'b', 'c']));
-                        app.emit({act: {type: 'TEST'}});
+                        app.send('action', {type: 'TEST'});
                     });
 
                     it('should support dynamic action targets', () => {
                         const app = o(s, sh);
                         app.setState({a: {b: {c: 'success!'}}});
-                        app.use({action: {
+                        app.send('blob.action', {
                             type: 'TEST',
                             target: (state, params) => {
                                 expect(state)
@@ -152,19 +152,19 @@ describe('state.handler', () => {
                                     .toBe('success!');
                                 return target;
                             },
-                        }});
-                        app.emit({act: {type: 'TEST', params: {test: true}}});
+                        });
+                        app.send('action', {type: 'TEST', params: {test: true}});
                     });
 
                     it('should fail when dynamic targets are invalid', () => {
                         const app = o(s, sh);
                         app.setState({});
-                        app.use({action: {
+                        app.send('blob.action', {
                             type: 'TEST',
                             target: () => [{}],
                             handler: () => {},
-                        }});
-                        expect(() => app.emit({act: {type: 'TEST'}}))
+                        });
+                        expect(() => app.send('action', {type: 'TEST'}))
                             .toThrow(/dynamic[^]*string/);
                     });
 
@@ -172,7 +172,7 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState({a: {}});
                         app.use(testAction(null, ['a', 'b']));
-                        expect(() => app.emit({act: {type: 'TEST'}}))
+                        expect(() => app.send('action', {type: 'TEST'}))
                             .toThrow(/target/);
                     });
 
@@ -180,7 +180,7 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState({a: {}});
                         app.use(testAction(null, ['a', 'b', 'c']));
-                        expect(() => app.emit({act: {type: 'TEST'}}))
+                        expect(() => app.send('action', {type: 'TEST'}))
                             .toThrow(/a\.b$/);
                     });
 
@@ -194,17 +194,17 @@ describe('state.handler', () => {
                             test1();
                             return state;
                         }));
-                        app.use({watcher: () => {
+                        app.send('blob.watcher', () => {
                             expect(test1)
                                 .toHaveBeenCalled();
                             test2();
-                        }});
-                        app.use({watcher: () => {
+                        });
+                        app.send('blob.watcher', () => {
                             expect(test1)
                                 .toHaveBeenCalled();
                             test3();
-                        }});
-                        app.emit({act: {type: 'TEST'}});
+                        });
+                        app.send('action', {type: 'TEST'});
                         expect(test2)
                             .toHaveBeenCalled();
                         expect(test3)
@@ -216,8 +216,8 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState(1);
                         app.use(testAction());
-                        app.use({watcher: test});
-                        app.emit({act: {type: 'TEST', params: 2}});
+                        app.send('blob.watcher', test);
+                        app.send('action', {type: 'TEST', params: 2});
                         expect(test)
                             .toHaveBeenCalledWith(1, 'TEST', 2);
                     });
@@ -227,11 +227,11 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState(1);
                         app.use(testAction());
-                        app.use({middleware: (next) => {
+                        app.send('blob.middleware', (next) => {
                             next('a', 'TEST', 'b');
-                        }});
-                        app.use({watcher: test});
-                        app.emit({act: {type: '2', params: 3}});
+                        });
+                        app.send('blob.watcher', test);
+                        app.send('action', {type: '2', params: 3});
                         expect(test)
                             .toHaveBeenCalledWith('a', 'TEST', 'b');
                     });
@@ -241,8 +241,8 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState({});
                         app.use(testAction(() => 0));
-                        app.use({watcher: test});
-                        app.emit({act: {type: 'TEST', params: 1}});
+                        app.send('blob.watcher', test);
+                        app.send('action', {type: 'TEST', params: 1});
                         expect(test)
                             .toHaveBeenCalledWith(0, 'TEST', 1);
                     });
@@ -252,8 +252,8 @@ describe('state.handler', () => {
                         const app = o(s, sh);
                         app.setState({subdirectory: 1});
                         app.use(testAction(() => 0, ['subdirectory']));
-                        app.use({watcher: test});
-                        app.emit({act: {type: 'TEST', params: 1}});
+                        app.send('blob.watcher', test);
+                        app.send('action', {type: 'TEST', params: 1});
                         expect(test)
                             .toHaveBeenCalledWith({subdirectory: 0}, 'TEST', 1);
                     });
@@ -262,7 +262,7 @@ describe('state.handler', () => {
         });
     });
 
-    describe('use', () => {
+    describe('blobs', () => {
         describe('action', () => {
             it('should register and use well formed actions', () => {
                 const test = jest.fn();
@@ -272,7 +272,7 @@ describe('state.handler', () => {
                     test();
                     return s;
                 }));
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -281,11 +281,11 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 app.setState({});
                 expect(() => {
-                    app.use({action: {
+                    app.send('blob.action', {
                         type: true,
                         target: [],
                         handler: () => {},
-                    }});
+                    });
                 })
                     .toThrow(/okwolo[^]*type/);
             });
@@ -294,11 +294,11 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 app.setState({});
                 expect(() => {
-                    app.use({action: {
+                    app.send('blob.action', {
                         type: 'TEST',
                         target: 'TEST',
                         handler: () => {},
-                    }});
+                    });
                 })
                     .toThrow(/okwolo[^]*target/);
             });
@@ -307,11 +307,11 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 app.setState({});
                 expect(() => {
-                    app.use({action: {
+                    app.send('blob.action', {
                         type: 'TEST',
                         target: [],
                         handler: true,
-                    }});
+                    });
                 })
                     .toThrow(/okwolo[^]*handler/);
             });
@@ -320,7 +320,7 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 app.setState({});
                 app.use(testAction((s) => {}));
-                expect(() => app.emit({act: {type: 'TEST'}}))
+                expect(() => app.send('action', {type: 'TEST'}))
                     .toThrow(/result[^]*undefined/);
             });
 
@@ -337,7 +337,7 @@ describe('state.handler', () => {
                     test2();
                     return s;
                 }));
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
@@ -350,14 +350,12 @@ describe('state.handler', () => {
                 const test = jest.fn();
                 const app = o(s, sh);
                 app.setState({});
-                app.use({
-                    middleware: (next, state, type, params) => {
-                        test();
-                        next();
-                    },
+                app.send('blob.middleware', (next, state, type, params) => {
+                    test();
+                    next();
                 });
                 app.use(testAction());
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -365,7 +363,7 @@ describe('state.handler', () => {
             it('should reject malformed middleware', () => {
                 const app = o(s, sh);
                 app.setState({});
-                expect(() => app.use({middleware: true}))
+                expect(() => app.send('blob.middleware', true))
                     .toThrow(/middleware/);
             });
 
@@ -374,16 +372,16 @@ describe('state.handler', () => {
                 const test1 = jest.fn();
                 const test2 = jest.fn();
                 app.setState({});
-                app.use({middleware: (next, state, type, params) => {
+                app.send('blob.middleware', (next, state, type, params) => {
                     test1();
                     next();
-                }});
-                app.use({middleware: (next, state, type, params) => {
+                });
+                app.send('blob.middleware', (next, state, type, params) => {
                     test2();
                     next();
-                }});
+                });
                 app.use(testAction());
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
@@ -396,9 +394,9 @@ describe('state.handler', () => {
                 const test = jest.fn();
                 const app = o(s, sh);
                 app.setState({});
-                app.use({watcher: test});
+                app.send('blob.watcher', test);
                 app.use(testAction());
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -406,7 +404,7 @@ describe('state.handler', () => {
             it('should reject malformed watchers', () => {
                 const app = o(s, sh);
                 app.setState({});
-                expect(() => app.use({watcher: true}))
+                expect(() => app.send('blob.watcher', true))
                     .toThrow(/watcher/);
             });
 
@@ -414,10 +412,10 @@ describe('state.handler', () => {
                 const test = jest.fn();
                 const app = o(s, sh);
                 app.setState({});
-                app.use({watcher: test});
-                app.use({watcher: test});
+                app.send('blob.watcher', test);
+                app.send('blob.watcher', test);
                 app.use(testAction());
-                app.emit({act: {type: 'TEST'}});
+                app.send('action', {type: 'TEST'});
                 expect(test)
                     .toHaveBeenCalledTimes(2);
             });

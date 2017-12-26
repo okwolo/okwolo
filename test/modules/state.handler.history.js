@@ -5,12 +5,12 @@ const sh = require('../../src/modules/state.handler');
 const shh = require('../../src/modules/state.handler.history');
 
 describe('state.handler.history', () => {
-    describe('use', () => {
+    describe('blobs', () => {
         describe('action', () => {
             it('should add an UNDO action', () => {
                 const test = jest.fn();
-                o(({use}) => {
-                    use.on('action', ({type}) => {
+                o(({on}) => {
+                    on('blob.action', ({type}) => {
                         if (type === 'UNDO') {
                             test();
                         }
@@ -22,8 +22,8 @@ describe('state.handler.history', () => {
 
             it('should add an REDO action', () => {
                 const test = jest.fn();
-                o(({use}) => {
-                    use.on('action', ({type}) => {
+                o(({on}) => {
+                    on('blob.action', ({type}) => {
                         if (type === 'REDO') {
                             test();
                         }
@@ -35,8 +35,8 @@ describe('state.handler.history', () => {
 
             it('should add an RESET action', () => {
                 const test = jest.fn();
-                o(({use}) => {
-                    use.on('action', ({type}) => {
+                o(({on}) => {
+                    on('blob.action', ({type}) => {
                         if (type === '__RESET__') {
                             test();
                         }
@@ -50,8 +50,8 @@ describe('state.handler.history', () => {
         describe('watcher', () => {
             it('should add a watcher', () => {
                 const test = jest.fn();
-                o(({use}) => {
-                    use.on('watcher', test);
+                o(({on}) => {
+                    on('blob.watcher', test);
                 }, shh);
                 expect(test)
                     .toHaveBeenCalled();
@@ -62,8 +62,8 @@ describe('state.handler.history', () => {
             describe('undo', () => {
                 it('should add a undo to the api', () => {
                     const test = jest.fn();
-                    o(({use}) => {
-                        use.on('api', (api) => {
+                    o(({on}) => {
+                        on('blob.api', (api) => {
                             expect(api.undo)
                                 .toBeInstanceOf(Function);
                             test();
@@ -76,7 +76,7 @@ describe('state.handler.history', () => {
                 it('should emit a undo action when called', () => {
                     const test = jest.fn();
                     const app = o(shh);
-                    app.emit.on('act', ({type}) => {
+                    app.on('action', ({type}) => {
                         if (type === 'UNDO') {
                             test();
                         }
@@ -90,8 +90,8 @@ describe('state.handler.history', () => {
             describe('redo', () => {
                 it('should add a redo to the api', () => {
                     const test = jest.fn();
-                    o(({use}) => {
-                        use.on('api', (api) => {
+                    o(({on}) => {
+                        on('blob.api', (api) => {
                             expect(api.redo)
                                 .toBeInstanceOf(Function);
                             test();
@@ -104,7 +104,7 @@ describe('state.handler.history', () => {
                 it('should emit a redo action when called', () => {
                     const test = jest.fn();
                     const app = o(shh);
-                    app.emit.on('act', ({type}) => {
+                    app.on('action', ({type}) => {
                         if (type === 'REDO') {
                             test();
                         }

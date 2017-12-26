@@ -3,25 +3,25 @@
 const s = require('../../src/modules/state');
 
 describe('state', () => {
-    describe('emit', () => {
+    describe('events', () => {
         describe('state', () => {
             it('should listen for state and update the internal one', () => {
                 const app = o(s);
                 const test = {a: 'test'};
-                app.emit({state: test});
+                app.send('state', test);
                 expect(app.getState())
                     .toEqual(test);
             });
         });
     });
 
-    describe('use', () => {
+    describe('blobs', () => {
         describe('api', () => {
             describe('getState', () => {
                 it('should add getState to the api', () => {
                     const test = jest.fn();
-                    const app = o(({use}) => {
-                        use.on('api', (api) => {
+                    const app = o(({on}) => {
+                        on('blob.api', (api) => {
                             test();
                             expect(api.getState)
                                 .toBeInstanceOf(Function);
@@ -35,14 +35,14 @@ describe('state', () => {
 
                 it('should fail if the state has not been set', () => {
                     const test = jest.fn();
-                    const app = o(({emit}) => {
-                        emit.on('state', test);
+                    const app = o(({on}) => {
+                        on('state', test);
                     }, s);
                     expect(test)
                         .toHaveBeenCalledTimes(0);
                     expect(() => app.getState())
                         .toThrow(/get.*state.*set/);
-                    app.emit({state: 0});
+                    app.send('state', 0);
                     expect(test)
                         .toHaveBeenCalledTimes(1);
                     expect(() => app.getState())
@@ -63,8 +63,8 @@ describe('state', () => {
             describe('setState', () => {
                 it('should add setState to the api', () => {
                     const test = jest.fn();
-                    const app = o(({use}) => {
-                        use.on('api', (api) => {
+                    const app = o(({on}) => {
+                        on('blob.api', (api) => {
                             test();
                             expect(api.setState)
                                 .toBeInstanceOf(Function);
@@ -80,7 +80,7 @@ describe('state', () => {
                     const test = jest.fn();
                     const app = o(s);
                     const temp = {test: true};
-                    app.use({handler: () => test});
+                    app.send('blob.handler', () => test);
                     expect(test)
                         .toHaveBeenCalledTimes(0);
                     app.setState(temp);
@@ -112,7 +112,7 @@ describe('state', () => {
         describe('handler', () => {
             it('should not accept malformed handlers', () => {
                 const app = o(s);
-                expect(() => app.use({handler: true}))
+                expect(() => app.send('blob.handler', true))
                     .toThrow(/handler.*function/);
             });
 
@@ -121,14 +121,14 @@ describe('state', () => {
                 const app = o(s);
                 const temp = {};
                 app.setState(temp);
-                app.use({handler: (reader) => {
+                app.send('blob.handler', (reader) => {
                     expect(reader)
                         .toBeInstanceOf(Function);
                     expect(reader())
                         .toBe(temp);
                     test();
                     return () => {};
-                }});
+                });
                 expect(test)
                     .toHaveBeenCalled();
             });
@@ -137,7 +137,7 @@ describe('state', () => {
                 const test = jest.fn();
                 const app = o(s);
                 const temp = {test: true};
-                app.use({handler: () => test});
+                app.send('blob.handler', () => test);
                 expect(test)
                     .toHaveBeenCalledTimes(0);
                 app.setState(temp);
@@ -148,12 +148,12 @@ describe('state', () => {
             it('should add a default handler which emits new state', () => {
                 const test1 = jest.fn();
                 const test2 = jest.fn();
-                const app = o(({use}) => {
-                    use.on('handler', test1);
+                const app = o(({on}) => {
+                    on('blob.handler', test1);
                 }, s);
                 expect(test1)
                     .toHaveBeenCalled();
-                app.emit.on('state', test2);
+                app.on('state', test2);
                 app.setState({});
                 expect(test2)
                     .toHaveBeenCalled();
