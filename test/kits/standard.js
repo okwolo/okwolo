@@ -189,11 +189,11 @@ describe('standard', () => {
     describe('act', () => {
         it('should not allow actions before state has been set', () => {
             const app = standard();
-            app.use({action: {
+            app.use('action', {
                 type: 'TEST',
                 target: [],
                 handler: (params) => params,
-            }});
+            });
             expect(() => app.act('TEST'))
                 .toThrow(/state/);
             app.setState({});
@@ -264,14 +264,14 @@ describe('standard', () => {
             const app = standard();
             const test = jest.fn();
             app.setState({});
-            app.use({action: {
+            app.use('action', {
                 type: 'UNDO',
                 target: [],
                 handler: () => {
                     test();
                     return null;
                 },
-            }});
+            });
             app.undo();
             expect(test)
                 .toHaveBeenCalled();
@@ -283,14 +283,14 @@ describe('standard', () => {
             const app = standard();
             const test = jest.fn();
             app.setState({});
-            app.use({action: {
+            app.use('action', {
                 type: 'REDO',
                 target: [],
                 handler: () => {
                     test();
                     return null;
                 },
-            }});
+            });
             app.redo();
             expect(test)
                 .toHaveBeenCalled();
@@ -324,14 +324,14 @@ describe('standard', () => {
                 {text: 'def', count: 0},
                 {text: 'ghi', count: 0},
             ]);
-            app.use({action: {
+            app.use('action', {
                 type: 'INC',
                 target: [],
                 handler: (state, params) => {
                     state[params].count++;
                     return state;
                 },
-            }});
+            });
             app(() => (state) => (
                 ['div.buttons', {},
                     state.map(({text, count}, index) => (

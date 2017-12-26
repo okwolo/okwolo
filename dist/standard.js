@@ -150,10 +150,6 @@ module.exports.assert = function (assertion, message) {
     }
 
     if (!assertion) {
-        console.log('\x1b[35mabc\x1b[0m');
-        var f = '\x1b[35m';
-        var err = '@okwolo.' + message;
-        err.replace(/(@okwolo(:?\..+)*) : (.*)/g, function () {});
         throw new Error('@okwolo.' + message + culprits.map(prettyPrint).join(''));
     }
 };
@@ -301,13 +297,13 @@ var makeBus = function makeBus() {
     return { on: on, send: send, use: use };
 };
 
-module.exports = function (_ref) {
-    var _ref$modules = _ref.modules,
-        modules = _ref$modules === undefined ? [] : _ref$modules,
-        _ref$options = _ref.options,
-        options = _ref$options === undefined ? {} : _ref$options;
+module.exports = function () {
+    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var _config$modules = config.modules,
+        modules = _config$modules === undefined ? [] : _config$modules,
+        _config$options = config.options,
+        options = _config$options === undefined ? {} : _config$options;
 
-    assert(false, 'test : test');
     assert(isArray(modules), 'core : passed modules must be an array');
     assert(isObject(options), 'core : passed options must be an object');
 
@@ -650,7 +646,7 @@ module.exports = function (_ref) {
             params = _ref2$params === undefined ? {} : _ref2$params;
 
         // the only action that does not need the state to have already
-        // been changed is SET_STATE.
+        // been changed is the override action.
         assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overrwritten');
         stateHasBeenOverwritten = true;
         assert(isString(type), 'state.act : action type is not a string', type);
@@ -663,7 +659,7 @@ module.exports = function (_ref) {
     // expose module's features to the app.
     send('blob.api', {
         act: function act(type, params) {
-            return send('act', { type: type, params: params });
+            return send('action', { type: type, params: params });
         }
     });
 
@@ -677,7 +673,7 @@ module.exports = function (_ref) {
         }
     });
 
-    send('handler', function (reader) {
+    send('blob.handler', function (reader) {
         readState = reader;
         return function (newState) {
             send('action', { type: overrideActionType, params: newState });
@@ -798,16 +794,16 @@ module.exports = function (_ref) {
 "use strict";
 
 
-// @fires   emit #update  [view]
-// @fires   use  #api     [core]
-// @fires   use  #primary [core]
-// @listens emit #state
-// @listens emit #update
-// @listens use  #build
-// @listens use  #builder
-// @listens use  #draw
-// @listens use  #target
-// @listens use  #update
+// @fires   update       [view]
+// @fires   blob.api     [core]
+// @fires   blob.primary [core]
+// @listens state
+// @listens update
+// @listens blob.build
+// @listens blob.builder
+// @listens blob.draw
+// @listens blob.target
+// @listens blob.update
 
 var _require = __webpack_require__(0),
     assert = _require.assert,
@@ -815,8 +811,8 @@ var _require = __webpack_require__(0),
     isFunction = _require.isFunction;
 
 module.exports = function (_ref) {
-    var emit = _ref.emit,
-        use = _ref.use;
+    var on = _ref.on,
+        send = _ref.send;
 
     var target = void 0;
     var builder = void 0;
@@ -843,39 +839,39 @@ module.exports = function (_ref) {
         return temp;
     };
 
-    use.on('target', function (_target) {
+    on('blob.target', function (_target) {
         target = _target;
-        emit({ update: true });
+        send('update', true);
     });
 
-    use.on('builder', function (_builder) {
-        assert(isFunction(_builder), 'view.use.builder : builder is not a function', _builder);
+    on('blob.builder', function (_builder) {
+        assert(isFunction(_builder), 'on.blob.builder : builder is not a function', _builder);
         builder = _builder;
-        emit({ update: false });
+        send('update', false);
     });
 
-    use.on('draw', function (_draw) {
-        assert(isFunction(_draw), 'view.use.draw : new draw is not a function', _draw);
+    on('blob.draw', function (_draw) {
+        assert(isFunction(_draw), 'on.blob.draw : new draw is not a function', _draw);
         draw = _draw;
-        emit({ update: true });
+        send('update', true);
     });
 
-    use.on('update', function (_update) {
-        assert(isFunction(_update), 'view.use.update : new target updater is not a function', _update);
+    on('blob.update', function (_update) {
+        assert(isFunction(_update), 'on.blob.update : new target updater is not a function', _update);
         update = _update;
-        emit({ update: false });
+        send('update', false);
     });
 
-    use.on('build', function (_build) {
-        assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
+    on('blob.build', function (_build) {
+        assert(isFunction(_build), 'on.blob.build : new build is not a function', _build);
         build = _build;
-        emit({ update: false });
+        send('update', false);
     });
 
-    emit.on('state', function (_state) {
-        assert(isDefined(_state), 'view.emit.state : new state is not defined', _state);
+    on('state', function (_state) {
+        assert(isDefined(_state), 'on.blob.state : new state is not defined', _state);
         state = _state;
-        emit({ update: false });
+        send('update', false);
     });
 
     // tracks whether the app has been drawn. this information is used to
@@ -909,7 +905,7 @@ module.exports = function (_ref) {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    emit.on('update', function (force) {
+    on('update', function (force) {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
@@ -930,17 +926,17 @@ module.exports = function (_ref) {
 
     // the only functionality from the dom module that is directly exposed
     // is the update event.
-    use({ api: {
-            update: function update() {
-                return emit({ update: false });
-            }
-        } });
+    send('blob.api', {
+        update: function update() {
+            return send('update', false);
+        }
+    });
 
     // primary functionality will be to replace buider. this is overwritten
     // by router modules to more easily associate routes to builders.
-    use({ primary: function primary(init) {
-            return use({ builder: init() });
-        } });
+    send('blob.primary', function (init) {
+        send('blob.builder', init());
+    });
 };
 
 /***/ }),
@@ -950,7 +946,7 @@ module.exports = function (_ref) {
 "use strict";
 
 
-// @fires use #build [view]
+// @fires blob.build [view]
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
@@ -958,14 +954,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var _require = __webpack_require__(0),
     assert = _require.assert,
-    isDefined = _require.isDefined,
-    isNull = _require.isNull,
     isArray = _require.isArray,
-    isString = _require.isString,
-    isNumber = _require.isNumber,
     isBoolean = _require.isBoolean,
+    isDefined = _require.isDefined,
+    isFunction = _require.isFunction,
+    isNull = _require.isNull,
+    isNumber = _require.isNumber,
     isObject = _require.isObject,
-    isFunction = _require.isFunction;
+    isString = _require.isString;
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
@@ -1118,9 +1114,9 @@ var build = function build(element) {
 };
 
 module.exports = function (_ref) {
-    var use = _ref.use;
+    var send = _ref.send;
 
-    use({ build: build });
+    send('blob.build', build);
 };
 
 /***/ }),
@@ -1130,14 +1126,14 @@ module.exports = function (_ref) {
 "use strict";
 
 
-// @fires use #draw   [view]
-// @fires use #update [view]
+// @fires blob.draw   [view]
+// @fires blob.update [view]
 
 var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
-    isNode = _require.isNode,
-    isFunction = _require.isFunction;
+    isFunction = _require.isFunction,
+    isNode = _require.isNode;
 
 // finds the longest commmon of equal items between two input arrays.
 // this function can make some optimizations by assuming that both
@@ -1205,7 +1201,7 @@ var diff = function diff(original, successor) {
 };
 
 module.exports = function (_ref, global) {
-    var use = _ref.use;
+    var send = _ref.send;
 
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
@@ -1380,10 +1376,8 @@ module.exports = function (_ref, global) {
         return VDOM;
     };
 
-    use({
-        draw: draw,
-        update: update
-    });
+    send('blob.draw', draw);
+    send('blob.update', update);
 };
 
 /***/ }),
