@@ -17,77 +17,72 @@ describe('view', () => {
 
     it('should add the builder function\'s output to the target', async () => {
         const app = o(v, vb, vd);
-        app.emit({state: {}});
-        app.use({builder: () => ['span']});
+        app.send('state', {});
+        app.send('blob.builder', () => ['span']);
         await sleep();
         expect(wrapper.children[0].tagName)
             .toBe('SPAN');
     });
 
     it('should not attempt to draw before it can', () => {
-        const init = (events) => {
+        const init = (e) => {
             const app = o(v);
-            expect(() => {
-                app.use(events);
-                app.emit(events);
-            })
+            expect(() => e(app.send))
                 .not.toThrow(Error);
         };
         // missing build
-        init({
-            target: wrapper,
-            builder: () => 'test',
-            state: () => 'test',
+        init((send) => {
+            send('blob.target', wrapper);
+            send('blob.builder', () => 'test');
+            send('blob.state', () => 'test');
         });
         // missing target
-        init({
-            draw: () => 0,
-            build: () => 'test',
-            builder: () => 'test',
-            state: () => 'test',
+        init((send) => {
+            send('blob.draw', () => 0);
+            send('blob.build', () => 'test');
+            send('blob.builder', () => 'test');
+            send('blob.state', () => 'test');
         });
         // missing builder
-        init({
-            build: () => 'test',
-            target: wrapper,
-            state: () => 'test',
+        init((send) => {
+            send('blob.build', () => 'test');
+            send('blob.target', wrapper);
+            send('blob.state', () => 'test');
         });
         // missing state
-        init({
-            build: () => 'test',
-            target: wrapper,
-            builder: () => 'test',
+        init((send) => {
+            send('blob.build', () => 'test');
+            send('blob.target', wrapper);
+            send('blob.builder', () => 'test');
         });
     });
 
-    describe('use', () => {
+    describe('blobs', () => {
         it('should not accept multiple items per key', () => {
             const app = o(v, vb, vd);
-            expect(() => app.use({name: ['name']}))
+            expect(() => app.send('blob.builder', [() => 'test']))
                 .toThrow(Error);
-            expect(() => app.use({builder: [() => 'test']}))
+            expect(() => app.send('blob.draw', [() => {}]))
                 .toThrow(Error);
-            expect(() => app.use({draw: [() => {}]}))
+            expect(() => app.send('blob.update', [() => {}]))
                 .toThrow(Error);
-            expect(() => app.use({update: [() => {}]}))
-                .toThrow(Error);
-            expect(() => app.use({build: [() => ({text: 'test'})]}))
+            expect(() => app.send('blob.build', [() => ({text: 'test'})]))
                 .toThrow(Error);
         });
 
         describe('target', () => {
             it('should reject malformed targets', () => {
                 const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                expect(() => app.use({target: null}))
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
+                expect(() => app.send('blob.target', null))
                     .toThrow(/target/g);
             });
 
             it('should change the render target', async () => {
                 const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
@@ -96,7 +91,7 @@ describe('view', () => {
                 wrapper.appendChild(newTarget);
                 expect(wrapper.innerHTML)
                     .toBe('<div></div>');
-                app.use({target: newTarget});
+                app.send('blob.target', newTarget);
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div>test</div>');
@@ -106,18 +101,18 @@ describe('view', () => {
         describe('builder', () => {
             it('should reject malformed builders', () => {
                 const app = o(v, vb, vd);
-                expect(() => app.use({builder: null}))
+                expect(() => app.send('blob.builder', null))
                     .toThrow(/builder/g);
             });
 
             it('should change the builder function', async () => {
                 const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('test');
-                app.use({builder: () => 'content'});
+                app.send('blob.builder', () => 'content');
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('content');
@@ -127,18 +122,18 @@ describe('view', () => {
         describe('state', () => {
             it('should reject undefined state', () => {
                 const app = o(v, vb, vd);
-                expect(() => app.emit({state: undefined}))
+                expect(() => app.send('state', undefined))
                     .toThrow(/state/gi);
             });
 
             it('should trigger an update', async () => {
                 const app = o(v, vb, vd);
-                app.emit({state: 'initial'});
-                app.use({builder: (s) => s});
+                app.send('state', 'initial');
+                app.send('blob.builder', (s) => s);
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('initial');
-                app.emit({state: 'changed'});
+                app.send('state', 'changed');
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('changed');
@@ -148,16 +143,16 @@ describe('view', () => {
         describe('draw', () => {
             it('should reject malformed draw', () => {
                 const app = o(v, vb, vd);
-                expect(() => app.use({draw: {}}))
+                expect(() => app.send('blob.draw', {}))
                     .toThrow(/draw/g);
             });
 
             it('should trigger a redraw', async () => {
                 const app = o(v, vb, vd);
                 const test = jest.fn();
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({draw: test});
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
+                app.send('blob.draw', test);
                 await sleep();
                 expect(test)
                     .toHaveBeenCalled();
@@ -167,7 +162,7 @@ describe('view', () => {
         describe('update', () => {
             it('should reject malformed update', () => {
                 const app = o(v, vb, vd);
-                expect(() => app.use({update: {}}))
+                expect(() => app.send('blob.update', {}))
                     .toThrow(/update/g);
             });
         });
@@ -175,16 +170,16 @@ describe('view', () => {
         describe('build', () => {
             it('should reject malformed build', () => {
                 const app = o(v, vb, vd);
-                expect(() => app.use({build: {}}))
+                expect(() => app.send('blob.build', {}))
                     .toThrow(/build/g);
             });
 
             it('should trigger an update', async () => {
                 const app = o(v, vb, vd);
                 const test = jest.fn();
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({build: test});
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
+                app.send('blob.build', test);
                 await sleep();
                 expect(test)
                     .toHaveBeenCalled();
@@ -192,13 +187,13 @@ describe('view', () => {
 
             it('should receive the builder\'s output and be able to edit it', async () => {
                 const app = o(v, vb, vd);
-                app.emit({state: {}});
-                app.use({builder: () => 'test'});
-                app.use({build: (element) => {
+                app.send('state', {});
+                app.send('blob.builder', () => 'test');
+                app.send('blob.build', (element) => {
                     expect(element)
                         .toEqual('test');
                     return {text: 'changed'};
-                }});
+                });
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('changed');

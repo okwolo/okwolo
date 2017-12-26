@@ -1,9 +1,14 @@
 'use strict';
 
-// @fires use #draw   [view]
-// @fires use #update [view]
+// @fires blob.draw   [view]
+// @fires blob.update [view]
 
-const {assert, isDefined, isNode, isFunction} = require('../utils');
+const {
+    assert,
+    isDefined,
+    isFunction,
+    isNode,
+} = require('../utils');
 
 // finds the longest commmon of equal items between two input arrays.
 // this function can make some optimizations by assuming that both
@@ -68,7 +73,7 @@ const diff = (original, successor) => {
     return modifiedKeys;
 };
 
-module.exports = ({use}, global) => {
+module.exports = ({send}, global) => {
     // recursively travels vdom to create rendered elements. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
@@ -234,8 +239,6 @@ module.exports = ({use}, global) => {
         return VDOM;
     };
 
-    use({
-        draw,
-        update,
-    });
+    send('blob.draw', draw);
+    send('blob.update', update);
 };

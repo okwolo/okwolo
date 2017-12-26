@@ -1,9 +1,13 @@
 'use strict';
 
-// @fires use #draw   [view]
-// @fires use #update [view]
+// @fires blob.draw   [view]
+// @fires blob.update [view]
 
-const {assert, isDefined, isFunction} = require('../utils');
+const {
+    assert,
+    isDefined,
+    isFunction,
+} = require('../utils');
 
 // the tags appearing in this map will be represented as singletons.
 const singletons = {
@@ -76,9 +80,7 @@ const renderToString = (target, _vdom) => {
 };
 
 // blob generating function that is expected in the configuration object.
-module.exports = ({emit, use}) => {
-    use({
-        draw: renderToString,
-        update: renderToString,
-    });
+module.exports = ({send}) => {
+    send('blob.draw', renderToString);
+    send('blob.update', renderToString);
 };

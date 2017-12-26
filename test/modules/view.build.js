@@ -5,7 +5,7 @@ const vb = require('../../src/modules/view.build');
 let build;
 
 o(
-    ({use}) => use.on('build', (b) => build = b),
+    ({on}) => on('blob.build', (b) => build = b),
     vb,
 );
 

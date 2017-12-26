@@ -1,8 +1,18 @@
 'use strict';
 
-// @fires use #build [view]
+// @fires blob.build [view]
 
-const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isObject, isFunction} = require('../utils');
+const {
+    assert,
+    isArray,
+    isBoolean,
+    isDefined,
+    isFunction,
+    isNull,
+    isNumber,
+    isObject,
+    isString,
+} = require('../utils');
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
@@ -132,6 +142,6 @@ const build = (element, ancestry = 'root') => {
     };
 };
 
-module.exports = ({use}) => {
-    use({build});
+module.exports = ({send}) => {
+    send('blob.build', build);
 };

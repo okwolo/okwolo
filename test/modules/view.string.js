@@ -2,6 +2,6 @@
 
 describe('view.string', () => {
     it('should', () => {
-
+        // TODO
     });
 });

@@ -1,19 +1,23 @@
 'use strict';
 
-// @fires   emit #update  [view]
-// @fires   use  #api     [core]
-// @fires   use  #primary [core]
-// @listens emit #state
-// @listens emit #update
-// @listens use  #build
-// @listens use  #builder
-// @listens use  #draw
-// @listens use  #target
-// @listens use  #update
+// @fires   update       [view]
+// @fires   blob.api     [core]
+// @fires   blob.primary [core]
+// @listens state
+// @listens update
+// @listens blob.build
+// @listens blob.builder
+// @listens blob.draw
+// @listens blob.target
+// @listens blob.update
 
-const {assert, isDefined, isFunction} = require('../utils');
+const {
+    assert,
+    isDefined,
+    isFunction,
+} = require('../utils');
 
-module.exports = ({emit, use}) => {
+module.exports = ({on, send}) => {
     let target;
     let builder;
     let build;
@@ -39,39 +43,39 @@ module.exports = ({emit, use}) => {
         return temp;
     };
 
-    use.on('target', (_target) => {
+    on('blob.target', (_target) => {
         target = _target;
-        emit({update: true});
+        send('update', true);
     });
 
-    use.on('builder', (_builder) => {
-        assert(isFunction(_builder), 'view.use.builder : builder is not a function', _builder);
+    on('blob.builder', (_builder) => {
+        assert(isFunction(_builder), 'on.blob.builder : builder is not a function', _builder);
         builder = _builder;
-        emit({update: false});
+        send('update', false);
     });
 
-    use.on('draw', (_draw) => {
-        assert(isFunction(_draw), 'view.use.draw : new draw is not a function', _draw);
+    on('blob.draw', (_draw) => {
+        assert(isFunction(_draw), 'on.blob.draw : new draw is not a function', _draw);
         draw = _draw;
-        emit({update: true});
+        send('update', true);
     });
 
-    use.on('update', (_update) => {
-        assert(isFunction(_update), 'view.use.update : new target updater is not a function', _update);
+    on('blob.update', (_update) => {
+        assert(isFunction(_update), 'on.blob.update : new target updater is not a function', _update);
         update = _update;
-        emit({update: false});
+        send('update', false);
     });
 
-    use.on('build', (_build) => {
-        assert(isFunction(_build), 'view.use.build : new build is not a function', _build);
+    on('blob.build', (_build) => {
+        assert(isFunction(_build), 'on.blob.build : new build is not a function', _build);
         build = _build;
-        emit({update: false});
+        send('update', false);
     });
 
-    emit.on('state', (_state) => {
-        assert(isDefined(_state), 'view.emit.state : new state is not defined', _state);
+    on('state', (_state) => {
+        assert(isDefined(_state), 'on.blob.state : new state is not defined', _state);
         state = _state;
-        emit({update: false});
+        send('update', false);
     });
 
     // tracks whether the app has been drawn. this information is used to
@@ -106,7 +110,7 @@ module.exports = ({emit, use}) => {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    emit.on('update', (force) => {
+    on('update', (force) => {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
@@ -127,11 +131,13 @@ module.exports = ({emit, use}) => {
 
     // the only functionality from the dom module that is directly exposed
     // is the update event.
-    use({api: {
-        update: () => emit({update: false}),
-    }});
+    send('blob.api', {
+        update: () => send('update', false),
+    });
 
     // primary functionality will be to replace buider. this is overwritten
     // by router modules to more easily associate routes to builders.
-    use({primary: (init) => use({builder: init()})});
+    send('blob.primary', (init) => {
+        send('blob.builder', init());
+    });
 };
