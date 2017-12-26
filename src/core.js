@@ -3,7 +3,7 @@
 const {isFunction, isDefined, isObject, assert, isBrowser, makeBus} = require('./utils')();
 
 // version cannot be taken from package.json because environment is not guaranteed.
-const version = '2.0.0';
+const version = '2.0.1';
 
 module.exports = ({modules = [], options = {}}) => {
     // if it is needed to define the window but not yet add a target, the first
