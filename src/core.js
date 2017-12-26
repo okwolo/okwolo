@@ -70,7 +70,8 @@ const makeBus = () => {
     return {on, send, use};
 };
 
-module.exports = ({modules = [], options = {}}) => {
+module.exports = (config = {}) => {
+    const {modules = [], options = {}} = config;
     assert(isArray(modules), 'core : passed modules must be an array');
     assert(isObject(options), 'core : passed options must be an object');
 

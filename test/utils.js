@@ -2,9 +2,9 @@
 
 const utils = require('../src/utils');
 
-describe('@okwolo/utils', () => {
+describe('utils', () => {
     describe('deepCopy', () => {
-        const {deepCopy} = utils();
+        const {deepCopy} = utils;
 
         it('should copy an object', () => {
             let obj = {};
@@ -67,7 +67,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isDefined', () => {
-        const {isDefined} = utils();
+        const {isDefined} = utils;
 
         it('should return false when undefined', () => {
             expect(isDefined(undefined))
@@ -91,7 +91,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isNull', () => {
-        const {isNull} = utils();
+        const {isNull} = utils;
 
         it('should return true when null', () => {
             expect(isNull(null))
@@ -115,7 +115,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isArray', () => {
-        const {isArray} = utils();
+        const {isArray} = utils;
 
         it('should return true when array', () => {
             expect(isArray([]))
@@ -139,7 +139,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isString', () => {
-        const {isString} = utils();
+        const {isString} = utils;
 
         it('should return true when string', () => {
             expect(isString('a'))
@@ -163,7 +163,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isFunction', () => {
-        const {isFunction} = utils();
+        const {isFunction} = utils;
 
         it('should return true when function', () => {
             expect(isFunction(() => {}))
@@ -187,7 +187,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isNumber', () => {
-        const {isNumber} = utils();
+        const {isNumber} = utils;
 
         it('should return true when number', () => {
             expect(isNumber(0))
@@ -217,7 +217,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isBoolean', () => {
-        const {isBoolean} = utils();
+        const {isBoolean} = utils;
 
         it('should return true when boolean', () => {
             expect(isBoolean(true))
@@ -247,7 +247,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isObject', () => {
-        const {isObject} = utils();
+        const {isObject} = utils;
 
         it('should return true when object', () => {
             expect(isObject({}))
@@ -273,7 +273,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isNode', () => {
-        const {isNode} = utils();
+        const {isNode} = utils;
 
         it('should return false for all other values', () => {
             expect(isNode(undefined))
@@ -294,7 +294,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('isRegExp', () => {
-        const {isRegExp} = utils();
+        const {isRegExp} = utils;
 
         it('should return true when RegExp', () => {
             expect(isRegExp(/.*/g))
@@ -320,7 +320,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('assert', () => {
-        const {assert} = utils();
+        const {assert} = utils;
 
         it('should throw an error when false', () => {
             expect(() => assert(false))
@@ -350,7 +350,7 @@ describe('@okwolo/utils', () => {
     });
 
     describe('makeQueue', () => {
-        const {makeQueue} = utils();
+        const {makeQueue} = utils;
 
         it('should immediately call new functions when empty', () => {
             const test = jest.fn();
@@ -389,67 +389,6 @@ describe('@okwolo/utils', () => {
                 }
                 done();
             });
-        });
-    });
-
-    describe('makeBus', () => {
-        let bus;
-
-        beforeEach(() => {
-            bus = utils().makeBus();
-        });
-
-        it('should reject malformed events', () => {
-            expect(() => bus(true))
-                .toThrow(/event/);
-        });
-
-        it('should call the function described in the event', () => {
-            const test = jest.fn();
-            bus.on('test', test);
-            bus({test: null});
-            expect(test)
-                .toHaveBeenCalled();
-        });
-
-        it('should pass the object to the event handler function', () => {
-            const test = jest.fn();
-            bus.on('test', test);
-            bus({test: {a: 'test123'}});
-            expect(test)
-                .toHaveBeenCalledWith({a: 'test123'});
-        });
-
-        it('should call the event handler for each key in the event object', () => {
-            const test1 = jest.fn();
-            const test2 = jest.fn();
-            bus.on('test1', test1);
-            bus.on('test2', test2);
-            bus({test1: null, test2: null});
-            expect(test1)
-                .toHaveBeenCalled();
-            expect(test2)
-                .toHaveBeenCalled();
-        });
-
-        it('should do nothing if there are no event handler functions for a key in the event object', () => {
-            const test = jest.fn();
-            bus.on('test', test);
-            expect(() => bus({differentTest: null}))
-                .not.toThrow(Error);
-            expect(test)
-                .toHaveBeenCalledTimes(0);
-        });
-
-        it('should only accept one event of the same name', () => {
-            const test = jest.fn();
-            bus.on('test', test);
-            bus({test: 'test', name: 'name'});
-            expect(test)
-                .toHaveBeenCalledTimes(1);
-            bus({test: 'test', name: 'name'});
-            expect(test)
-                .toHaveBeenCalledTimes(1);
         });
     });
 });
