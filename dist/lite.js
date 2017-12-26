@@ -292,7 +292,7 @@ var _require = __webpack_require__(0)(),
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '2.0.0';
+var version = '2.0.1';
 
 module.exports = function (_ref) {
     var _ref$modules = _ref.modules,
