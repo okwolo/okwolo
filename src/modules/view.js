@@ -11,7 +11,7 @@
 // @listens use  #target
 // @listens use  #update
 
-const {assert, isDefined, isFunction} = require('../utils')();
+const {assert, isDefined, isFunction} = require('../utils');
 
 module.exports = ({emit, use}) => {
     let target;

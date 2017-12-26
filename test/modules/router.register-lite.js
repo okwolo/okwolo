@@ -1,14 +1,14 @@
 'use strict';
 
-const rrl = require('../../src/modules/router.register.lite');
+const rrl = require('../../src/modules/router.register-lite');
 
 let register;
 
-o(({use}) => {
-    use.on('register', (f) => register = f);
+o(({on}) => {
+    on('blob.register', (f) => register = f);
 }, rrl);
 
-describe('router.register.lite', () => {
+describe('router.register-lite', () => {
     it('should use a register blob', () => {
         expect(register)
             .toBeInstanceOf(Function);

@@ -1,6 +1,6 @@
 'use strict';
 
-// @fires use #register [router]
+// @fires blob.register [router]
 
 const keyPattern = /:\w+/g;
 
@@ -15,7 +15,7 @@ const createPattern = (path) => {
     return new RegExp(`^${pattern}(:?\\?.*)?$`);
 };
 
-module.exports = ({use}) => {
+module.exports = ({send}) => {
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
     const register = (store = [], path, handler) => {
@@ -33,5 +33,5 @@ module.exports = ({use}) => {
         return store;
     };
 
-    use({register});
+    send('blob.register', register);
 };

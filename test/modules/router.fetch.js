@@ -4,8 +4,8 @@ const rf = require('../../src/modules/router.fetch');
 
 let fetch;
 
-o(({use}) => {
-    use.on('fetch', (f) => fetch = f);
+o(({on}) => {
+    on('blob.fetch', (f) => fetch = f);
 }, rf);
 
 describe('router.fetch', () => {

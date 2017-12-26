@@ -8,8 +8,8 @@ const rr = require('../../src/modules/router.register');
 
 let register;
 
-o(({use}) => {
-    use.on('register', (f) => register = f);
+o(({on}) => {
+    on('blob.register', (f) => register = f);
 }, rr);
 
 describe('router.register', () => {

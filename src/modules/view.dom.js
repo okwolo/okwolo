@@ -3,7 +3,7 @@
 // @fires use #draw   [view]
 // @fires use #update [view]
 
-const {assert, isDefined, isNode, isFunction} = require('../utils')();
+const {assert, isDefined, isNode, isFunction} = require('../utils');
 
 // finds the longest commmon of equal items between two input arrays.
 // this function can make some optimizations by assuming that both

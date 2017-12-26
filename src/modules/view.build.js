@@ -2,7 +2,7 @@
 
 // @fires use #build [view]
 
-const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isObject, isFunction} = require('../utils')();
+const {assert, isDefined, isNull, isArray, isString, isNumber, isBoolean, isObject, isFunction} = require('../utils');
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.

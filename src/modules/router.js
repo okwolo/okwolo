@@ -1,19 +1,25 @@
 'use strict';
 
-// @fires   emit #redirect [router]
-// @fires   emit #show     [router]
-// @fires   use  #api      [core]
-// @fires   use  #primary  [core]
-// @listens emit #redirect
-// @listens emit #show
-// @listens use  #base
-// @listens use  #fetch
-// @listens use  #register
-// @listens use  #route
+// @fires   redirect     [router]
+// @fires   show         [router]
+// @fires   blob.api     [core]
+// @fires   blob.primary [core]
+// @listens redirect
+// @listens show
+// @listens blob.base
+// @listens blob.fetch
+// @listens blob.register
+// @listens blob.route
 
-const {assert, isString, isObject, isFunction, makeQueue} = require('../utils')();
+const {
+    assert,
+    isFunction,
+    isObject,
+    isString,
+    makeQueue,
+} = require('../utils');
 
-module.exports = ({emit, use}, global) => {
+module.exports = ({on, send}, global) => {
     // will check is the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
     const isHosted = global.document.origin !== null && global.document.origin !== 'null';
@@ -58,37 +64,37 @@ module.exports = ({emit, use}, global) => {
         safeFetch(currentPath);
     };
 
-    use.on('route', ({path, handler} = {}) => {
-        assert(isString(path), 'router.use.route : path is not a string', path);
-        assert(isFunction(handler), 'router.use.route : handler is not a function', path, handler);
-        assert(isFunction(register), 'route.use.route : register is not a function', register);
+    on('blob.route', ({path, handler} = {}) => {
+        assert(isString(path), 'on.blob.route : path is not a string', path);
+        assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
+        assert(isFunction(register), 'on.blob.route : register is not a function', register);
         store = register(store, path, handler);
         if (!hasMatched) {
             hasMatched = !!safeFetch(currentPath);
         }
     });
 
-    use.on('base', (base) => {
-        assert(isString(base), 'router.use.base : base url is not a string', base);
+    on('blob.base', (base) => {
+        assert(isString(base), 'on.blob.base : base url is not a string', base);
         baseUrl = base;
         currentPath = removeBaseUrl(currentPath);
         safeFetch(currentPath);
     });
 
-    use.on('register', (_register) => {
-        assert(isFunction(_register), 'router.use.register : register is not a function', register);
+    on('blob.register', (_register) => {
+        assert(isFunction(_register), 'on.blob.register : register is not a function', register);
         register = _register;
     });
 
-    use.on('fetch', (_fetch) => {
-        assert(isFunction(_fetch), 'router.use.fetch : fetch is not a function', fetch);
+    on('blob.fetch', (_fetch) => {
+        assert(isFunction(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
         fetch = _fetch;
     });
 
     // fetch wrapper that makes the browser aware of the url change
-    emit.on('redirect', ({path, params = {}} = {}) => {
-        assert(isString(path), 'router.redirect : path is not a string', path);
-        assert(isObject(params), 'router.redirect : params is not an object', params);
+    on('redirect', (path, params = {}) => {
+        assert(isString(path), 'on.redirect : path is not a string', path);
+        assert(isObject(params), 'on.redirect : params is not an object', params);
         // queue used so that route handlers that call route handlers behave
         // as expected. (sequentially)
         queue.add(() => {
@@ -99,17 +105,17 @@ module.exports = ({emit, use}, global) => {
                 // the path given to pushState. which means it needs to be removed here.
                 global.history.pushState({}, '', (baseUrl + currentPath).replace(/^\/C\:/, ''));
             } else {
-                console.log(`@okwolo/router:: path changed to\n>>> ${currentPath}`);
+                console.log(`@okwolo : path changed to\n>>> ${currentPath}`);
             }
             safeFetch(currentPath, params);
             queue.done();
         });
     });
 
-    // this will act like a redirect, but will not change the browser's url.
-    emit.on('show', ({path, params = {}} = {}) => {
-        assert(isString(path), 'router.show : path is not a string', path);
-        assert(isObject(params), 'router.show : params is not an object', params);
+    // show acts like a redirect, but will not change the browser's url.
+    on('show', (path, params = {}) => {
+        assert(isString(path), 'on.show : path is not a string', path);
+        assert(isObject(params), 'on.show : params is not an object', params);
         // queue used so that route handlers that call route handlers behave
         // as expected. (sequentially)
         queue.add(() => {
@@ -119,23 +125,23 @@ module.exports = ({emit, use}, global) => {
     });
 
     // expose module's features to the app.
-    use({api: {
-        redirect: (path, params) => emit({redirect: {path, params}}),
-        show: (path, params) => emit({show: {path, params}}),
-    }});
+    send('blob.api', {
+        redirect: (path, params) => send('redirect', path, params),
+        show: (path, params) => send('show', path, params),
+    });
 
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
-    use({primary: (path, builder) => {
+    send('blob.primary', (path, builder) => {
         if (isFunction(path)) {
-            use({builder: path()});
+            send('blob.builder', path());
             return;
         }
-        use({route: {
+        send('blob.route', {
             path,
             handler: (params) => {
-                use({builder: builder(params)});
+                send('blob.builder', builder(params));
             },
-        }});
-    }});
+        });
+    });
 };

@@ -3,7 +3,7 @@
 // @fires use #draw   [view]
 // @fires use #update [view]
 
-const {assert, isDefined, isFunction} = require('../utils')();
+const {assert, isDefined, isFunction} = require('../utils');
 
 // the tags appearing in this map will be represented as singletons.
 const singletons = {

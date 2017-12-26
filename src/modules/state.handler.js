@@ -10,7 +10,7 @@
 // @listens use  #middleware
 // @listens use  #watcher
 
-const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils')();
+const {assert, deepCopy, makeQueue, isDefined, isArray, isFunction, isString} = require('../utils');
 
 module.exports = ({emit, use}) => {
     // this module defines an action which overrides the whole state while

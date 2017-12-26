@@ -41,7 +41,7 @@ The lite kit is a trimmed down version of okwolo for projects where bundle size 
 - state.handler.history
   router
 - router.register
-+ router.register.lite
++ router.register-lite
   router.fetch
 ```
 

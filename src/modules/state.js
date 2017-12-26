@@ -6,7 +6,7 @@
 // @listens emit #state
 // @listens use  #handler
 
-const {assert, deepCopy, isFunction} = require('../utils')();
+const {assert, deepCopy, isFunction} = require('../utils');
 
 module.exports = ({emit, use}) => {
     // reference to initial state is kept to be able to track whether it

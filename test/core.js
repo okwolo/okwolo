@@ -3,23 +3,19 @@
 const core = require('../src/core');
 
 describe('core', () => {
-    const c = (modules = [], options = {}) => {
-        return core({modules, options});
-    };
-
     it('should return an okwolo function', () => {
-        expect(c())
+        expect(core({}))
             .toBeInstanceOf(Function);
     });
 
     it('should return an okwolo function that returns an app', () => {
-        expect(c()())
+        expect(core({})())
             .toBeInstanceOf(Function);
     });
 
     it('should add the kit name to the okwolo function', () => {
         const name = 'test';
-        expect(c([], {kit: name}).kit)
+        expect(core({options: {kit: name}}).kit)
             .toBe(name);
     });
 
@@ -30,47 +26,44 @@ describe('core', () => {
 
     it('should initialize the modules', () => {
         const _window = {};
-        const test = ({use, emit}, window) => {
-            expect(use)
+        const test = ({on, send}, window) => {
+            expect(on)
                 .toBeInstanceOf(Function);
-            expect(use.on)
-                .toBeInstanceOf(Function);
-            expect(emit)
-                .toBeInstanceOf(Function);
-            expect(emit.on)
+            expect(send)
                 .toBeInstanceOf(Function);
             expect(window)
                 .toBe(_window);
         };
-        c([test])(null, _window);
+        core({modules: [test]})(null, _window);
     });
 
-    it('should add use to the api', () => {
-        expect(c()().use)
-            .toBeInstanceOf(Function);
-        expect(c()().use.on)
+    it('should add "on" to the api', () => {
+        expect(core({})().on)
             .toBeInstanceOf(Function);
     });
 
-    it('should add emit to the api', () => {
-        expect(c()().emit)
+    it('should add "send" to the api', () => {
+        expect(core({})().send)
             .toBeInstanceOf(Function);
-        expect(c()().emit.on)
+    });
+
+    it('should add "use" to the api', () => {
+        expect(core({})().use)
             .toBeInstanceOf(Function);
     });
 
     describe('use', () => {
         describe('api', () => {
             it('should change the app\'s api', () => {
-                const app = c()();
+                const app = core({})();
                 const key = 'test';
-                app.use({api: {[key]: 'test'}});
+                app.use('api', {[key]: 'test'});
                 expect(app[key])
                     .toBe('test');
             });
 
             it('should reject malformed additionnal api', () => {
-                const app = c()();
+                const app = core({})();
                 expect(() => app.use({api: 'test'}))
                     .toThrow(/api.*object[^]*test/);
             });
@@ -79,7 +72,7 @@ describe('core', () => {
         describe('primary', () => {
             it('should replace the app function\'s primary action', () => {
                 const test = jest.fn();
-                const app = c()();
+                const app = core({})();
                 app();
                 expect(test)
                     .toHaveBeenCalledTimes(0);
@@ -95,7 +88,7 @@ describe('core', () => {
 
             it('should pass all arguments to the new primary action', () => {
                 const test = jest.fn();
-                const app = c()();
+                const app = core({})();
                 const arg1 = () => 0;
                 const arg2 = {arg1};
                 app.use({primary: test});
@@ -105,7 +98,7 @@ describe('core', () => {
             });
 
             it('should only accept functions', () => {
-                const app = c()();
+                const app = core({})();
                 expect(() => app.use({primary: 0}))
                     .toThrow(/primary.*function[^]*0/);
                 expect(() => app.use({primary: {}}))
@@ -118,7 +111,7 @@ describe('core', () => {
         describe('kit', () => {
             it('should add the kit to the window', () => {
                 const name = 'test';
-                c([], {kit: name});
+                core({options: {kit: name}});
                 expect(window.okwolo['name'])
                     .toBeDefined();
             });
@@ -128,14 +121,14 @@ describe('core', () => {
             it('should check for a browser environemnt', () => {
                 const _window = global.window;
                 delete global.window;
-                expect(() => c([], {
+                expect(() => core({options: {
                     browser: true,
-                })())
+                }})())
                     .toThrow('browser');
                 global.window = _window;
-                expect(() => c([], {
+                expect(() => core({options: {
                     browser: true,
-                })())
+                }})())
                     .not.toThrow(Error);
             });
         });

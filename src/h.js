@@ -1,6 +1,11 @@
 'use strict';
 
-const {assert, isString, isObject, isFunction} = require('./utils')();
+const {
+    assert,
+    isFunction,
+    isObject,
+    isString,
+} = require('./utils');
 
 module.exports = (tagName, attributes, ...children) => {
     assert(isString(tagName) || isFunction(tagName), 'dom.h : tagName is not a string or a function', tagName);

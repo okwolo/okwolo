@@ -1,8 +1,8 @@
 'use strict';
 
-// @fires use #fetch [router]
+// @fires blob.fetch [router]
 
-module.exports = ({use}) => {
+module.exports = ({send}) => {
     // the store's initial value is undefined so it needs to be defaulted
     // to an empty array. this function should be the one doing the action
     // defined in the route since it doesn't return it.
@@ -32,5 +32,5 @@ module.exports = ({use}) => {
         return found;
     };
 
-    use({fetch});
+    send('blob.fetch', fetch);
 };
