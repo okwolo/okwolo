@@ -9,7 +9,7 @@ describe('core', () => {
     });
 
     it('should return an okwolo function that returns an app', () => {
-        expect(core({})())
+        expect(core()())
             .toBeInstanceOf(Function);
     });
 
@@ -39,12 +39,12 @@ describe('core', () => {
 
     describe('on/send', () => {
         it('should add "on" to the api', () => {
-            expect(core({})().on)
+            expect(core()().on)
                 .toBeInstanceOf(Function);
         });
 
         it('should add "send" to the api', () => {
-            expect(core({})().send)
+            expect(core()().send)
                 .toBeInstanceOf(Function);
         });
 
@@ -81,13 +81,13 @@ describe('core', () => {
 
     describe('use', () => {
         it('should add "use" to the api', () => {
-            expect(core({})().use)
+            expect(core()().use)
                 .toBeInstanceOf(Function);
         });
 
         it('should forward calls to send with blob prefix', () => {
             const test = jest.fn();
-            const app = core({})();
+            const app = core()();
             app.on('blob.test', test);
             app.use('test', {test: true});
             expect(test)
@@ -97,7 +97,7 @@ describe('core', () => {
         it('should accept blob groups', () => {
             const test1 = jest.fn();
             const test2 = jest.fn();
-            const app = core({})();
+            const app = core()();
             app.on('blob.test1', test1);
             app.on('blob.test2', test2);
             app.use({
@@ -111,7 +111,7 @@ describe('core', () => {
         });
 
         it('should reject malformed blob groups', () => {
-            const app = core({})();
+            const app = core()();
             expect(() => app.use(null))
                 .toThrow(/okwolo.*object/g);
         });
@@ -132,7 +132,7 @@ describe('core', () => {
     describe('blobs', () => {
         describe('api', () => {
             it('should change the app\'s api', () => {
-                const app = core({})();
+                const app = core()();
                 const key = 'test';
                 app.send('blob.api', {[key]: 'test'});
                 expect(app[key])
@@ -140,20 +140,27 @@ describe('core', () => {
             });
 
             it('should reject malformed additionnal api', () => {
-                const app = core({})();
+                const app = core()();
                 expect(() => app.send('blob.api', 'test'))
                     .toThrow(/api.*object[^]*test/);
+            });
+
+            it('should not allow overrides without the flag being set', () => {
+                const app = core()();
+                app.send('blob.api', {test: true});
+                expect(() => app.send('blob.api', {test: true}))
+                    .toThrow(/key.*test.*defined/g);
             });
         });
 
         describe('primary', () => {
             it('should replace the app function\'s primary action', () => {
                 const test = jest.fn();
-                const app = core({})();
+                const app = core()();
                 app();
                 expect(test)
                     .toHaveBeenCalledTimes(0);
-                app.use({primary: test});
+                app.send('blob.primary', test);
                 app();
                 expect(test)
                     .toHaveBeenCalledTimes(1);
@@ -165,7 +172,7 @@ describe('core', () => {
 
             it('should pass all arguments to the new primary action', () => {
                 const test = jest.fn();
-                const app = core({})();
+                const app = core()();
                 const arg1 = () => 0;
                 const arg2 = {arg1};
                 app.send('blob.primary', test);
@@ -175,7 +182,7 @@ describe('core', () => {
             });
 
             it('should only accept functions', () => {
-                const app = core({})();
+                const app = core()();
                 expect(() => app.send('blob.primary', 0))
                     .toThrow(/primary.*function[^]*0/);
                 expect(() => app.send('blob.primary', {}))

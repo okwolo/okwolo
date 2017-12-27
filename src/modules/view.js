@@ -97,7 +97,7 @@ module.exports = ({on, send}) => {
         }
         waitTimer = setTimeout(() => {
             // formatting all blocking variables into an error message.
-            const vals = {build, builder, state, target};
+            const vals = {builder, state, target};
             Object.keys(vals)
                 .forEach((key) => {
                     vals[key] = vals[key] ? 'ok' : 'waiting';
@@ -115,7 +115,7 @@ module.exports = ({on, send}) => {
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
         if (!canDraw) {
-            if (isDefined(target) && isDefined(builder) && isDefined(state) && isDefined(build)) {
+            if (isDefined(target) && isDefined(builder) && isDefined(state)) {
                 canDraw = true;
             } else {
                 return waiting();

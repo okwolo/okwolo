@@ -100,9 +100,14 @@ module.exports = (config = {}) => {
 
         Object.assign(app, makeBus());
 
-        app.on('blob.api', (api) => {
+        app.on('blob.api', (api, override) => {
             assert(isObject(api), 'on.blob.api : additional api is not an object', api);
-            Object.assign(app, api);
+            Object.keys(api).forEach((key) => {
+                if (!override) {
+                    assert(!app[key], `on.blob.api : cannot add key "${key}" because it is already defined`);
+                }
+                app[key] = api[key];
+            });
         });
 
         app.on('blob.primary', (_primary) => {
