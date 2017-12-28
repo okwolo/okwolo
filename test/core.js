@@ -150,6 +150,8 @@ describe('core', () => {
                 app.send('blob.api', {test: true});
                 expect(() => app.send('blob.api', {test: true}))
                     .toThrow(/key.*test.*defined/g);
+                expect(() => app.send('blob.api', {test: true}, true))
+                    .not.toThrow(Error);
             });
         });
 

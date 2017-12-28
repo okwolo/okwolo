@@ -92,7 +92,7 @@ describe('view.build', () => {
     });
 
     it('should accept components', () => {
-        const element = [() => 'test'];
+        const element = [() => () => 'test'];
         const vdom = {
             text: 'test',
         };
@@ -108,15 +108,17 @@ describe('view.build', () => {
 
     it('should give error context about the broken element\'s parent', () => {
         const element1 = undefined;
-        const element2 = ['div.test', {}, [{}]];
+        const element2 = ['div.test', {}, [
+            ['span#test', {}, [[]]],
+        ]];
         expect(() => build(element1))
             .toThrow(/root/g);
         expect(() => build(element2))
-            .toThrow(/div\.test/g);
+            .toThrow(/root -> div\.test -> span#test/g);
     });
 
     it('should pass props and children to components', () => {
-        const component = ({test, children}) => {
+        const component = ({test, children}) => () => {
             expect(test)
                 .toBeTruthy();
             expect(children)
@@ -238,13 +240,13 @@ describe('view.build', () => {
     });
 
     it('should reject invalid component props', () => {
-        const element = [() => 'test', 'props1'];
+        const element = [() => () => 'test', 'props1'];
         expect(() => build(element))
             .toThrow(/props.*object[^]*props1/g);
     });
 
     it('should reject invalid component children', () => {
-        const element = [() => 'test', {}, 'children1'];
+        const element = [() => () => 'test', {}, 'children1'];
         expect(() => build(element))
             .toThrow(/children.*array[^]*children1/g);
     });

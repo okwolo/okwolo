@@ -301,7 +301,7 @@ describe('standard', () => {
         it('should correctly render the fruit example', async () => {
             const app = standard(wrapper);
             app.setState(['orange', 'apple', 'pear']);
-            let FruitItem = ({type}) => (
+            let FruitItem = ({type}) => () => (
                 ['li.fruit', {}, [
                     type,
                 ]]

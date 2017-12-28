@@ -166,7 +166,7 @@ describe('view.dom', () => {
             it('should accept components', async () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
-                const component = () => 'test';
+                const component = () => () => 'test';
                 app.send('blob.builder', () => [component]);
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -176,7 +176,7 @@ describe('view.dom', () => {
             it('should pass arguments to components', async () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
-                const component = ({a}) => a;
+                const component = ({a}) => () => a;
                 app.send('blob.builder', () => [component, {a: 'test'}]);
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -186,7 +186,7 @@ describe('view.dom', () => {
             it('should pass children to component', async () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
-                const component = ({children}) => children[0];
+                const component = ({children}) => () => children[0];
                 app.send('blob.builder', () => [component, {}, ['test']]);
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -196,9 +196,9 @@ describe('view.dom', () => {
             it('should support nested components', async () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
-                const component3 = ({c}) => c;
-                const component2 = ({b}) => [component3, {c: b}];
-                const component1 = ({a}) => [component2, {b: a}];
+                const component3 = ({c}) => () => c;
+                const component2 = ({b}) => () => [component3, {c: b}];
+                const component1 = ({a}) => () => [component2, {b: a}];
                 app.send('blob.builder', () => [component1, {a: 'test'}]);
                 await sleep();
                 expect(wrapper.innerHTML)
@@ -539,6 +539,59 @@ describe('view.dom', () => {
                     .toBe(first);
                 expect(wrapper.querySelector('.second'))
                     .toBe(second);
+            });
+
+            it('should update components', async () => {
+                const app = o(v, vb, vd);
+                let update1;
+                let update2;
+                const Component = (props, update) => {
+                    let internalState = 'test';
+                    update1 = () => {
+                        internalState = ['div', {}, [
+                            ['a', {key: 'a'}],
+                            ['b', {key: 'b'}],
+                        ]];
+                        update();
+                    };
+                    update2 = () => {
+                        internalState = ['div', {}, [
+                            ['b', {key: 'b'}],
+                            ['a', {key: 'a'}],
+                        ]];
+                        update();
+                    };
+                    return () => (
+                        ['div.c', {}, [
+                            internalState,
+                        ]]
+                    );
+                };
+                app.send('blob.builder', () => (
+                    ['div.test', {}, [
+                        'test',
+                        ['test'],
+                        [Component],
+                    ]]
+                ));
+                app.send('state', {});
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div class="test">test<test></test><div class="c">test</div></div>');
+                update1();
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div class="test">test<test></test><div class="c"><div><a></a><b></b></div></div></div>');
+                const a = wrapper.querySelector('a');
+                const elem = wrapper.querySelector('.c > *');
+                update2();
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div class="test">test<test></test><div class="c"><div><b></b><a></a></div></div></div>');
+                expect(wrapper.querySelector('a'))
+                    .toBe(a);
+                expect(wrapper.querySelector('.c > *'))
+                    .toBe(elem);
             });
         });
     });
