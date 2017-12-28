@@ -68,7 +68,7 @@ const build = (element, ancestry = 'root') => {
         assert(isArray(children), 'view.build : component\'s children is not an array', ancestry, element, children);
         // the component function is called with an object containing the props
         // and an extra key with the children of this element.
-        return build(component(Object.assign({}, props, {children}), ancestry));
+        return build(component(Object.assign({}, props, {children}), ancestry)());
     }
 
     let [tagType, attributes = {}, childList = []] = element;

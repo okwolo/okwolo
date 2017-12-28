@@ -541,7 +541,7 @@ describe('view.dom', () => {
                     .toBe(second);
             });
 
-            it('should update components', async () => {
+            xit('should update components', async () => {
                 const app = o(v, vb, vd);
                 let update1;
                 let update2;

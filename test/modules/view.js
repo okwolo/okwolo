@@ -200,4 +200,78 @@ describe('view', () => {
             });
         });
     });
+
+    describe('events', () => {
+        describe('state', () => {
+            it('should emit an update when state changes', () => {
+                const test = jest.fn();
+                const app = o(v);
+                app.on('update', test);
+                app.send('state', {});
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should not accept undefined state', () => {
+                const app = o(v);
+                expect(() => app.send('state', undefined))
+                    .toThrow(/undefined/g);
+            });
+        });
+
+        describe('update', () => {
+            it('should wait for target, builder and state', () => {
+                const test = jest.fn();
+                const app = o(v);
+                app.send('blob.draw', test);
+                app.send('blob.update', test);
+                app.send('blob.build', test);
+                app.send('blob.target', {});
+                expect(test)
+                    .not.toHaveBeenCalled();
+                app.send('blob.builder', () => {});
+                expect(test)
+                    .not.toHaveBeenCalled();
+                app.send('state', {});
+                expect(test)
+                    .toHaveBeenCalled();
+            });
+
+            it('should draw before updating', () => {
+                const test1 = jest.fn();
+                const test2 = jest.fn();
+                const app = o(v);
+                app.send('blob.draw', test1);
+                app.send('blob.update', () => {
+                    test2();
+                    expect(test1)
+                        .toHaveBeenCalled();
+                });
+                app.send('blob.build', () => {});
+                app.send('blob.target', {});
+                app.send('blob.builder', () => {});
+                app.send('state', {});
+                app.update();
+                expect(test2)
+                    .toHaveBeenCalled();
+            });
+
+            it('should allow for a forced redraw', () => {
+                const test1 = jest.fn();
+                const test2 = jest.fn();
+                const app = o(v);
+                app.send('blob.draw', test1);
+                app.send('blob.update', test2);
+                app.send('blob.build', () => {});
+                app.send('blob.target', {});
+                app.send('blob.builder', () => {});
+                app.send('state', {});
+                app.send('update', true);
+                expect(test1)
+                    .toHaveBeenCalledTimes(2);
+                expect(test2)
+                    .not.toHaveBeenCalled();
+            });
+        });
+    });
 });
