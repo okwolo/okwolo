@@ -29,66 +29,6 @@ const classnames = (...args) => {
         .join(' ');
 };
 
-const build = (element, ancestry = []) => {
-    if (isBoolean(element)) {
-        element = null;
-    }
-    if (isNull(element)) {
-        return {text: ''};
-    }
-    if (isNumber(element)) {
-        element = String(element);
-    }
-    if (isString(element)) {
-        return {text: element};
-    }
-    if (isFunction(element[0])) {
-        let [component, props = {}, children = []] = element;
-        return build(component(Object.assign({}, props, {children}), ancestry)(), ancestry);
-    }
-    let [tagType, attributes = {}, childList = []] = element;
-    const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-    let [, tagName, id, className, style] = match;
-    if (isDefined(id) && !isDefined(attributes.id)) {
-        attributes.id = id.trim();
-    }
-    if (isDefined(attributes.className) || isDefined(className)) {
-        attributes.className = classnames(attributes.className, className)
-            .replace(/\./g, ' ')
-            .replace(/  +/g, ' ')
-            .trim();
-    }
-
-    if (isDefined(style)) {
-        if (!isDefined(attributes.style)) {
-            attributes.style = style;
-        } else {
-            style = (style + ';').replace(/;;$/g, ';');
-            attributes.style = style + attributes.style;
-        }
-    }
-    const children = {};
-    const childOrder = [];
-    for (let i = 0; i < childList.length; ++i) {
-        const childElement = childList[i];
-        let key = i;
-        const child = build(childElement, ancestry.concat(key));
-        if (child.attributes && 'key' in child.attributes) {
-            key = child.attributes.key;
-        }
-        key = String(key);
-        childOrder.push(key);
-        children[key] = child;
-    }
-
-    return {
-        tagName,
-        attributes,
-        children,
-        childOrder,
-    };
-};
-
 const longestChain = (original, successor) => {
     const count = successor.length;
     const half = count / 2;
@@ -136,6 +76,80 @@ const diff = (original, successor) => {
 };
 
 module.exports = ({on, send}, global) => {
+    let target;
+    let builder;
+    let state;
+
+    let view;
+    let hasDrawn = false;
+    let canDraw = false;
+
+    const build = (element, ancestry = []) => {
+        if (isBoolean(element)) {
+            element = null;
+        }
+        if (isNull(element)) {
+            return {text: ''};
+        }
+        if (isNumber(element)) {
+            element = String(element);
+        }
+        if (isString(element)) {
+            return {text: element};
+        }
+        if (isFunction(element[0])) {
+            let [component, props = {}, children = []] = element;
+            const p = Object.assign({}, props, {children});
+            let gen;
+            const u = (...args) => {
+                update(ancestry, build(gen(...args)));
+            };
+            gen = component(p, u);
+            return build(gen());
+        }
+        let [tagType, attributes = {}, childList = []] = element;
+        const match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+        let [, tagName, id, className, style] = match;
+        if (isDefined(id) && !isDefined(attributes.id)) {
+            attributes.id = id.trim();
+        }
+        if (isDefined(attributes.className) || isDefined(className)) {
+            attributes.className = classnames(attributes.className, className)
+                .replace(/\./g, ' ')
+                .replace(/  +/g, ' ')
+                .trim();
+        }
+
+        if (isDefined(style)) {
+            if (!isDefined(attributes.style)) {
+                attributes.style = style;
+            } else {
+                style = (style + ';').replace(/;;$/g, ';');
+                attributes.style = style + attributes.style;
+            }
+        }
+        const children = {};
+        const childOrder = [];
+        for (let i = 0; i < childList.length; ++i) {
+            const childElement = childList[i];
+            let key = i;
+            const child = build(childElement, ancestry.concat(key));
+            if (child.attributes && 'key' in child.attributes) {
+                key = child.attributes.key;
+            }
+            key = String(key);
+            childOrder.push(key);
+            children[key] = child;
+        }
+
+        return {
+            tagName,
+            attributes,
+            children,
+            childOrder,
+        };
+    };
+
     const render = (velem) => {
         if (isDefined(velem.text)) {
             velem.DOM = global.document.createTextNode(velem.text);
@@ -152,13 +166,12 @@ module.exports = ({on, send}, global) => {
         return velem;
     };
 
-    const draw = (target, newVDOM) => {
-        render(newVDOM);
+    const draw = (newVDOM) => {
+        view = render(newVDOM);
         global.requestAnimationFrame(() => {
             target.innerHTML = '';
-            target.appendChild(newVDOM.DOM);
+            target.appendChild(view.DOM);
         });
-        return newVDOM;
     };
 
     const updateElement = (original, successor, parent, parentKey) => {
@@ -227,21 +240,23 @@ module.exports = ({on, send}, global) => {
         }
     };
 
-    const update = (target, newVDOM, VDOM) => {
+    const update = (address, successor) => {
+        let parent = {DOM: target, children: {root: view}};
+        let parentKey = 'root';
+        let original = view;
+        for (let i = 0; i < address.length; ++i) {
+            parentKey = address[i];
+            parent = original;
+            original = original.children[parentKey];
+        }
         global.requestAnimationFrame(() => {
             try {
-                updateElement(VDOM, newVDOM, {DOM: target, children: {root: VDOM}}, 'root');
+                updateElement(original, successor, parent, parentKey);
             } catch (e) {
                 console.error('view.dom.update : ' + e);
             }
         });
-        return VDOM;
     };
-
-    let target;
-    let builder;
-    let view;
-    let state;
 
     on('blob.target', (_target) => {
         target = _target;
@@ -258,9 +273,6 @@ module.exports = ({on, send}, global) => {
         send('update', false);
     });
 
-    let hasDrawn = false;
-    let canDraw = false;
-
     on('update', (force) => {
         if (!canDraw) {
             if (isDefined(target) && isDefined(builder) && isDefined(state)) {
@@ -270,16 +282,17 @@ module.exports = ({on, send}, global) => {
             }
         }
         if (!force && hasDrawn) {
-            view = update(target, build(builder(state)), view);
+            update([], build(builder(state)));
             return;
         }
-        view = draw(target, build(builder(state)));
+        draw(build(builder(state)));
         hasDrawn = true;
     });
 
     send('blob.api', {
         update: () => send('update', false),
     });
+
     send('blob.primary', (init) => {
         send('blob.builder', init());
     });

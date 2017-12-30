@@ -2,13 +2,6 @@
 
 const v2 = require('../../src/modules/view2');
 
-const log = async () => {
-    await sleep();
-    console.log(wrapper.innerHTML);
-};
-
-const qs = (s) => document.querySelector(s);
-
 it('test', async () => {
     const app = o(v2);
     app(() => (a) => a);
@@ -19,21 +12,33 @@ it('test', async () => {
             'span',
         ]]
     );
-    await log();
+    await sleep();
+    expect(wrapper.innerHTML)
+        .toBe('<div>span</div>');
 
     let Component = (props, update) => {
         let test = 0;
-        console.log(update);
-        return () => (
+        setTimeout(() => {
+            ++test;
+            update('test');
+        }, 200);
+        return (other) => (
             ['div.c', {}, [
                 test,
+                other ? other : null,
             ]]
         );
     };
     app.render(
         ['div', {}, [
+            'as',
             [Component],
         ]]
     );
-    await log();
+    await sleep();
+    expect(wrapper.innerHTML)
+        .toBe('<div>as<div class="c">0</div></div>');
+    await sleep(220);
+    expect(wrapper.innerHTML)
+        .toBe('<div>as<div class="c">1test</div></div>');
 });
