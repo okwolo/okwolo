@@ -3,7 +3,6 @@
 // @fires   redirect     [router]
 // @fires   show         [router]
 // @fires   blob.api     [core]
-// @fires   blob.primary [core]
 // @listens redirect
 // @listens show
 // @listens blob.base
@@ -128,20 +127,5 @@ module.exports = ({on, send}, global) => {
     send('blob.api', {
         redirect: (path, params) => send('redirect', path, params),
         show: (path, params) => send('show', path, params),
-    });
-
-    // first argument can be a path string to register a route handler
-    // or a function to directly use a builder.
-    send('blob.primary', (path, builder) => {
-        if (isFunction(path)) {
-            send('blob.builder', path());
-            return;
-        }
-        send('blob.route', {
-            path,
-            handler: (params) => {
-                send('blob.builder', builder(params));
-            },
-        });
     });
 };

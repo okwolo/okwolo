@@ -14,6 +14,7 @@ module.exports = core({
         require('../modules/router'),
         require('../modules/router.register'),
         require('../modules/router.fetch'),
+        require('../modules/primary.router.builder'),
     ],
     options: {
         kit: 'standard',
