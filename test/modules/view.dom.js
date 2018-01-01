@@ -541,21 +541,21 @@ describe('view.dom', () => {
                     .toBe(second);
             });
 
-            xit('should update components', async () => {
+            it('should update components', async () => {
                 const app = o(v, vb, vd);
                 let update1;
                 let update2;
                 const Component = (props, update) => {
                     let internalState = 'test';
                     update1 = () => {
-                        internalState = ['div', {}, [
+                        internalState = ['div.u1', {}, [
                             ['a', {key: 'a'}],
                             ['b', {key: 'b'}],
                         ]];
                         update();
                     };
                     update2 = () => {
-                        internalState = ['div', {}, [
+                        internalState = ['div.u2', {}, [
                             ['b', {key: 'b'}],
                             ['a', {key: 'a'}],
                         ]];
@@ -581,17 +581,65 @@ describe('view.dom', () => {
                 update1();
                 await sleep();
                 expect(wrapper.innerHTML)
-                    .toBe('<div class="test">test<test></test><div class="c"><div><a></a><b></b></div></div></div>');
+                    .toBe('<div class="test">test<test></test><div class="c"><div class="u1"><a></a><b></b></div></div></div>');
                 const a = wrapper.querySelector('a');
                 const elem = wrapper.querySelector('.c > *');
                 update2();
                 await sleep();
                 expect(wrapper.innerHTML)
-                    .toBe('<div class="test">test<test></test><div class="c"><div><b></b><a></a></div></div></div>');
+                    .toBe('<div class="test">test<test></test><div class="c"><div class="u2"><b></b><a></a></div></div></div>');
                 expect(wrapper.querySelector('a'))
                     .toBe(a);
                 expect(wrapper.querySelector('.c > *'))
                     .toBe(elem);
+            });
+
+            it('should correctly update nested components', async () => {
+                const app = o(v, vb, vd);
+                app(() => (a) => a);
+                app.use('api', {render: (f) => app.send('state', f)});
+                app.render(
+                    ['div', {}, [
+                        'span',
+                    ]]
+                );
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div>span</div>');
+                let Component2 = (props, update) => {
+                    let test = 0;
+                    setTimeout(() => {
+                        ++test;
+                        update('test');
+                    }, 200);
+                    return (other) => (
+                        ['div.c', {}, [
+                            other ? other : null,
+                            test,
+                        ]]
+                    );
+                };
+                let Component1 = (props, update) => {
+                    return () => (
+                        [Component2]
+                    );
+                };
+                app.render(
+                    ['div', {}, [
+                        'as',
+                        [Component1],
+                    ]]
+                );
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div>as<div class="c">0</div></div>');
+                await sleep(220);
+                expect(wrapper.innerHTML)
+                    .toBe('<div>as<div class="c">test1</div></div>');
+            });
+
+            it('should pass update arguments to component generator', () => {
+                // TODO
             });
         });
     });

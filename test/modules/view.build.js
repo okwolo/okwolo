@@ -109,12 +109,13 @@ describe('view.build', () => {
     it('should give error context about the broken element\'s parent', () => {
         const element1 = undefined;
         const element2 = ['div.test', {}, [
-            ['span#test', {}, [[]]],
+            ['div'],
+            ['span#test | height: 2px;', {}, [[]]],
         ]];
         expect(() => build(element1))
             .toThrow(/root/g);
         expect(() => build(element2))
-            .toThrow(/root -> div\.test -> span#test/g);
+            .toThrow(/root -> div\.test -> span#test \| \.\.\. -> \{\{0\}\}/g);
     });
 
     it('should pass props and children to components', () => {

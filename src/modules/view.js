@@ -4,6 +4,7 @@
 // @fires   blob.api     [core]
 // @fires   blob.primary [core]
 // @listens state
+// @listens sync
 // @listens update
 // @listens blob.build
 // @listens blob.builder
@@ -32,16 +33,6 @@ module.exports = ({on, send}) => {
     // a copy of the state must be kept so that the view can be re-computed as
     // soon as any part of the rendering pipeline is modified.
     let state;
-
-    // generates an object representing the view from the output of the builder.
-    // note that it requires both the builder and the build functions to be
-    // defined in order to complete successfully. they must be checked before
-    // calling this function.
-    const create = (state) => {
-        let temp = builder(state);
-        temp = build(temp);
-        return temp;
-    };
 
     on('blob.target', (_target) => {
         target = _target;
@@ -110,7 +101,7 @@ module.exports = ({on, send}) => {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    on('update', (force) => {
+    on('update', (redraw) => {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
@@ -121,12 +112,20 @@ module.exports = ({on, send}) => {
                 return waiting();
             }
         }
-        if (!force && hasDrawn) {
-            view = update(target, create(state), view);
+        if (redraw || !hasDrawn) {
+            view = draw(target, build(builder(state)));
+            hasDrawn = true;
             return;
         }
-        view = draw(target, create(state));
-        hasDrawn = true;
+        view = update(target, build(builder(state)), [], view);
+    });
+
+    // message which allows for scoped updates. since the successor argument is
+    // not passed through the build/builder pipeline, it's use is loosely
+    // restricted to the build module (which should have a reference to itself).
+    on('sync', (address, successor) => {
+        assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
+        view = update(target, successor, address, view);
     });
 
     // the only functionality from the dom module that is directly exposed
