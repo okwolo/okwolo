@@ -330,9 +330,14 @@ module.exports = function () {
 
         Object.assign(app, makeBus());
 
-        app.on('blob.api', function (api) {
+        app.on('blob.api', function (api, override) {
             assert(isObject(api), 'on.blob.api : additional api is not an object', api);
-            Object.assign(app, api);
+            Object.keys(api).forEach(function (key) {
+                if (!override) {
+                    assert(!app[key], 'on.blob.api : cannot add key "' + key + '" because it is already defined');
+                }
+                app[key] = api[key];
+            });
         });
 
         app.on('blob.primary', function (_primary) {
@@ -383,6 +388,7 @@ module.exports = function () {
 // @fires   blob.api     [core]
 // @fires   blob.primary [core]
 // @listens state
+// @listens sync
 // @listens update
 // @listens blob.build
 // @listens blob.builder
@@ -413,16 +419,6 @@ module.exports = function (_ref) {
     // a copy of the state must be kept so that the view can be re-computed as
     // soon as any part of the rendering pipeline is modified.
     var state = void 0;
-
-    // generates an object representing the view from the output of the builder.
-    // note that it requires both the builder and the build functions to be
-    // defined in order to complete successfully. they must be checked before
-    // calling this function.
-    var create = function create(state) {
-        var temp = builder(state);
-        temp = build(temp);
-        return temp;
-    };
 
     on('blob.target', function (_target) {
         target = _target;
@@ -478,7 +474,7 @@ module.exports = function (_ref) {
         }
         waitTimer = setTimeout(function () {
             // formatting all blocking variables into an error message.
-            var vals = { build: build, builder: builder, state: state, target: target };
+            var vals = { builder: builder, state: state, target: target };
             Object.keys(vals).forEach(function (key) {
                 vals[key] = vals[key] ? 'ok' : 'waiting';
             });
@@ -490,23 +486,31 @@ module.exports = function (_ref) {
     // if the view has already been drawn, it is assumed that it can be updated
     // instead of redrawing again. the force argument can override this assumption
     // and require a redraw.
-    on('update', function (force) {
+    on('update', function (redraw) {
         // canDraw is saved to avoid doing the four checks on every update/draw.
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
         if (!canDraw) {
-            if (isDefined(target) && isDefined(builder) && isDefined(state) && isDefined(build)) {
+            if (isDefined(target) && isDefined(builder) && isDefined(state)) {
                 canDraw = true;
             } else {
                 return waiting();
             }
         }
-        if (!force && hasDrawn) {
-            view = update(target, create(state), view);
+        if (redraw || !hasDrawn) {
+            view = draw(target, build(builder(state)));
+            hasDrawn = true;
             return;
         }
-        view = draw(target, create(state));
-        hasDrawn = true;
+        view = update(target, build(builder(state)), [], view);
+    });
+
+    // message which allows for scoped updates. since the successor argument is
+    // not passed through the build/builder pipeline, it's use is loosely
+    // restricted to the build module (which should have a reference to itself).
+    on('sync', function (address, successor) {
+        assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
+        view = update(target, successor, address, view);
     });
 
     // the only functionality from the dom module that is directly exposed
@@ -531,6 +535,7 @@ module.exports = function (_ref) {
 "use strict";
 
 
+// @fires sync       [view]
 // @fires blob.build [view]
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -548,10 +553,74 @@ var _require = __webpack_require__(0),
     isObject = _require.isObject,
     isString = _require.isString;
 
+// ancestry helper which ensures immutability and handles common logic.
+// ancestry list is recorded in reverse for easier access to the last (first)
+// element. all elements take the form of objects with the "tag" and "key" keys
+// which are not guaranteed to be defined. (ex. first list element has no key,
+// but does have a tag since it is the root node)
+
+
+var geneologist = function geneologist() {
+    var list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+
+    var formatted = null;
+
+    // keys are only know by parents and will therefore always be added
+    // before the child adds its own tag.
+    var addKey = function addKey(key) {
+        return geneologist([{ key: key }].concat(list));
+    };
+
+    // first tag in the list does not have a key. all subsequent tags are added
+    // to the first array element (most recent descendant).
+    var addTag = function addTag(tag) {
+        if (list.length === 0) {
+            return geneologist([{ tag: tag }]);
+        }
+        var l = list.slice();
+        l[0].tag = tag;
+        return geneologist(l);
+    };
+
+    // formats the list to be consumed by assertions.
+    var f = function f() {
+        // memoization to prevent unnecessarily re-running the logic.
+        if (!isNull(formatted)) {
+            return formatted;
+        }
+        formatted = 'root';
+        for (var i = list.length - 1; i >= 0; --i) {
+            formatted += ' -> ';
+            var _list$i = list[i],
+                tag = _list$i.tag,
+                key = _list$i.key;
+            // list elements without a tag will show the key instead.
+
+            if (!isString(tag)) {
+                formatted += '{{' + key + '}}';
+                continue;
+            }
+            // tag's style is removed to reduce clutter.
+            formatted += tag.replace(/\|\s*[^]*$/g, '| ...');
+        }
+        return formatted;
+    };
+
+    var keyList = function keyList() {
+        var temp = [];
+        // skip the last array element (tag without key)
+        var start = Math.max(0, list.length - 2);
+        for (var i = start; i >= 0; --i) {
+            temp.push(String(list[i].key));
+        }
+        return temp;
+    };
+
+    return { addKey: addKey, addTag: addTag, f: f, keyList: keyList };
+};
+
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
-
-
 var classnames = function classnames() {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
@@ -570,136 +639,143 @@ var classnames = function classnames() {
     }).filter(Boolean).join(' ');
 };
 
-// will build a vdom structure from the output of the app's builder funtions. this
-// output must be valid element syntax, or an expception will be thrown.
-var build = function build(element) {
-    var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'root';
-
-    // boolean values will produce no visible output to make it easier to use inline
-    // logical expressions without worrying about unexpected strings on the page.
-    if (isBoolean(element)) {
-        element = null;
-    }
-    // null elements will produce no visible output. undefined is intentionally not
-    // handled since it is often produced as a result of an unexpected builder output
-    // and it should be made clear that something went wrong.
-    if (isNull(element)) {
-        return { text: '' };
-    }
-    // in order to simplify type checking, numbers are stringified.
-    if (isNumber(element)) {
-        element = String(element);
-    }
-    // strings will produce textNodes when rendered to the browser.
-    if (isString(element)) {
-        return { text: element };
-    }
-
-    // the only remaining element types are formatted as arrays.
-    assert(isArray(element), 'view.build : vdom object is not a recognized type', ancestry, element);
-
-    // early recursive return when the element is seen to be have the component syntax.
-    if (isFunction(element[0])) {
-        // leaving the props and children items undefined should not throw an error.
-        var _element = element,
-            _element2 = _slicedToArray(_element, 3),
-            component = _element2[0],
-            _element2$ = _element2[1],
-            props = _element2$ === undefined ? {} : _element2$,
-            _element2$2 = _element2[2],
-            _children = _element2$2 === undefined ? [] : _element2$2;
-
-        assert(isObject(props), 'view.build : component\'s props is not an object', ancestry, element, props);
-        assert(isArray(_children), 'view.build : component\'s children is not an array', ancestry, element, _children);
-        // the component function is called with an object containing the props
-        // and an extra key with the children of this element.
-        return build(component(Object.assign({}, props, { children: _children }), ancestry));
-    }
-
-    var _element3 = element,
-        _element4 = _slicedToArray(_element3, 3),
-        tagType = _element4[0],
-        _element4$ = _element4[1],
-        attributes = _element4$ === undefined ? {} : _element4$,
-        _element4$2 = _element4[2],
-        childList = _element4$2 === undefined ? [] : _element4$2;
-
-    assert(isString(tagType), 'view.build : tag property is not a string', ancestry, element, tagType);
-    assert(isObject(attributes), 'view.build : attributes is not an object', ancestry, element, attributes);
-    assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry, element, childList);
-
-    // regular expression to capture values from the shorthand element tag syntax.
-    // it allows each section to be seperated by any amount of spaces, but enforces
-    // the order of the capture groups (tagName #id .className | style)
-    var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
-    assert(isArray(match), 'view.build : tag property cannot be parsed', ancestry, tagType);
-    // first element is not needed since it is the entire matched string. default
-    // values are not used to avoid adding blank attributes to the nodes.
-
-    var _match = _slicedToArray(match, 5),
-        tagName = _match[1],
-        id = _match[2],
-        className = _match[3],
-        style = _match[4];
-
-    // priority is given to the id defined in the attributes.
-
-
-    if (isDefined(id) && !isDefined(attributes.id)) {
-        attributes.id = id.trim();
-    }
-
-    // class names from both the tag and the attributes are used.
-    if (isDefined(attributes.className) || isDefined(className)) {
-        attributes.className = classnames(attributes.className, className).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
-    }
-
-    if (isDefined(style)) {
-        if (!isDefined(attributes.style)) {
-            attributes.style = style;
-        } else {
-            // extra semicolon is added if not present to prevent conflicts.
-            style = (style + ';').replace(/;;$/g, ';');
-            // styles defined in the attributes are given priority by being
-            // placed after the ones from the tag.
-            attributes.style = style + attributes.style;
-        }
-    }
-
-    // ancestry is recorded to give more context to error messages
-    ancestry += ' -> ' + tagType;
-
-    // childList is converted to a children object with each child having its
-    // own key. the child order is also recorded.
-    var children = {};
-    var childOrder = [];
-    for (var i = 0; i < childList.length; ++i) {
-        var childElement = childList[i];
-        var key = i;
-        var child = build(childElement, ancestry);
-        // a key attribute will override the default array index key.
-        if (child.attributes && 'key' in child.attributes) {
-            key = child.attributes.key;
-            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry, key);
-            assert(String(key).match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry, key);
-        }
-        // keys are normalized to strings to properly compare them.
-        key = String(key);
-        assert(!children[key], 'view.build : duplicate child key', ancestry, key);
-        childOrder.push(key);
-        children[key] = child;
-    }
-
-    return {
-        tagName: tagName,
-        attributes: attributes,
-        children: children,
-        childOrder: childOrder
-    };
-};
-
 module.exports = function (_ref) {
     var send = _ref.send;
+
+    // will build a vdom structure from the output of the app's builder funtions. this
+    // output must be valid element syntax, or an expception will be thrown.
+    var build = function build(element) {
+        var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : geneologist();
+
+        // boolean values will produce no visible output to make it easier to use inline
+        // logical expressions without worrying about unexpected strings on the page.
+        if (isBoolean(element)) {
+            element = null;
+        }
+        // null elements will produce no visible output. undefined is intentionally not
+        // handled since it is often produced as a result of an unexpected builder output
+        // and it should be made clear that something went wrong.
+        if (isNull(element)) {
+            return { text: '' };
+        }
+        // in order to simplify type checking, numbers are stringified.
+        if (isNumber(element)) {
+            element = String(element);
+        }
+        // strings will produce textNodes when rendered to the browser.
+        if (isString(element)) {
+            return { text: element };
+        }
+
+        // the only remaining element types are formatted as arrays.
+        assert(isArray(element), 'view.build : vdom object is not a recognized type', ancestry.f(), element);
+
+        // early recursive return when the element is seen to be have the component syntax.
+        if (isFunction(element[0])) {
+            // leaving the props or children items undefined should not throw an error.
+            var _element = element,
+                _element2 = _slicedToArray(_element, 3),
+                component = _element2[0],
+                _element2$ = _element2[1],
+                props = _element2$ === undefined ? {} : _element2$,
+                _element2$2 = _element2[2],
+                _children = _element2$2 === undefined ? [] : _element2$2;
+
+            assert(isObject(props), 'view.build : component\'s props is not an object', ancestry.f(), element, props);
+            assert(isArray(_children), 'view.build : component\'s children is not an array', ancestry.f(), element, _children);
+
+            // component generator is given to update function and used to create
+            // the inital version of the component.
+            var gen = void 0;
+            var update = function update() {
+                send('sync', ancestry.keyList(), build(gen.apply(undefined, arguments), ancestry));
+            };
+            gen = component(Object.assign({}, props, { children: _children }), update);
+            return build(gen(), ancestry);
+        }
+
+        var _element3 = element,
+            _element4 = _slicedToArray(_element3, 3),
+            tagType = _element4[0],
+            _element4$ = _element4[1],
+            attributes = _element4$ === undefined ? {} : _element4$,
+            _element4$2 = _element4[2],
+            childList = _element4$2 === undefined ? [] : _element4$2;
+
+        assert(isString(tagType), 'view.build : tag property is not a string', ancestry.f(), element, tagType);
+        assert(isObject(attributes), 'view.build : attributes is not an object', ancestry.f(), element, attributes);
+        assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry.f(), element, childList);
+
+        // regular expression to capture values from the shorthand element tag syntax.
+        // it allows each section to be seperated by any amount of spaces, but enforces
+        // the order of the capture groups (tagName #id .className | style)
+        var match = /^ *(\w+) *(?:#([-\w\d]+))? *((?:\.[-\w\d]+)*)? *(?:\|\s*([^\s]{1}[^]*?))? *$/.exec(tagType);
+        assert(isArray(match), 'view.build : tag property cannot be parsed', ancestry.f(), tagType);
+        // first element is not needed since it is the entire matched string. default
+        // values are not used to avoid adding blank attributes to the nodes.
+
+        var _match = _slicedToArray(match, 5),
+            tagName = _match[1],
+            id = _match[2],
+            className = _match[3],
+            style = _match[4];
+
+        // priority is given to the id defined in the attributes.
+
+
+        if (isDefined(id) && !isDefined(attributes.id)) {
+            attributes.id = id.trim();
+        }
+
+        // class names from both the tag and the attributes are used.
+        if (isDefined(attributes.className) || isDefined(className)) {
+            attributes.className = classnames(attributes.className, className).replace(/\./g, ' ').replace(/  +/g, ' ').trim();
+        }
+
+        if (isDefined(style)) {
+            if (!isDefined(attributes.style)) {
+                attributes.style = style;
+            } else {
+                // extra semicolon is added if not present to prevent conflicts.
+                style = (style + ';').replace(/;;$/g, ';');
+                // styles defined in the attributes are given priority by being
+                // placed after the ones from the tag.
+                attributes.style = style + attributes.style;
+            }
+        }
+
+        // ancestry is recorded to give more context to error messages
+        // console.log(ancestry.f());
+        ancestry = ancestry.addTag(tagType);
+
+        // childList is converted to a children object with each child having its
+        // own key. the child order is also recorded.
+        var children = {};
+        var childOrder = [];
+        for (var i = 0; i < childList.length; ++i) {
+            var childElement = childList[i];
+            var key = i;
+            var child = build(childElement, ancestry.addKey(key));
+            // a key attribute will override the default array index key.
+            if (child.attributes && 'key' in child.attributes) {
+                key = child.attributes.key;
+                assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry.f(), key);
+                assert(String(key).match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry.f(), key);
+            }
+            // keys are normalized to strings to properly compare them.
+            key = String(key);
+            assert(!children[key], 'view.build : duplicate child key', ancestry.f(), key);
+            childOrder.push(key);
+            children[key] = child;
+        }
+
+        return {
+            tagName: tagName,
+            attributes: attributes,
+            children: children,
+            childOrder: childOrder
+        };
+    };
 
     send('blob.build', build);
 };
