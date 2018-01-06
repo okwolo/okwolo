@@ -638,8 +638,24 @@ describe('view.dom', () => {
                     .toBe('<div>as<div class="c">test1</div></div>');
             });
 
-            it('should pass update arguments to component generator', () => {
-                // TODO
+            it('should pass update arguments to component generator', async () => {
+                const test = jest.fn();
+                const app = o(v, vb, vd);
+                const args = ['', {}, null];
+                app.send('state', {});
+                app.use('builder', () => (
+                    ['div', {}, [
+                        [(_, update) => {
+                            setTimeout(() => update(...args), 0);
+                            return (...a) => (
+                                ['div.c', {t: test(...a)}]
+                            );
+                        }],
+                    ]]
+                ));
+                await sleep();
+                expect(test)
+                    .toHaveBeenCalledWith(...args);
             });
         });
     });
