@@ -245,7 +245,7 @@ module.exports = ({send}, global) => {
             }
         });
 
-        // TODO vdom object is modified after being returned.
+        // object is modified after being returned.
         return VDOM;
     };
 
