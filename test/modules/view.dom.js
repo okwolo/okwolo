@@ -657,6 +657,21 @@ describe('view.dom', () => {
                 expect(test)
                     .toHaveBeenCalledWith(...args);
             });
+
+            it('should accept top level components', async () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                const Component = (_, update) => {
+                    setTimeout(() => update());
+                    return () => (
+                        ['div.c']
+                    );
+                };
+                app.use('builder', () => (
+                    [Component]
+                ));
+                await sleep();
+            });
         });
     });
 });

@@ -63,8 +63,11 @@ const geneologist = (list = []) => {
 
     const keyList = () => {
         const temp = [];
+        if (list.length < 2) {
+            return [];
+        }
         // skip the last array element (tag without key)
-        const start = Math.max(0, list.length - 2);
+        const start = list.length - 2;
         for (let i = start; i >= 0; --i) {
             temp.push(String(list[i].key));
         }
