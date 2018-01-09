@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/okwolo/okwolo">
-        <img src="https://user-images.githubusercontent.com/9319710/28757374-8e78376e-754f-11e7-84a1-7b2b2e540e56.png" alt="logo" width="400px">
+        <img src="https://user-images.githubusercontent.com/9319710/28757374-8e78376e-754f-11e7-84a1-7b2b2e540e56.png" alt="logo" width="600px">
     </a>
 </p>
 <p align="center">
