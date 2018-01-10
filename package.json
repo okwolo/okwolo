@@ -26,6 +26,13 @@
         "type": "git",
         "url": "http://github.com/okwolo/okwolo.git"
     },
+    "files": [
+        "dist/",
+        "src/",
+        "lite.js",
+        "standard.js",
+        "server.js"
+    ],
     "dependencies": {
         "path-to-regexp": "^2.1.0"
     },
