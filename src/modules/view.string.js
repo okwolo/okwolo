@@ -42,6 +42,7 @@ const renderToString = (target, _vdom) => {
         if (isDefined(vdom.text)) {
             return [vdom.text];
         }
+
         // the input of this function can be assumed to be proper vdom syntax
         // since it has already been parsed and "transpiled" by the dom
         // module's "build" blob.
@@ -54,11 +55,20 @@ const renderToString = (target, _vdom) => {
                     key = 'class';
                     attributes.class = attributes.className;
                 }
-                return `${key}="${attributes[key].toString()}"`;
+                let value = attributes[key];
+                if (value === undefined) {
+                    value = '';
+                }
+                if (value === null) {
+                    value = 'null';
+                }
+                return `${key}="${value.toString()}"`;
             })
             .join(' ');
+
         // to correctly catch tags written with uppercase letters.
         tagName = tagName.toLowerCase();
+
         // early return in the case the element is a recognized singleton.
         // there it also checks that the element does not have descendents.
         if (isDefined(singletons[tagName]) && childOrder.length < 1) {
