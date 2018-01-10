@@ -677,8 +677,11 @@ var geneologist = function geneologist() {
 
     var keyList = function keyList() {
         var temp = [];
+        if (list.length < 2) {
+            return [];
+        }
         // skip the last array element (tag without key)
-        var start = Math.max(0, list.length - 2);
+        var start = list.length - 2;
         for (var i = start; i >= 0; --i) {
             temp.push(String(list[i].key));
         }
@@ -1115,7 +1118,7 @@ module.exports = function (_ref, global) {
             }
         });
 
-        // TODO vdom object is modified after being returned.
+        // object is modified after being returned.
         return VDOM;
     };
 
