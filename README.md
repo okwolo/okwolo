@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="https://github.com/okwolo/okwolo">
+    <a href="https://okwolo.org">
         <img src="https://user-images.githubusercontent.com/9319710/28757374-8e78376e-754f-11e7-84a1-7b2b2e540e56.png" alt="logo" width="600px">
     </a>
 </p>
@@ -9,3 +9,59 @@
     <a href="https://codecov.io/gh/okwolo/okwolo"><img src="https://img.shields.io/codecov/c/github/okwolo/okwolo.svg" alt="Codecov" /></a>
     <a href="https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz"><img src="https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg" alt="gzipped size" /></a>
 </p>
+
+---
+
+# [okwolo](https://okwolo.org)
+
+> light javascript framework to build web applications
+
+* No build step necessary by default.
+* Virtual DOM implementation for fast and efficient keyed layout updates.
+* Built-in client-side router for instant page changes.
+* Included state management solution which supports actions, middleware and watchers.
+* Deeply customizable with support for asynchronous configuration.
+
+## Quickstart
+
+Install with npm and use with a code bundler.
+
+```
+npm install okwolo
+```
+
+```javascript
+const okwolo = require('okwolo/standard');
+```
+
+Alternatively, the okwolo function can be loaded using a script tag. It will automatically attach itself to the global window object. All three kits are available transpiled to es5 and minified in the `dist` folder.
+
+```html
+<script src="/dist/standard.min.js"></script>
+```
+
+Create your first app.
+
+```javascript
+const app = okwolo(document.body);
+
+app.setState({});
+
+app(() => () => (
+    ['div.wrapper', {}, [
+        ['h1', {}, [
+            'Hello World!',
+        ]],
+    ]]
+));
+```
+
+Visit [the website](https://okwolo.org) for more information.
+
+## Documentation
+
+Documentation is maintained on the project's [website](https://okwolo.org).
+
+## License
+
+[MIT](https://github.com/okwolo/okwolo/blob/master/LICENSE)

@@ -1,6 +1,6 @@
 {
     "name": "okwolo",
-    "version": "2.0.1",
+    "version": "3.0.0",
     "description": "light javascript framework to build web applications",
     "main": "src/index.js",
     "keywords": [
@@ -74,24 +74,12 @@
         },
         "extends": "google",
         "rules": {
-            "indent": [
-                2,
-                4
-            ],
+            "indent": [2, 4],
             "linebreak-style": 0,
-            "quotes": [
-                2,
-                "single"
-            ],
-            "semi": [
-                2,
-                "always"
-            ],
+            "quotes": [2, "single"],
+            "semi": [2, "always"],
             "max-len": 0,
-            "strict": [
-                2,
-                "global"
-            ]
+            "strict": [2, "global"]
         }
     },
     "eslintIgnore": [
