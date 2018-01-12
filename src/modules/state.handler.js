@@ -135,8 +135,8 @@ module.exports = ({on, send}) => {
     };
 
     // actions can be added in batches by using an array.
-    on('blob.action', (action) => {
-        [].concat(action).forEach((item = {}) => {
+    on('blob.action', (...action) => {
+        action.reduce((a, b) => a.concat(b), []).forEach((item = {}) => {
             const {type, handler, target} = item;
             assert(isString(type), 'on.blob.action : action\'s type is not a string', item, type);
             assert(isFunction(handler), `on.blob.action : handler for action ${type} is not a function`, item, handler);
@@ -156,16 +156,16 @@ module.exports = ({on, send}) => {
     });
 
     // middleware can be added in batches by using an array.
-    on('blob.middleware', (_middleware) => {
-        [].concat(_middleware).forEach((item) => {
+    on('blob.middleware', (..._middleware) => {
+        _middleware.reduce((a, b) => a.concat(b), []).forEach((item) => {
             assert(isFunction(item), 'on.blob.middleware : middleware is not a function', item);
             middleware.push(item);
         });
     });
 
     // watchers can be added in batches by using an array.
-    on('blob.watcher', (watcher) => {
-        [].concat(watcher).forEach((item) => {
+    on('blob.watcher', (...watcher) => {
+        watcher.reduce((a, b) => a.concat(b), []).forEach((item) => {
             assert(isFunction(item), 'on.blob.watcher : watcher is not a function', item);
             watchers.push(item);
         });

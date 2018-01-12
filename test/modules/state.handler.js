@@ -328,6 +328,7 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 const test1 = jest.fn();
                 const test2 = jest.fn();
+                const test3 = jest.fn();
                 app.setState({});
                 app.use(testAction((s) => {
                     test1();
@@ -337,11 +338,19 @@ describe('state.handler', () => {
                     test2();
                     return s;
                 }));
+                const {action} = testAction((s) => {
+                    test3();
+                    return s;
+                });
+                app.send('blob.action', [action, action]);
+                app.send('blob.action', action, action);
                 app.send('action', {type: 'TEST'});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
                     .toHaveBeenCalled();
+                expect(test3)
+                    .toHaveBeenCalledTimes(4);
             });
         });
 
@@ -371,6 +380,7 @@ describe('state.handler', () => {
                 const app = o(s, sh);
                 const test1 = jest.fn();
                 const test2 = jest.fn();
+                const test3 = jest.fn();
                 app.setState({});
                 app.send('blob.middleware', (next, state, type, params) => {
                     test1();
@@ -380,12 +390,20 @@ describe('state.handler', () => {
                     test2();
                     next();
                 });
+                const middleware = (next) => {
+                    test3();
+                    next();
+                };
+                app.send('blob.middleware', [middleware, middleware]);
+                app.send('blob.middleware', middleware, middleware);
                 app.use(testAction());
                 app.send('action', {type: 'TEST'});
                 expect(test1)
                     .toHaveBeenCalled();
                 expect(test2)
                     .toHaveBeenCalled();
+                expect(test3)
+                    .toHaveBeenCalledTimes(4);
             });
         });
 
@@ -414,10 +432,12 @@ describe('state.handler', () => {
                 app.setState({});
                 app.send('blob.watcher', test);
                 app.send('blob.watcher', test);
+                app.send('blob.watcher', [test, test]);
+                app.send('blob.watcher', test, test);
                 app.use(testAction());
                 app.send('action', {type: 'TEST'});
                 expect(test)
-                    .toHaveBeenCalledTimes(2);
+                    .toHaveBeenCalledTimes(6);
             });
         });
     });
