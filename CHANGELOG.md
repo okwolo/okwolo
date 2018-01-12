@@ -4,6 +4,7 @@
 * merged use/emit into single bus
 * added protection against overriding api with blobs
 * fixed error when server kit received an element with undefined or null attributes
+* added a catch-all path (**) to the routers
 
 ## v2.0.1
 

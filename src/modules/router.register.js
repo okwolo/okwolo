@@ -10,7 +10,12 @@ module.exports = ({send}) => {
     // that it needs to be created when the first path is registered.
     const register = (store = [], path, handler) => {
         const keys = [];
-        const pattern = pathToRegexp(path, keys, {strict: true});
+        let pattern;
+        if (path === '**') {
+            pattern = /.*/g;
+        } else {
+            pattern = pathToRegexp(path, keys, {strict: true});
+        }
         store.push({
             pattern,
             keys,

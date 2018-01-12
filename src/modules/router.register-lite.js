@@ -21,13 +21,19 @@ module.exports = ({send}) => {
     const register = (store = [], path, handler) => {
         // the keys are extracted from the path string and stored to properly
         // assign the url's values to the right keys in the params.
-        let keys = (path.match(keyPattern) || [])
+        const keys = (path.match(keyPattern) || [])
             .map((key) => ({
                 name: key.replace(/^:/g, ''),
             }));
+        let pattern;
+        if (path === '**') {
+            pattern = /.*/g;
+        } else {
+            pattern = createPattern(path);
+        }
         store.push({
             keys,
-            pattern: createPattern(path),
+            pattern,
             handler,
         });
         return store;

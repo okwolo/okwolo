@@ -33,6 +33,17 @@ describe('router.register-lite', () => {
             .toBe(handler);
     });
 
+    it('should support the catch-all path', () => {
+        const handler = () => 0;
+        const [path] = register([], '**', handler);
+        expect(path.keys)
+            .toEqual([]);
+        expect(path.pattern.toString())
+            .toBe('/.*/g');
+        expect(path.handler)
+            .toBe(handler);
+    });
+
     it('should correctly identify the path\'s keys', () => {
         let [{keys}] = register([], '/:test:key/:id::0:');
         expect(keys)

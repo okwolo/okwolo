@@ -27,6 +27,7 @@
         "url": "http://github.com/okwolo/okwolo.git"
     },
     "files": [
+        "README.md",
         "dist/",
         "src/",
         "lite.js",
