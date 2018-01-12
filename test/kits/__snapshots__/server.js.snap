@@ -14,7 +14,7 @@ exports[`server should correctly render complex structures 1`] = `
     <div id="prompt" style="margin-top: 10px;">
       <div id="alias">
         <div id="offer">Example.com offered in:
-          <a href="https://example.com">Français</a>
+          <a href="https://example.com">Fran&#xE7;ais</a>
         </div>
       </div>
       <div id="swimlanes"></div>

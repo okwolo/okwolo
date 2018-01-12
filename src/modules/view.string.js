@@ -3,6 +3,8 @@
 // @fires blob.draw   [view]
 // @fires blob.update [view]
 
+const he = require('he');
+
 const {
     assert,
     isDefined,
@@ -40,7 +42,7 @@ const renderToString = (target, _vdom) => {
     // in the result of the render of a child.
     const render = (vdom = {text: ''})=> {
         if (isDefined(vdom.text)) {
-            return [vdom.text];
+            return [he.encode(vdom.text)];
         }
 
         // the input of this function can be assumed to be proper vdom syntax

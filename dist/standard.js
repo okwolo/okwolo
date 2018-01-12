@@ -604,8 +604,14 @@ module.exports = function (_ref) {
     };
 
     // actions can be added in batches by using an array.
-    on('blob.action', function (action) {
-        [].concat(action).forEach(function () {
+    on('blob.action', function () {
+        for (var _len = arguments.length, action = Array(_len), _key = 0; _key < _len; _key++) {
+            action[_key] = arguments[_key];
+        }
+
+        action.reduce(function (a, b) {
+            return a.concat(b);
+        }, []).forEach(function () {
             var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
             var type = item.type,
                 handler = item.handler,
@@ -629,16 +635,28 @@ module.exports = function (_ref) {
     });
 
     // middleware can be added in batches by using an array.
-    on('blob.middleware', function (_middleware) {
-        [].concat(_middleware).forEach(function (item) {
+    on('blob.middleware', function () {
+        for (var _len2 = arguments.length, _middleware = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+            _middleware[_key2] = arguments[_key2];
+        }
+
+        _middleware.reduce(function (a, b) {
+            return a.concat(b);
+        }, []).forEach(function (item) {
             assert(isFunction(item), 'on.blob.middleware : middleware is not a function', item);
             middleware.push(item);
         });
     });
 
     // watchers can be added in batches by using an array.
-    on('blob.watcher', function (watcher) {
-        [].concat(watcher).forEach(function (item) {
+    on('blob.watcher', function () {
+        for (var _len3 = arguments.length, watcher = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+            watcher[_key3] = arguments[_key3];
+        }
+
+        watcher.reduce(function (a, b) {
+            return a.concat(b);
+        }, []).forEach(function (item) {
             assert(isFunction(item), 'on.blob.watcher : watcher is not a function', item);
             watchers.push(item);
         });
@@ -1651,7 +1669,12 @@ module.exports = function (_ref) {
         var handler = arguments[2];
 
         var keys = [];
-        var pattern = pathToRegexp(path, keys, { strict: true });
+        var pattern = void 0;
+        if (path === '**') {
+            pattern = /.*/g;
+        } else {
+            pattern = pathToRegexp(path, keys, { strict: true });
+        }
         store.push({
             pattern: pattern,
             keys: keys,

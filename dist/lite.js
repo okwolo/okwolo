@@ -1367,9 +1367,15 @@ module.exports = function (_ref) {
                 name: key.replace(/^:/g, '')
             };
         });
+        var pattern = void 0;
+        if (path === '**') {
+            pattern = /.*/g;
+        } else {
+            pattern = createPattern(path);
+        }
         store.push({
             keys: keys,
-            pattern: createPattern(path),
+            pattern: pattern,
             handler: handler
         });
         return store;

@@ -19,4 +19,17 @@ describe('view.string', () => {
         )))
             .not.toThrow(Error);
     });
+
+    it('should produce escaped html from text elements', (done) => {
+        const app = o(v, vb, vs);
+        app.send('state', {});
+        app.send('blob.target', (htmlString) => {
+            expect(htmlString)
+                .toBe('&#x3C;script&#x3E;alert(&#x27;test&#x27;);&#x3C;/script&#x3E;');
+            done();
+        });
+        app(() => () => (
+            '<script>alert(\'test\');</script>'
+        ));
+    });
 });

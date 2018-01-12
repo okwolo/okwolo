@@ -6,6 +6,7 @@
 * fixed error when server kit received an element with undefined or null attributes
 * added a catch-all path (**) to the routers
 * made action, middleware and watcher blob handlers accept multiple arguments
+* added html escaping for text elements in view.string
 
 ## v2.0.1
 
