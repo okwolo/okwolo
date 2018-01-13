@@ -1,7 +1,8 @@
 'use strict';
 
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const PrepackPlugin = require('prepack-webpack-plugin').default;
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 const kit = (name) => ([
     {
@@ -29,6 +30,7 @@ const bundles = [
 module.exports = bundles.map((options) => {
     const plugins = [];
     if (options.minified) {
+        plugins.push(new PrepackPlugin({}));
         plugins.push(new UglifyJSPlugin());
     }
     if (options.gzipped) {
