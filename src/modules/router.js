@@ -59,35 +59,50 @@ module.exports = ({on, send}, global) => {
 
     // handle back/forward events
     global.onpopstate = () => {
-        currentPath = removeBaseUrl(global.location.pathname);
-        safeFetch(currentPath);
+        queue.add(() => {
+            currentPath = removeBaseUrl(global.location.pathname);
+            safeFetch(currentPath);
+            queue.done();
+        });
     };
 
     on('blob.route', ({path, handler} = {}) => {
         assert(isString(path), 'on.blob.route : path is not a string', path);
         assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
         assert(isFunction(register), 'on.blob.route : register is not a function', register);
-        store = register(store, path, handler);
-        if (!hasMatched) {
-            hasMatched = !!safeFetch(currentPath);
-        }
+        queue.add(() => {
+            store = register(store, path, handler);
+            if (!hasMatched) {
+                hasMatched = !!safeFetch(currentPath);
+            }
+            queue.done();
+        });
     });
 
     on('blob.base', (base) => {
         assert(isString(base), 'on.blob.base : base url is not a string', base);
-        baseUrl = base;
-        currentPath = removeBaseUrl(currentPath);
-        safeFetch(currentPath);
+        queue.add(() => {
+            baseUrl = base;
+            currentPath = removeBaseUrl(currentPath);
+            safeFetch(currentPath);
+            queue.done();
+        });
     });
 
     on('blob.register', (_register) => {
         assert(isFunction(_register), 'on.blob.register : register is not a function', register);
-        register = _register;
+        queue.add(() => {
+            register = _register;
+            queue.done();
+        });
     });
 
     on('blob.fetch', (_fetch) => {
         assert(isFunction(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
-        fetch = _fetch;
+        queue.add(() => {
+            fetch = _fetch;
+            queue.done();
+        });
     });
 
     // fetch wrapper that makes the browser aware of the url change

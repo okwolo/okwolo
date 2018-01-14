@@ -1,3 +1,8 @@
+## 3.0.1
+
+* added prepack to the build process for minified and gzipped bundles
+* made all blob listeners in router use a queue
+
 ## v3.0.0
 
 * made components capable of scoped layout updates, requires slight change of syntax

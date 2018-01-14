@@ -357,4 +357,24 @@ describe('router', () => {
             });
         });
     });
+
+    it('should execute all changes in the order they are called', () => {
+        const app = o(r, rr, rf);
+        let test = false;
+        app.send('blob.route', {
+            path: '/test',
+            handler: () => {
+                test = true;
+            },
+        });
+        app.send('blob.route', {
+            path: '/',
+            handler: () => {
+                app.send('redirect', '/test');
+                test = false;
+            },
+        });
+        expect(test)
+            .toBe(true);
+    });
 });
