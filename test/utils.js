@@ -390,5 +390,23 @@ describe('utils', () => {
                 done();
             });
         });
+
+        it('should not max out the stack', () => {
+            let maxStack = 0;
+            try {
+                let f = () => {
+                    ++maxStack;
+                    f();
+                };
+                f();
+            } catch (e) {}
+            const queue = makeQueue();
+            for (let i = 0; i < maxStack * 2; ++i) {
+                queue.add(() => {
+                    queue.done();
+                });
+            }
+            queue.done();
+        });
     });
 });
