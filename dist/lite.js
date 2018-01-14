@@ -229,7 +229,7 @@ var _require = __webpack_require__(0),
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '3.0.0';
+var version = '3.0.1';
 
 var makeBus = function makeBus() {
     // stores arrays of handlers for each event key.
@@ -1198,8 +1198,11 @@ module.exports = function (_ref, global) {
 
     // handle back/forward events
     global.onpopstate = function () {
-        currentPath = removeBaseUrl(global.location.pathname);
-        safeFetch(currentPath);
+        queue.add(function () {
+            currentPath = removeBaseUrl(global.location.pathname);
+            safeFetch(currentPath);
+            queue.done();
+        });
     };
 
     on('blob.route', function () {
@@ -1210,27 +1213,39 @@ module.exports = function (_ref, global) {
         assert(isString(path), 'on.blob.route : path is not a string', path);
         assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
         assert(isFunction(register), 'on.blob.route : register is not a function', register);
-        store = register(store, path, handler);
-        if (!hasMatched) {
-            hasMatched = !!safeFetch(currentPath);
-        }
+        queue.add(function () {
+            store = register(store, path, handler);
+            if (!hasMatched) {
+                hasMatched = !!safeFetch(currentPath);
+            }
+            queue.done();
+        });
     });
 
     on('blob.base', function (base) {
         assert(isString(base), 'on.blob.base : base url is not a string', base);
-        baseUrl = base;
-        currentPath = removeBaseUrl(currentPath);
-        safeFetch(currentPath);
+        queue.add(function () {
+            baseUrl = base;
+            currentPath = removeBaseUrl(currentPath);
+            safeFetch(currentPath);
+            queue.done();
+        });
     });
 
     on('blob.register', function (_register) {
         assert(isFunction(_register), 'on.blob.register : register is not a function', register);
-        register = _register;
+        queue.add(function () {
+            register = _register;
+            queue.done();
+        });
     });
 
     on('blob.fetch', function (_fetch) {
         assert(isFunction(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
-        fetch = _fetch;
+        queue.add(function () {
+            fetch = _fetch;
+            queue.done();
+        });
     });
 
     // fetch wrapper that makes the browser aware of the url change
