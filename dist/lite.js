@@ -978,17 +978,25 @@ module.exports = function (_ref, global) {
     // recursive function to update an element according to new state. the
     // parent and the element's parent index must be passed in order to make
     // modifications to the vdom object in place.
-    var updateElement = function updateElement(original, successor, parent, parentKey) {
+    var updateElement = function updateElement(DOMChanges, original, successor, parent, parentKey) {
         // lack of original element implies the successor is a new element.
         if (!isDefined(original)) {
             parent.children[parentKey] = render(successor);
-            parent.DOM.appendChild(parent.children[parentKey].DOM);
+            var parentNode = parent.DOM;
+            var node = parent.children[parentKey].DOM;
+            DOMChanges.push(function () {
+                parentNode.appendChild(node);
+            });
             return;
         }
 
         // lack of successor element implies the original is being removed.
         if (!isDefined(successor)) {
-            parent.DOM.removeChild(original.DOM);
+            var _parentNode = parent.DOM;
+            var _node = original.DOM;
+            DOMChanges.push(function () {
+                _parentNode.removeChild(_node);
+            });
             delete parent.children[parentKey];
             return;
         }
@@ -1000,7 +1008,11 @@ module.exports = function (_ref, global) {
         if (original.tagName !== successor.tagName) {
             var oldDOM = original.DOM;
             var newVDOM = render(successor);
-            parent.DOM.replaceChild(newVDOM.DOM, oldDOM);
+            var _parentNode2 = parent.DOM;
+            var _node2 = newVDOM.DOM;
+            DOMChanges.push(function () {
+                _parentNode2.replaceChild(_node2, oldDOM);
+            });
             // this technique is used to modify the vdom object in place.
             // both the text element and the tag element props are reset
             // since the types are not recorded.
@@ -1018,19 +1030,32 @@ module.exports = function (_ref, global) {
         // nodeType of three indicates that the HTML node is a textNode.
         // at this point in the function it has been estblished that the
         // original and successor nodes are of the same type.
-        if (original.DOM.nodeType === 3) {
-            if (original.text !== successor.text) {
-                original.DOM.nodeValue = successor.text;
-                original.text = successor.text;
+        if (original.text !== undefined) {
+            var text = successor.text;
+            if (original.text !== text) {
+                var _node3 = original.DOM;
+                DOMChanges.push(function () {
+                    _node3.nodeValue = text;
+                });
+                original.text = text;
             }
             return;
         }
 
         var attributesDiff = diff(original.attributes, successor.attributes);
-        for (var i = 0; i < attributesDiff.length; ++i) {
+
+        var _loop = function _loop(i) {
             var key = attributesDiff[i];
-            original.attributes[key] = successor.attributes[key];
-            original.DOM[key] = successor.attributes[key];
+            var value = successor.attributes[key];
+            original.attributes[key] = value;
+            var node = original.DOM;
+            DOMChanges.push(function () {
+                node[key] = value;
+            });
+        };
+
+        for (var i = 0; i < attributesDiff.length; ++i) {
+            _loop(i);
         }
 
         // list representing the actual order of children in the dom. it is
@@ -1042,8 +1067,8 @@ module.exports = function (_ref, global) {
         // accumulate all child keys from both the original node and the
         // successor node. each child is then recursively updated.
         var childKeys = Object.keys(Object.assign({}, original.children, successor.children));
-        for (var _i = 0; _i < childKeys.length; ++_i) {
-            var _key = childKeys[_i];
+        for (var i = 0; i < childKeys.length; ++i) {
+            var _key = childKeys[i];
             // new elements are moved to the end of the list.
             if (!original.children[_key]) {
                 childOrder.push(_key);
@@ -1051,7 +1076,7 @@ module.exports = function (_ref, global) {
             } else if (!successor.children[_key]) {
                 childOrder.splice(childOrder.indexOf(_key), 1);
             }
-            updateElement(original.children[_key], successor.children[_key], original, _key);
+            updateElement(DOMChanges, original.children[_key], successor.children[_key], original, _key);
         }
 
         if (!childOrder.length) {
@@ -1078,16 +1103,34 @@ module.exports = function (_ref, global) {
 
 
         var startKeys = successor.childOrder.slice(0, start);
-        for (var _i2 = startKeys.length - 1; _i2 >= 0; --_i2) {
-            var _key2 = startKeys[_i2];
-            original.DOM.insertBefore(original.children[_key2].DOM, original.DOM.firstChild);
+
+        var _loop2 = function _loop2(_i) {
+            var key = startKeys[_i];
+            var parentNode = original.DOM;
+            var node = original.children[key].DOM;
+            DOMChanges.push(function () {
+                parentNode.insertBefore(node, parentNode.firstChild);
+            });
+        };
+
+        for (var _i = startKeys.length - 1; _i >= 0; --_i) {
+            _loop2(_i);
         }
 
         // elements after the "correct" chain are appended to the parent.
         var endKeys = successor.childOrder.slice(end + 1, Infinity);
-        for (var _i3 = 0; _i3 < endKeys.length; ++_i3) {
-            var _key3 = endKeys[_i3];
-            original.DOM.appendChild(original.children[_key3].DOM);
+
+        var _loop3 = function _loop3(_i2) {
+            var key = endKeys[_i2];
+            var parentNode = original.DOM;
+            var node = original.children[key].DOM;
+            DOMChanges.push(function () {
+                parentNode.appendChild(node);
+            });
+        };
+
+        for (var _i2 = 0; _i2 < endKeys.length; ++_i2) {
+            _loop3(_i2);
         }
     };
 
@@ -1110,15 +1153,22 @@ module.exports = function (_ref, global) {
             original = original.children[parentKey];
         }
 
+        // the updateElement function adds all DOM changes to the array while
+        // it is updating the vdom. these changes can be executed later in an
+        // animation frame, as long as the order is respected.
+        var DOMChanges = [];
+        updateElement(DOMChanges, original, successor, parent, parentKey);
+
         global.requestAnimationFrame(function () {
             try {
-                updateElement(original, successor, parent, parentKey);
+                for (var _i3 = 0; _i3 < DOMChanges.length; ++_i3) {
+                    DOMChanges[_i3]();
+                }
             } catch (e) {
                 console.error('view.dom.update : ' + e);
             }
         });
 
-        // object is modified after being returned.
         return VDOM;
     };
 
