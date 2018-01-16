@@ -1,3 +1,8 @@
+## 3.0.2
+
+* seperated the vdom diff/update from the resulting DOM changes
+* small performance improvements
+
 ## 3.0.1
 
 * added prepack to the build process for minified and gzipped bundles

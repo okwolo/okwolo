@@ -115,7 +115,7 @@ describe('view.build', () => {
         expect(() => build(element1))
             .toThrow(/root/g);
         expect(() => build(element2))
-            .toThrow(/root -> div\.test -> span#test \| \.\.\. -> \{\{0\}\}/g);
+            .toThrow(/root -> div\.test -> span#test \| heig\.\.\. -> \{\{0\}\}/g);
     });
 
     it('should pass props and children to components', () => {

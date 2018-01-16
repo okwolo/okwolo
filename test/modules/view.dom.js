@@ -672,6 +672,29 @@ describe('view.dom', () => {
                 ));
                 await sleep();
             });
+
+            xit('should properly handle components inside keyed elements', async () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                const Component = (props, update) => {
+                    setTimeout(() => update('.test'), 10);
+                    return (arg) => (
+                        ['div.c' + (arg?arg:'')]
+                    );
+                };
+                app.use('builder', () => (
+                    ['div', {}, [
+                        ['span', {key: 'span'}],
+                        ['div', {key: 'div'}, [
+                            [Component],
+                        ]],
+                    ]]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div><span></span><div><div class="c"></div></div></div>');
+                await sleep(10);
+            });
         });
     });
 });

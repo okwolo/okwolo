@@ -94,7 +94,8 @@
             "strict": [
                 2,
                 "global"
-            ]
+            ],
+            "require-jsdoc": 0
         }
     },
     "eslintIgnore": [

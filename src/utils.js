@@ -60,7 +60,9 @@ module.exports.isRegExp = (value) => {
 
 // there cannot be any assumptions about the environment globals so
 // node's process should not be used.
-module.exports.isBrowser = () => typeof window !== 'undefined';
+module.exports.isBrowser = () => {
+    return typeof window !== 'undefined';
+};
 
 module.exports.deepCopy = (obj) => {
     // undefined value would otherwise throw an error at parsing time.
