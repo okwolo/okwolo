@@ -28,7 +28,6 @@
     },
     "files": [
         "README.md",
-        "dist/",
         "src/",
         "lite.js",
         "standard.js",

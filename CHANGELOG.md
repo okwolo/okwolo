@@ -2,6 +2,7 @@
 
 * seperated the vdom diff/update from the resulting DOM changes
 * small performance improvements
+* removed dist directory from npm file list
 
 ## 3.0.1
 
