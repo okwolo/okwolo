@@ -1,4 +1,4 @@
-## 3.2.0
+## v3.2.0
 
 * build function blob now receives a queue as second argument
 * seperated the vdom diff/update from the resulting DOM changes
@@ -6,7 +6,7 @@
 * small performance improvements
 * removed dist directory from npm file list
 
-## 3.0.1
+## v3.0.1
 
 * added prepack to the build process for minified and gzipped bundles
 * made all blob listeners in router use a queue
