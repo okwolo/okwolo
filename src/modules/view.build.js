@@ -15,60 +15,67 @@ const {
     isString,
 } = require('../utils');
 
-// ancestry helper which ensures immutability and handles common logic.
-// ancestry list is recorded in reverse for easier access to the last (first)
-// element. all elements take the form of objects with the "tag" and "key" keys
-// which are not guaranteed to be defined. (ex. first list element has no key,
-// but does have a tag since it is the root node)
-class Geneologist {
+// ancestry helper which handles immutability and common logic. this code is
+// implemented as a class contrarily to the patterns in the rest of this
+// project. the decision was made as an optimization to prevent new functions
+// from being created on each instanciation.
+class Genealogist {
     constructor(list = []) {
         this.list = list;
 
-        // precomputing the formatted address for use in error assertions,
+        // precalculating the formatted address for use in error assertions.
         let formatted = 'root';
-        for (let i = this.list.length - 1; i >= 0; --i) {
+        for (let i = 0; i < this.list.length; ++i) {
             formatted += ' -> ';
-            const {tag, key} = this.list[i];
-            // list elements without a tag will show the key instead.
-            if (!isString(tag)) {
-                formatted += `{{${key}}}`;
-                continue;
-            }
-            // tag's style is removed to reduce clutter.
+            const {tag} = this.list[i];
+            // tag's length is capped to reduce clutter.
             formatted += tag.substr(0, 16);
             if (tag.length > 16) {
                 formatted += '...';
             }
         }
-        this.f = formatted;
+        this.formatted = formatted;
     }
 
-    // keys are only know by parents and will therefore always be added
-    // before the child adds its own tag.
-    addKey(key) {
-        return new Geneologist([{key}].concat(this.list));
-    }
-
-    // first tag in the list does not have a key. all subsequent tags are added
-    // to the first array element (most recent descendant).
-    addTag(tag) {
-        if (this.list.length === 0) {
-            return new Geneologist([{tag}]);
+    // formats the address with the parent index appended to the end.
+    // this is useful for errors that happen before an element's tagName
+    // is parsed and only the parentIndex is known.
+    f(parentIndex) {
+        if (parentIndex === undefined) {
+            return this.formatted;
         }
-        const l = this.list.slice();
-        l[0].tag = tag;
-        return new Geneologist(l);
+        return `${this.formatted} -> {{${parentIndex}}}`;
     }
 
-    keyList() {
+    // adding a level returns a new instance of genealogist and does not
+    // mutate the undelying list.
+    add(tag, key) {
+        return new Genealogist(this.list.concat([{tag, key}]));
+    }
+
+    // adds a level to the current instance. this method should be used
+    // with caution since it modifies the list directly. should be used
+    // in conjunction with copy method to ensure no list made invalid.
+    addUnsafe(tag, key) {
+        this.list.push({tag, key});
+        return this;
+    }
+
+    // returns a new instance of genealogist with a copy of the underlying list.
+    copy() {
+        return new Genealogist(this.list.slice());
+    }
+
+    // returns the list of keys in the ancestry. this value is represents
+    // the element's "address".
+    keys() {
         const temp = [];
         if (this.list.length < 2) {
             return [];
         }
-        // skip the last array element (tag without key)
-        const start = this.list.length - 2;
-        for (let i = start; i >= 0; --i) {
-            temp.push('' + this.list[i].key);
+        // skip the first array element (root element has no parent key)
+        for (let i = 1; i < this.list.length; ++i) {
+            temp.push(this.list[i].key);
         }
         return temp;
     };
@@ -97,17 +104,17 @@ const classnames = (...args) => {
 module.exports = ({send}) => {
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
-    const build = (element, ancestry = new Geneologist()) => {
+    const build = (element, queue, ancestry = new Genealogist(), parentIndex, fromComponent) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
-            element = null;
+            element = '';
         }
         // null elements will produce no visible output. undefined is intentionally not
         // handled since it is often produced as a result of an unexpected builder output
         // and it should be made clear that something went wrong.
         if (isNull(element)) {
-            return {text: ''};
+            element = '';
         }
         // in order to simplify type checking, numbers are stringified.
         if (isNumber(element)) {
@@ -115,39 +122,63 @@ module.exports = ({send}) => {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
+            // the fromComponent argument is set to true when the direct parent
+            // of the current element is a component. a value of true implies
+            // the child is responsible for adding its key to the ancestry,
+            // even if the resulting element is a text node.
+            if (fromComponent) {
+                ancestry.addUnsafe('textNode', parentIndex);
+            }
             return {text: element};
         }
 
+        // element's address generated once and stored for the error assertions.
+        const addr = ancestry.f(parentIndex);
+
         // the only remaining element types are formatted as arrays.
-        assert(isArray(element), 'view.build : vdom object is not a recognized type', ancestry.f, element);
+        assert(isArray(element), 'view.build : vdom object is not a recognized type', addr, element);
 
         // early recursive return when the element is seen to be have the component syntax.
         if (isFunction(element[0])) {
             // leaving the props or children items undefined should not throw an error.
             let [component, props = {}, children = []] = element;
-            assert(isObject(props), 'view.build : component\'s props is not an object', ancestry.f, element, props);
-            assert(isArray(children), 'view.build : component\'s children is not an array', ancestry.f, element, children);
+            assert(isObject(props), 'view.build : component\'s props is not an object', addr, element, props);
+            assert(isArray(children), 'view.build : component\'s children is not an array', addr, element, children);
 
             // component generator is given to update function and used to create
             // the inital version of the component.
             let gen;
+            // the child component's ancestry starts as a copy of its parent's.
+            // however, its contents are modified after the component is built
+            // for the first time by setting the fromComponent argument to true.
+            const childAncestry = ancestry.copy();
             const update = (...args) => {
-                send('sync', ancestry.keyList(), build(gen(...args), ancestry));
+                // build caller's queue is used to make sure the childAncestry
+                // has been modified and that the vdom stored in the view module
+                // has beeen updated. this is necessary because the sync event
+                // requires the component's complete address as well as a vdom
+                // tree which actually contains the parsed element.
+                queue.add(() => {
+                    send('sync', childAncestry.keys(), build(gen(...args), queue, childAncestry, parentIndex));
+                    queue.done();
+                });
             };
             gen = component(Object.assign({}, props, {children}), update);
-            return build(gen(), ancestry);
+            assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
+            // initial component is built with the fromComponent argument set to true.
+            return build(gen(), queue, childAncestry, parentIndex, true);
         }
 
         let [tagType, attributes = {}, childList = []] = element;
-        assert(isString(tagType), 'view.build : tag property is not a string', ancestry.f, element, tagType);
-        assert(isObject(attributes), 'view.build : attributes is not an object', ancestry.f, element, attributes);
-        assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry.f, element, childList);
+        assert(isString(tagType), 'view.build : tag property is not a string', addr, element, tagType);
+        assert(isObject(attributes), 'view.build : attributes is not an object', addr, element, attributes);
+        assert(isArray(childList), 'view.build : children of vdom object is not an array', addr, element, childList);
 
         // regular expression to capture values from the shorthand element tag syntax.
         // it allows each section to be seperated by any amount of spaces, but enforces
         // the order of the capture groups (tagName #id .className | style)
         const match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
-        assert(isArray(match), 'view.build : tag property cannot be parsed', ancestry.f, tagType);
+        assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);
         // first element is not needed since it is the entire matched string. default
         // values are not used to avoid adding blank attributes to the nodes.
         let [, tagName, id, className, style] = match;
@@ -177,8 +208,25 @@ module.exports = ({send}) => {
             }
         }
 
-        // ancestry is recorded to give more context to error messages
-        ancestry = ancestry.addTag(tagType);
+        // this element's key is either defined in the attributes or it defaults
+        // to being the parentIndex. in both cases, it is always a string.
+        let key = parentIndex;
+        if ('key' in attributes) {
+            key = attributes.key;
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', addr, key);
+            key = '' + key;
+            assert(key.match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', addr, key);
+            attributes.key = key;
+        }
+
+        // ancestry is recorded to give more context to error messages. being a
+        // direct descendant from a component makes this iteration of build
+        // responsible for adding its ancestry entry.
+        if (fromComponent) {
+            ancestry.addUnsafe(tagType, key);
+        } else {
+            ancestry = ancestry.add(tagType, key);
+        }
 
         // childList is converted to a children object with each child having its
         // own key. the child order is also recorded.
@@ -186,16 +234,15 @@ module.exports = ({send}) => {
         const childOrder = [];
         for (let i = 0; i < childList.length; ++i) {
             const childElement = childList[i];
+            // parentIndex argument passed to build should be a string.
             let key = '' + i;
-            const child = build(childElement, ancestry.addKey(key));
-            // a key attribute will override the default array index key.
+            const child = build(childElement, queue, ancestry, key);
+            // a key attribute in the child will override the default
+            // array index as key.
             if (child.attributes && 'key' in child.attributes) {
                 key = child.attributes.key;
-                assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry.f, key);
-                key += '';
-                assert(key.match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry.f, key);
             }
-            assert(!children[key], 'view.build : duplicate child key', ancestry.f, key);
+            assert(!children[key], 'view.build : duplicate child key (note that text elements and elements with no key attribute are given their array index as key)', ancestry.f(), key);
             childOrder.push(key);
             children[key] = child;
         }
@@ -208,5 +255,8 @@ module.exports = ({send}) => {
         };
     };
 
-    send('blob.build', build);
+    send('blob.build', (element, queue) => {
+        queue.add(Function);
+        return build(element, queue);
+    });
 };

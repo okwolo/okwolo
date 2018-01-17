@@ -1,6 +1,8 @@
-## 3.0.2
+## 3.2.0
 
+* build function blob now receives a queue as second argument
 * seperated the vdom diff/update from the resulting DOM changes
+* made it safer to use the component's update function inside builder
 * small performance improvements
 * removed dist directory from npm file list
 

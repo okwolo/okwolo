@@ -229,7 +229,7 @@ var _require = __webpack_require__(0),
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '3.0.2';
+var version = '3.2.0';
 
 var makeBus = function makeBus() {
     // stores arrays of handlers for each event key.
@@ -832,7 +832,8 @@ module.exports = function (_ref) {
 var _require = __webpack_require__(0),
     assert = _require.assert,
     isDefined = _require.isDefined,
-    isFunction = _require.isFunction;
+    isFunction = _require.isFunction,
+    makeQueue = _require.makeQueue;
 
 module.exports = function (_ref) {
     var on = _ref.on,
@@ -930,12 +931,21 @@ module.exports = function (_ref) {
                 return waiting();
             }
         }
+
+        // queue is passed to build to allow it to block component updates until the
+        // view object in this module is updated. this is necessary because otherwise,
+        // the sync event could fire with an old version of the view. calling the done
+        // method on an empty queue does not produce an error, so the builder has no
+        // obligation to use it.
+        var queue = makeQueue();
         if (redraw || !hasDrawn) {
-            view = draw(target, build(builder(state)));
+            view = draw(target, build(builder(state), queue));
             hasDrawn = true;
+            queue.done();
             return;
         }
-        view = update(target, build(builder(state)), [], view);
+        view = update(target, build(builder(state), queue), [], view);
+        queue.done();
     });
 
     // message which allows for scoped updates. since the successor argument is
@@ -950,13 +960,16 @@ module.exports = function (_ref) {
     // is the update event.
     send('blob.api', {
         update: function update() {
-            return send('update', false);
+            console.warn('@okwolo.update : function will be deprecated in next major version (4.x)');
+            send('update', false);
         }
     });
 
     // primary functionality will be to replace buider. this is overwritten
     // by router modules to more easily associate routes to builders.
     send('blob.primary', function (init) {
+        // calling init for consistency with the router primary which passes
+        // route params to init;
         send('blob.builder', init());
     });
 };
@@ -990,83 +1003,96 @@ var _require = __webpack_require__(0),
     isObject = _require.isObject,
     isString = _require.isString;
 
-// ancestry helper which ensures immutability and handles common logic.
-// ancestry list is recorded in reverse for easier access to the last (first)
-// element. all elements take the form of objects with the "tag" and "key" keys
-// which are not guaranteed to be defined. (ex. first list element has no key,
-// but does have a tag since it is the root node)
+// ancestry helper which handles immutability and common logic. this code is
+// implemented as a class contrarily to the patterns in the rest of this
+// project. the decision was made as an optimization to prevent new functions
+// from being created on each instanciation.
 
 
-var Geneologist = function () {
-    function Geneologist() {
+var Genealogist = function () {
+    function Genealogist() {
         var list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 
-        _classCallCheck(this, Geneologist);
+        _classCallCheck(this, Genealogist);
 
         this.list = list;
 
-        // precomputing the formatted address for use in error assertions,
+        // precalculating the formatted address for use in error assertions.
         var formatted = 'root';
-        for (var i = this.list.length - 1; i >= 0; --i) {
+        for (var i = 0; i < this.list.length; ++i) {
             formatted += ' -> ';
-            var _list$i = this.list[i],
-                tag = _list$i.tag,
-                key = _list$i.key;
-            // list elements without a tag will show the key instead.
+            var tag = this.list[i].tag;
+            // tag's length is capped to reduce clutter.
 
-            if (!isString(tag)) {
-                formatted += '{{' + key + '}}';
-                continue;
-            }
-            // tag's style is removed to reduce clutter.
             formatted += tag.substr(0, 16);
             if (tag.length > 16) {
                 formatted += '...';
             }
         }
-        this.f = formatted;
+        this.formatted = formatted;
     }
 
-    // keys are only know by parents and will therefore always be added
-    // before the child adds its own tag.
+    // formats the address with the parent index appended to the end.
+    // this is useful for errors that happen before an element's tagName
+    // is parsed and only the parentIndex is known.
 
 
-    _createClass(Geneologist, [{
-        key: 'addKey',
-        value: function addKey(key) {
-            return new Geneologist([{ key: key }].concat(this.list));
-        }
-
-        // first tag in the list does not have a key. all subsequent tags are added
-        // to the first array element (most recent descendant).
-
-    }, {
-        key: 'addTag',
-        value: function addTag(tag) {
-            if (this.list.length === 0) {
-                return new Geneologist([{ tag: tag }]);
+    _createClass(Genealogist, [{
+        key: 'f',
+        value: function f(parentIndex) {
+            if (parentIndex === undefined) {
+                return this.formatted;
             }
-            var l = this.list.slice();
-            l[0].tag = tag;
-            return new Geneologist(l);
+            return this.formatted + ' -> {{' + parentIndex + '}}';
         }
+
+        // adding a level returns a new instance of genealogist and does not
+        // mutate the undelying list.
+
     }, {
-        key: 'keyList',
-        value: function keyList() {
+        key: 'add',
+        value: function add(tag, key) {
+            return new Genealogist(this.list.concat([{ tag: tag, key: key }]));
+        }
+
+        // adds a level to the current instance. this method should be used
+        // with caution since it modifies the list directly. should be used
+        // in conjunction with copy method to ensure no list made invalid.
+
+    }, {
+        key: 'addUnsafe',
+        value: function addUnsafe(tag, key) {
+            this.list.push({ tag: tag, key: key });
+            return this;
+        }
+
+        // returns a new instance of genealogist with a copy of the underlying list.
+
+    }, {
+        key: 'copy',
+        value: function copy() {
+            return new Genealogist(this.list.slice());
+        }
+
+        // returns the list of keys in the ancestry. this value is represents
+        // the element's "address".
+
+    }, {
+        key: 'keys',
+        value: function keys() {
             var temp = [];
             if (this.list.length < 2) {
                 return [];
             }
-            // skip the last array element (tag without key)
-            var start = this.list.length - 2;
-            for (var i = start; i >= 0; --i) {
-                temp.push('' + this.list[i].key);
+            // skip the first array element (root element has no parent key)
+            for (var i = 1; i < this.list.length; ++i) {
+                temp.push(this.list[i].key);
             }
             return temp;
         }
     }]);
 
-    return Geneologist;
+    return Genealogist;
 }();
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
@@ -1096,19 +1122,21 @@ module.exports = function (_ref) {
 
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
-    var build = function build(element) {
-        var ancestry = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new Geneologist();
+    var build = function build(element, queue) {
+        var ancestry = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Genealogist();
+        var parentIndex = arguments[3];
+        var fromComponent = arguments[4];
 
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
-            element = null;
+            element = '';
         }
         // null elements will produce no visible output. undefined is intentionally not
         // handled since it is often produced as a result of an unexpected builder output
         // and it should be made clear that something went wrong.
         if (isNull(element)) {
-            return { text: '' };
+            element = '';
         }
         // in order to simplify type checking, numbers are stringified.
         if (isNumber(element)) {
@@ -1116,11 +1144,21 @@ module.exports = function (_ref) {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
+            // the fromComponent argument is set to true when the direct parent
+            // of the current element is a component. a value of true implies
+            // the child is responsible for adding its key to the ancestry,
+            // even if the resulting element is a text node.
+            if (fromComponent) {
+                ancestry.addUnsafe('textNode', parentIndex);
+            }
             return { text: element };
         }
 
+        // element's address generated once and stored for the error assertions.
+        var addr = ancestry.f(parentIndex);
+
         // the only remaining element types are formatted as arrays.
-        assert(isArray(element), 'view.build : vdom object is not a recognized type', ancestry.f, element);
+        assert(isArray(element), 'view.build : vdom object is not a recognized type', addr, element);
 
         // early recursive return when the element is seen to be have the component syntax.
         if (isFunction(element[0])) {
@@ -1133,17 +1171,35 @@ module.exports = function (_ref) {
                 _element2$2 = _element2[2],
                 _children = _element2$2 === undefined ? [] : _element2$2;
 
-            assert(isObject(props), 'view.build : component\'s props is not an object', ancestry.f, element, props);
-            assert(isArray(_children), 'view.build : component\'s children is not an array', ancestry.f, element, _children);
+            assert(isObject(props), 'view.build : component\'s props is not an object', addr, element, props);
+            assert(isArray(_children), 'view.build : component\'s children is not an array', addr, element, _children);
 
             // component generator is given to update function and used to create
             // the inital version of the component.
             var gen = void 0;
+            // the child component's ancestry starts as a copy of its parent's.
+            // however, its contents are modified after the component is built
+            // for the first time by setting the fromComponent argument to true.
+            var childAncestry = ancestry.copy();
             var update = function update() {
-                send('sync', ancestry.keyList(), build(gen.apply(undefined, arguments), ancestry));
+                for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                    args[_key2] = arguments[_key2];
+                }
+
+                // build caller's queue is used to make sure the childAncestry
+                // has been modified and that the vdom stored in the view module
+                // has beeen updated. this is necessary because the sync event
+                // requires the component's complete address as well as a vdom
+                // tree which actually contains the parsed element.
+                queue.add(function () {
+                    send('sync', childAncestry.keys(), build(gen.apply(undefined, args), queue, childAncestry, parentIndex));
+                    queue.done();
+                });
             };
             gen = component(Object.assign({}, props, { children: _children }), update);
-            return build(gen(), ancestry);
+            assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
+            // initial component is built with the fromComponent argument set to true.
+            return build(gen(), queue, childAncestry, parentIndex, true);
         }
 
         var _element3 = element,
@@ -1154,15 +1210,15 @@ module.exports = function (_ref) {
             _element4$2 = _element4[2],
             childList = _element4$2 === undefined ? [] : _element4$2;
 
-        assert(isString(tagType), 'view.build : tag property is not a string', ancestry.f, element, tagType);
-        assert(isObject(attributes), 'view.build : attributes is not an object', ancestry.f, element, attributes);
-        assert(isArray(childList), 'view.build : children of vdom object is not an array', ancestry.f, element, childList);
+        assert(isString(tagType), 'view.build : tag property is not a string', addr, element, tagType);
+        assert(isObject(attributes), 'view.build : attributes is not an object', addr, element, attributes);
+        assert(isArray(childList), 'view.build : children of vdom object is not an array', addr, element, childList);
 
         // regular expression to capture values from the shorthand element tag syntax.
         // it allows each section to be seperated by any amount of spaces, but enforces
         // the order of the capture groups (tagName #id .className | style)
         var match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
-        assert(isArray(match), 'view.build : tag property cannot be parsed', ancestry.f, tagType);
+        assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);
         // first element is not needed since it is the entire matched string. default
         // values are not used to avoid adding blank attributes to the nodes.
 
@@ -1196,9 +1252,25 @@ module.exports = function (_ref) {
             }
         }
 
-        // ancestry is recorded to give more context to error messages
-        // console.log(ancestry.f);
-        ancestry = ancestry.addTag(tagType);
+        // this element's key is either defined in the attributes or it defaults
+        // to being the parentIndex. in both cases, it is always a string.
+        var key = parentIndex;
+        if ('key' in attributes) {
+            key = attributes.key;
+            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', addr, key);
+            key = '' + key;
+            assert(key.match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', addr, key);
+            attributes.key = key;
+        }
+
+        // ancestry is recorded to give more context to error messages. being a
+        // direct descendant from a component makes this iteration of build
+        // responsible for adding its ancestry entry.
+        if (fromComponent) {
+            ancestry.addUnsafe(tagType, key);
+        } else {
+            ancestry = ancestry.add(tagType, key);
+        }
 
         // childList is converted to a children object with each child having its
         // own key. the child order is also recorded.
@@ -1206,19 +1278,17 @@ module.exports = function (_ref) {
         var childOrder = [];
         for (var i = 0; i < childList.length; ++i) {
             var childElement = childList[i];
-            var key = i;
-            var child = build(childElement, ancestry.addKey(key));
-            // a key attribute will override the default array index key.
+            // parentIndex argument passed to build should be a string.
+            var _key3 = '' + i;
+            var child = build(childElement, queue, ancestry, _key3);
+            // a key attribute in the child will override the default
+            // array index as key.
             if (child.attributes && 'key' in child.attributes) {
-                key = child.attributes.key;
-                assert(isNumber(key) || isString(key), 'view.build : invalid element key type', ancestry.f, key);
-                assert(('' + key).match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', ancestry.f, key);
+                _key3 = child.attributes.key;
             }
-            // keys are normalized to strings to properly compare them.
-            key = '' + key;
-            assert(!children[key], 'view.build : duplicate child key', ancestry.f, key);
-            childOrder.push(key);
-            children[key] = child;
+            assert(!children[_key3], 'view.build : duplicate child key (note that text elements and elements with no key attribute are given their array index as key)', ancestry.f(), _key3);
+            childOrder.push(_key3);
+            children[_key3] = child;
         }
 
         return {
@@ -1229,7 +1299,10 @@ module.exports = function (_ref) {
         };
     };
 
-    send('blob.build', build);
+    send('blob.build', function (element, queue) {
+        queue.add(Function);
+        return build(element, queue);
+    });
 };
 
 /***/ }),

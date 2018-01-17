@@ -62,6 +62,12 @@ Visit [the website](https://okwolo.org) for more information.
 
 Documentation is maintained on the project's [website](https://okwolo.org).
 
+## Versioning
+
+Versions follow the [smever convention](https://semver.org/). Because okwolo gives its users so much access into the internal workings, the surface area of changes that are considered "breaking" is large. This means major releases might happen more often that usual.
+
+All changes are logged in the [changelog](https://github.com/okwolo/okwolo/blob/master/CHANGELOG.md).
+
 ## License
 
 [MIT](https://github.com/okwolo/okwolo/blob/master/LICENSE)

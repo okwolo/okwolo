@@ -16,6 +16,7 @@ const {
     assert,
     isDefined,
     isFunction,
+    makeQueue,
 } = require('../utils');
 
 module.exports = ({on, send}) => {
@@ -112,12 +113,21 @@ module.exports = ({on, send}) => {
                 return waiting();
             }
         }
+
+        // queue is passed to build to allow it to block component updates until the
+        // view object in this module is updated. this is necessary because otherwise,
+        // the sync event could fire with an old version of the view. calling the done
+        // method on an empty queue does not produce an error, so the builder has no
+        // obligation to use it.
+        const queue = makeQueue();
         if (redraw || !hasDrawn) {
-            view = draw(target, build(builder(state)));
+            view = draw(target, build(builder(state), queue));
             hasDrawn = true;
+            queue.done();
             return;
         }
-        view = update(target, build(builder(state)), [], view);
+        view = update(target, build(builder(state), queue), [], view);
+        queue.done();
     });
 
     // message which allows for scoped updates. since the successor argument is
@@ -131,12 +141,17 @@ module.exports = ({on, send}) => {
     // the only functionality from the dom module that is directly exposed
     // is the update event.
     send('blob.api', {
-        update: () => send('update', false),
+        update: () => {
+            console.warn('@okwolo.update : function will be deprecated in next major version (4.x)');
+            send('update', false);
+        },
     });
 
     // primary functionality will be to replace buider. this is overwritten
     // by router modules to more easily associate routes to builders.
     send('blob.primary', (init) => {
+        // calling init for consistency with the router primary which passes
+        // route params to init;
         send('blob.builder', init());
     });
 };

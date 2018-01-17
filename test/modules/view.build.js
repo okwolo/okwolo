@@ -1,11 +1,18 @@
 'use strict';
 
 const vb = require('../../src/modules/view.build');
+const {
+    makeQueue,
+} = require('../../src/utils');
 
 let build;
 
 o(
-    ({on}) => on('blob.build', (b) => build = b),
+    ({on}) => on('blob.build', (b) => {
+        build = (element) => {
+            return b(element, makeQueue());
+        };
+    }),
     vb,
 );
 
@@ -200,7 +207,7 @@ describe('view.build', () => {
                     '2': {
                         tagName: 'div',
                         attributes: {
-                            key: 2,
+                            key: '2',
                         },
                         children: {},
                         childOrder: [],
@@ -334,5 +341,11 @@ describe('view.build', () => {
         };
         expect(build(element))
             .toEqual(vdom);
+    });
+
+    it('should require component functions to return a function', () => {
+        const element = [() => 0];
+        expect(() => build(element))
+            .toThrow(/build.*function/g);
     });
 });

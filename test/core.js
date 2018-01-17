@@ -21,7 +21,7 @@ describe('core', () => {
 
     it('should expose the version', () => {
         expect(okwolo.version)
-            .toMatch(/^(\d+\.){2}\d+$/g);
+            .toBe(require('../package.json').version);
     });
 
     it('should initialize the modules', () => {

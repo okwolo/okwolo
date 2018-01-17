@@ -673,7 +673,36 @@ describe('view.dom', () => {
                 await sleep();
             });
 
-            xit('should properly handle components inside keyed elements', async () => {
+            it('should not fail when a component is updated multiple times', async () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                let _update;
+                const Component = (props, update) => {
+                    _update = update;
+                    return (current = 0) => current;
+                };
+                app.use('builder', () => (
+                    ['div', {}, [
+                        ['button', {}, [
+                            ['hr'],
+                            [Component],
+                        ]],
+                    ]]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toMatch('0');
+                _update(1);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toMatch('1');
+                _update(2);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toMatch('2');
+            });
+
+            it('should properly handle components inside keyed elements', async () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
                 const Component = (props, update) => {
@@ -694,6 +723,69 @@ describe('view.dom', () => {
                 expect(wrapper.innerHTML)
                     .toBe('<div><span></span><div><div class="c"></div></div></div>');
                 await sleep(10);
+            });
+
+            it('should correctly apply component updates when it is called in the builder', async () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                app.use('builder', () => ['test']);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<test></test>');
+                let _update;
+                const Component1 = ({c}, update) => {
+                    _update = update;
+                    for (let i = 0; i < 3; ++i) {
+                        update(++c);
+                    }
+                    return (count = c) => count;
+                };
+                let i = 0;
+                const Component2 = (props, update) => (count = 0) => {
+                    for (; i < 5; ++i) {
+                        update(++count);
+                    }
+                    return count;
+                };
+                app.use('builder', () => (
+                    ['a', {}, [
+                        'test',
+                        [Component1, {c: 0}],
+                        ['a', {key: 'test'}, [
+                            [Component2],
+                        ]],
+                    ]]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<a>test3<a>5</a></a>');
+                _update(0);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<a>test0<a>5</a></a>');
+            });
+
+            it('should keep track of text nodes\' order', async () => {
+                const app = o(v, vb, vd);
+                app.use('builder', (s) => s);
+                app.send('state', (
+                    ['div', {}, [
+                        'test',
+                        ['div', {key: 'test'}],
+                    ]]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div>test<div></div></div>');
+                app.send('state', (
+                    ['div', {}, [
+                        ['div', {key: 'test'}],
+                        'test',
+                    ]]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div><div></div>test</div>');
             });
         });
     });

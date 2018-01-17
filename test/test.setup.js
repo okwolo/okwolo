@@ -13,3 +13,18 @@ window.requestAnimationFrame = (f) => setTimeout(f, 0);
 window.sleep = async (t = 1) => {
     return new Promise((resolve) => setTimeout(resolve, t));
 };
+
+// overriding console.warn to filter out deprecation warnings
+// while running tests.
+const _cw = console.warn;
+console.warn = (...args) => {
+    let isDeprecationWarning = false;
+    args.forEach((arg) => {
+        if (typeof arg === 'string' && arg.match(/deprecat/g)) {
+            isDeprecationWarning = true;
+        }
+    });
+    if (!isDeprecationWarning) {
+        _cw(...args);
+    }
+};
