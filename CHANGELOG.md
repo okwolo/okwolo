@@ -1,3 +1,9 @@
+## v3.3.0
+
+* update function blob now receives an identity as 5th argument
+* view module's sync event now accepts an identity as 3rd argument
+* made component update functions expire after component is replaced in the view
+
 ## v3.2.0
 
 * build function blob now receives a queue as second argument

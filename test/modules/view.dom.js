@@ -606,22 +606,25 @@ describe('view.dom', () => {
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div>span</div>');
+                let update2;
                 let Component2 = (props, update) => {
                     let test = 0;
-                    setTimeout(() => {
+                    update2 = () => {
                         ++test;
-                        update('test');
-                    }, 200);
+                        update('test2');
+                    };
                     return (other) => (
                         ['div.c', {}, [
-                            other ? other : null,
+                            other || null,
                             test,
                         ]]
                     );
                 };
+                let update1;
                 let Component1 = (props, update) => {
-                    return () => (
-                        [Component2]
+                    update1 = () => update('test1');
+                    return (newContent) => (
+                        newContent || [Component2]
                     );
                 };
                 app.render(
@@ -633,9 +636,14 @@ describe('view.dom', () => {
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div>as<div class="c">0</div></div>');
-                await sleep(220);
+                update2();
+                await sleep();
                 expect(wrapper.innerHTML)
-                    .toBe('<div>as<div class="c">test1</div></div>');
+                    .toBe('<div>as<div class="c">test21</div></div>');
+                update1();
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('<div>astest1</div>');
             });
 
             it('should pass update arguments to component generator', async () => {
@@ -786,6 +794,35 @@ describe('view.dom', () => {
                 await sleep();
                 expect(wrapper.innerHTML)
                     .toBe('<div><div></div>test</div>');
+            });
+
+            it('should refuse to update components that no longer exist', async () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                let _update;
+                const Component = (props, update) => {
+                    _update = update;
+                    return (content) => content || 'default';
+                };
+                app.use('builder', () => (
+                    [Component]
+                ));
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('default');
+                _update('updated');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('updated');
+                app.use('builder', () => 'test');
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
+                expect(() => _update('component'))
+                    .toThrow(/view\.dom.*identity/g);
+                await sleep();
+                expect(wrapper.innerHTML)
+                    .toBe('test');
             });
         });
     });

@@ -102,6 +102,7 @@ describe('view.build', () => {
         const element = [() => () => 'test'];
         const vdom = {
             text: 'test',
+            componentIdentity: {},
         };
         expect(build(element))
             .toEqual(vdom);
@@ -136,6 +137,7 @@ describe('view.build', () => {
         const element = [component, {test: true}, ['test']];
         const vdom = {
             text: 'test',
+            componentIdentity: {},
         };
         expect(build(element))
             .toEqual(vdom);

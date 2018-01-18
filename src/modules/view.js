@@ -133,9 +133,9 @@ module.exports = ({on, send}) => {
     // message which allows for scoped updates. since the successor argument is
     // not passed through the build/builder pipeline, it's use is loosely
     // restricted to the build module (which should have a reference to itself).
-    on('sync', (address, successor) => {
+    on('sync', (address, successor, identity) => {
         assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
-        view = update(target, successor, address, view);
+        view = update(target, successor, address, view, identity);
     });
 
     // the only functionality from the dom module that is directly exposed

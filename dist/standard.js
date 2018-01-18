@@ -951,9 +951,9 @@ module.exports = function (_ref) {
     // message which allows for scoped updates. since the successor argument is
     // not passed through the build/builder pipeline, it's use is loosely
     // restricted to the build module (which should have a reference to itself).
-    on('sync', function (address, successor) {
+    on('sync', function (address, successor, identity) {
         assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
-        view = update(target, successor, address, view);
+        view = update(target, successor, address, view, identity);
     });
 
     // the only functionality from the dom module that is directly exposed
@@ -1122,11 +1122,7 @@ module.exports = function (_ref) {
 
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
-    var build = function build(element, queue) {
-        var ancestry = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Genealogist();
-        var parentIndex = arguments[3];
-        var fromComponent = arguments[4];
-
+    var build = function build(element, queue, ancestry, parentIndex, fromComponent, componentIdentity) {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
@@ -1144,14 +1140,17 @@ module.exports = function (_ref) {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
-            // the fromComponent argument is set to true when the direct parent
-            // of the current element is a component. a value of true implies
-            // the child is responsible for adding its key to the ancestry,
-            // even if the resulting element is a text node.
+            // the fromComponentIdentity argument is set to truthy when the
+            // direct parent of the current element is a component. a value
+            // implies the child is responsible for adding its key to the
+            // ancestry, even if the resulting element is a text node.
             if (fromComponent) {
                 ancestry.addUnsafe('textNode', parentIndex);
             }
-            return { text: element };
+            return {
+                text: element,
+                componentIdentity: componentIdentity
+            };
         }
 
         // element's address generated once and stored for the error assertions.
@@ -1177,10 +1176,26 @@ module.exports = function (_ref) {
             // component generator is given to update function and used to create
             // the inital version of the component.
             var gen = void 0;
-            // the child component's ancestry starts as a copy of its parent's.
-            // however, its contents are modified after the component is built
+            // the child ancestry will be modified after the component is built
             // for the first time by setting the fromComponent argument to true.
-            var childAncestry = ancestry.copy();
+            var childAncestry = ancestry;
+            // if this iteration of component is the direct child of another
+            // component, it should share it's ancestry and identity. this is
+            // caused by the design choice of having components produce no extra
+            // level in the vdom structure. instead, the element that represents
+            // a component will have a populated componentIdentity key and be
+            // otherwise exactly the same as any other element.
+            if (!fromComponent) {
+                childAncestry = ancestry.copy();
+                // when a component is updated, the update blob in the view.dom
+                // module compares the provided identity with the vdom element's
+                // identity. if both values are strictly equal, a component update
+                // is allowed to happen. the mecahnism is used to prevent update
+                // events from ocurring on vdom elements that are not the expected
+                // component. this can happen if the component's update function
+                // is called after the component's position is replaced in the view.
+                componentIdentity = {};
+            }
             var update = function update() {
                 for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
                     args[_key2] = arguments[_key2];
@@ -1192,14 +1207,14 @@ module.exports = function (_ref) {
                 // requires the component's complete address as well as a vdom
                 // tree which actually contains the parsed element.
                 queue.add(function () {
-                    send('sync', childAncestry.keys(), build(gen.apply(undefined, args), queue, childAncestry, parentIndex));
+                    send('sync', childAncestry.keys(), build(gen.apply(undefined, args), queue, childAncestry, parentIndex, false, componentIdentity), componentIdentity);
                     queue.done();
                 });
             };
             gen = component(Object.assign({}, props, { children: _children }), update);
             assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
             // initial component is built with the fromComponent argument set to true.
-            return build(gen(), queue, childAncestry, parentIndex, true);
+            return build(gen(), queue, childAncestry, parentIndex, true, componentIdentity);
         }
 
         var _element3 = element,
@@ -1295,13 +1310,15 @@ module.exports = function (_ref) {
             tagName: tagName,
             attributes: attributes,
             children: children,
-            childOrder: childOrder
+            childOrder: childOrder,
+            componentIdentity: componentIdentity
         };
     };
 
     send('blob.build', function (element, queue) {
+        // queue is blocked by a dummy function until the caller releases it.
         queue.add(Function);
-        return build(element, queue);
+        return build(element, queue, new Genealogist());
     });
 };
 
@@ -1389,36 +1406,36 @@ var diff = function diff(original, successor) {
 module.exports = function (_ref, global) {
     var send = _ref.send;
 
-    // recursively travels vdom to create rendered elements. after being rendered,
+    // recursively travels vdom to create rendered nodes. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
-    var render = function render(velem) {
-        // the text key will only be present for text elements.
-        if (isDefined(velem.text)) {
-            velem.DOM = global.document.createTextNode(velem.text);
-            return velem;
+    var render = function render(vnode) {
+        // the text key will only be present for text nodes.
+        if (isDefined(vnode.text)) {
+            vnode.DOM = global.document.createTextNode(vnode.text);
+            return vnode;
         }
-        var element = global.document.createElement(velem.tagName);
+        var node = global.document.createElement(vnode.tagName);
         // attributes are added onto the node.
-        Object.assign(element, velem.attributes);
+        Object.assign(node, vnode.attributes);
         // all children are rendered and immediately appended into the parent node.
-        for (var i = 0; i < velem.childOrder.length; ++i) {
-            var key = velem.childOrder[i];
+        for (var i = 0; i < vnode.childOrder.length; ++i) {
+            var key = vnode.childOrder[i];
 
-            var _render = render(velem.children[key]),
+            var _render = render(vnode.children[key]),
                 DOM = _render.DOM;
 
-            element.appendChild(DOM);
+            node.appendChild(DOM);
         }
-        velem.DOM = element;
-        return velem;
+        vnode.DOM = node;
+        return vnode;
     };
 
     // initial draw to target will wipe the contents of the container node.
     var draw = function draw(target, newVDOM) {
         // the target's type is not enforced by the module and it needs to be
         // done at this point. this is done to decouple the dom module from
-        // the browser (but cannot be avoided in this blob).
+        // the browser (but cannot be avoided in this module).
         assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(newVDOM);
         global.requestAnimationFrame(function () {
@@ -1428,11 +1445,11 @@ module.exports = function (_ref, global) {
         return newVDOM;
     };
 
-    // recursive function to update an element according to new state. the
-    // parent and the element's parent index must be passed in order to make
+    // recursive function to update an node according to new state. the
+    // parent and the node's parent index must be passed in order to make
     // modifications to the vdom object in place.
-    var updateElement = function updateElement(DOMChanges, original, successor, parent, parentKey) {
-        // lack of original element implies the successor is a new element.
+    var updateNode = function updateNode(DOMChanges, original, successor, parent, parentKey) {
+        // lack of original node implies the successor is a new node.
         if (!isDefined(original)) {
             parent.children[parentKey] = render(successor);
             var parentNode = parent.DOM;
@@ -1443,7 +1460,7 @@ module.exports = function (_ref, global) {
             return;
         }
 
-        // lack of successor element implies the original is being removed.
+        // lack of successor node implies the original is being removed.
         if (!isDefined(successor)) {
             var _parentNode = parent.DOM;
             var _node = original.DOM;
@@ -1454,7 +1471,9 @@ module.exports = function (_ref, global) {
             return;
         }
 
-        // if the element's tagName has changed, the whole element must be
+        original.componentIdentity = successor.componentIdentity;
+
+        // if the node's tagName has changed, the whole node must be
         // replaced. this will also capture the case where an html node is
         // being transformed into a text node since the text node's vdom
         // object will not contain a tagName.
@@ -1467,8 +1486,8 @@ module.exports = function (_ref, global) {
                 _parentNode2.replaceChild(_node2, oldDOM);
             });
             // this technique is used to modify the vdom object in place.
-            // both the text element and the tag element props are reset
-            // since the types are not recorded.
+            // both the text node and the tag node props are reset
+            // since the original's type is not explicit.
             Object.assign(original, {
                 DOM: undefined,
                 text: undefined,
@@ -1480,9 +1499,9 @@ module.exports = function (_ref, global) {
             return;
         }
 
-        // nodeType of three indicates that the HTML node is a textNode.
         // at this point in the function it has been estblished that the
-        // original and successor nodes are of the same type.
+        // original and successor nodes are of the same type. this block
+        // handles the case where two text nodes are compared.
         if (original.text !== undefined) {
             var text = successor.text;
             if (original.text !== text) {
@@ -1495,6 +1514,7 @@ module.exports = function (_ref, global) {
             return;
         }
 
+        // nodes' attributes are updated to the successor's values.
         var attributesDiff = diff(original.attributes, successor.attributes);
 
         var _loop = function _loop(i) {
@@ -1522,14 +1542,14 @@ module.exports = function (_ref, global) {
         var childKeys = Object.keys(Object.assign({}, original.children, successor.children));
         for (var i = 0; i < childKeys.length; ++i) {
             var _key = childKeys[i];
-            // new elements are moved to the end of the list.
+            // new nodes are moved to the end of the list.
             if (!original.children[_key]) {
                 childOrder.push(_key);
-                // deleted elements are removed from the list.
+                // deleted nodes are removed from the list.
             } else if (!successor.children[_key]) {
                 childOrder.splice(childOrder.indexOf(_key), 1);
             }
-            updateElement(DOMChanges, original.children[_key], successor.children[_key], original, _key);
+            updateNode(DOMChanges, original.children[_key], successor.children[_key], original, _key);
         }
 
         if (!childOrder.length) {
@@ -1592,11 +1612,13 @@ module.exports = function (_ref, global) {
     var update = function update(target, successor) {
         var address = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
         var VDOM = arguments[3];
+        var identity = arguments[4];
 
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
-        // element update function's arguments are scoped down the VDOM tree.
+        // node update function's arguments are scoped down the VDOM tree
+        // according to the supplied address.
         var parent = { DOM: target, children: { root: VDOM }, childOrder: ['root'] };
         var parentKey = 'root';
         var original = VDOM;
@@ -1606,11 +1628,18 @@ module.exports = function (_ref, global) {
             original = original.children[parentKey];
         }
 
-        // the updateElement function adds all DOM changes to the array while
-        // it is updating the vdom. these changes can be executed later in an
+        // if a matching identity is requested, the vdom node at the specified
+        // address is checked for equality.
+        if (identity) {
+            var identityMatch = original.componentIdentity === identity;
+            assert(identityMatch, 'view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
+        }
+
+        // node update function adds all DOM changes to the array while it is
+        // updating the vdom. these changes are safe to be executed later in an
         // animation frame, as long as the order is respected.
         var DOMChanges = [];
-        updateElement(DOMChanges, original, successor, parent, parentKey);
+        updateNode(DOMChanges, original, successor, parent, parentKey);
 
         global.requestAnimationFrame(function () {
             try {

@@ -518,9 +518,9 @@ module.exports = function (_ref) {
     // message which allows for scoped updates. since the successor argument is
     // not passed through the build/builder pipeline, it's use is loosely
     // restricted to the build module (which should have a reference to itself).
-    on('sync', function (address, successor) {
+    on('sync', function (address, successor, identity) {
         assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
-        view = update(target, successor, address, view);
+        view = update(target, successor, address, view, identity);
     });
 
     // the only functionality from the dom module that is directly exposed
@@ -689,11 +689,7 @@ module.exports = function (_ref) {
 
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
-    var build = function build(element, queue) {
-        var ancestry = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Genealogist();
-        var parentIndex = arguments[3];
-        var fromComponent = arguments[4];
-
+    var build = function build(element, queue, ancestry, parentIndex, fromComponent, componentIdentity) {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
@@ -711,14 +707,17 @@ module.exports = function (_ref) {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
-            // the fromComponent argument is set to true when the direct parent
-            // of the current element is a component. a value of true implies
-            // the child is responsible for adding its key to the ancestry,
-            // even if the resulting element is a text node.
+            // the fromComponentIdentity argument is set to truthy when the
+            // direct parent of the current element is a component. a value
+            // implies the child is responsible for adding its key to the
+            // ancestry, even if the resulting element is a text node.
             if (fromComponent) {
                 ancestry.addUnsafe('textNode', parentIndex);
             }
-            return { text: element };
+            return {
+                text: element,
+                componentIdentity: componentIdentity
+            };
         }
 
         // element's address generated once and stored for the error assertions.
@@ -744,10 +743,26 @@ module.exports = function (_ref) {
             // component generator is given to update function and used to create
             // the inital version of the component.
             var gen = void 0;
-            // the child component's ancestry starts as a copy of its parent's.
-            // however, its contents are modified after the component is built
+            // the child ancestry will be modified after the component is built
             // for the first time by setting the fromComponent argument to true.
-            var childAncestry = ancestry.copy();
+            var childAncestry = ancestry;
+            // if this iteration of component is the direct child of another
+            // component, it should share it's ancestry and identity. this is
+            // caused by the design choice of having components produce no extra
+            // level in the vdom structure. instead, the element that represents
+            // a component will have a populated componentIdentity key and be
+            // otherwise exactly the same as any other element.
+            if (!fromComponent) {
+                childAncestry = ancestry.copy();
+                // when a component is updated, the update blob in the view.dom
+                // module compares the provided identity with the vdom element's
+                // identity. if both values are strictly equal, a component update
+                // is allowed to happen. the mecahnism is used to prevent update
+                // events from ocurring on vdom elements that are not the expected
+                // component. this can happen if the component's update function
+                // is called after the component's position is replaced in the view.
+                componentIdentity = {};
+            }
             var update = function update() {
                 for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
                     args[_key2] = arguments[_key2];
@@ -759,14 +774,14 @@ module.exports = function (_ref) {
                 // requires the component's complete address as well as a vdom
                 // tree which actually contains the parsed element.
                 queue.add(function () {
-                    send('sync', childAncestry.keys(), build(gen.apply(undefined, args), queue, childAncestry, parentIndex));
+                    send('sync', childAncestry.keys(), build(gen.apply(undefined, args), queue, childAncestry, parentIndex, false, componentIdentity), componentIdentity);
                     queue.done();
                 });
             };
             gen = component(Object.assign({}, props, { children: _children }), update);
             assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
             // initial component is built with the fromComponent argument set to true.
-            return build(gen(), queue, childAncestry, parentIndex, true);
+            return build(gen(), queue, childAncestry, parentIndex, true, componentIdentity);
         }
 
         var _element3 = element,
@@ -862,13 +877,15 @@ module.exports = function (_ref) {
             tagName: tagName,
             attributes: attributes,
             children: children,
-            childOrder: childOrder
+            childOrder: childOrder,
+            componentIdentity: componentIdentity
         };
     };
 
     send('blob.build', function (element, queue) {
+        // queue is blocked by a dummy function until the caller releases it.
         queue.add(Function);
-        return build(element, queue);
+        return build(element, queue, new Genealogist());
     });
 };
 

@@ -104,7 +104,7 @@ const classnames = (...args) => {
 module.exports = ({send}) => {
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
-    const build = (element, queue, ancestry = new Genealogist(), parentIndex, fromComponent) => {
+    const build = (element, queue, ancestry, parentIndex, fromComponent, componentIdentity) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
@@ -122,14 +122,17 @@ module.exports = ({send}) => {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
-            // the fromComponent argument is set to true when the direct parent
-            // of the current element is a component. a value of true implies
-            // the child is responsible for adding its key to the ancestry,
-            // even if the resulting element is a text node.
+            // the fromComponentIdentity argument is set to truthy when the
+            // direct parent of the current element is a component. a value
+            // implies the child is responsible for adding its key to the
+            // ancestry, even if the resulting element is a text node.
             if (fromComponent) {
                 ancestry.addUnsafe('textNode', parentIndex);
             }
-            return {text: element};
+            return {
+                text: element,
+                componentIdentity,
+            };
         }
 
         // element's address generated once and stored for the error assertions.
@@ -148,10 +151,26 @@ module.exports = ({send}) => {
             // component generator is given to update function and used to create
             // the inital version of the component.
             let gen;
-            // the child component's ancestry starts as a copy of its parent's.
-            // however, its contents are modified after the component is built
+            // the child ancestry will be modified after the component is built
             // for the first time by setting the fromComponent argument to true.
-            const childAncestry = ancestry.copy();
+            let childAncestry = ancestry;
+            // if this iteration of component is the direct child of another
+            // component, it should share it's ancestry and identity. this is
+            // caused by the design choice of having components produce no extra
+            // level in the vdom structure. instead, the element that represents
+            // a component will have a populated componentIdentity key and be
+            // otherwise exactly the same as any other element.
+            if (!fromComponent) {
+                childAncestry = ancestry.copy();
+                // when a component is updated, the update blob in the view.dom
+                // module compares the provided identity with the vdom element's
+                // identity. if both values are strictly equal, a component update
+                // is allowed to happen. the mecahnism is used to prevent update
+                // events from ocurring on vdom elements that are not the expected
+                // component. this can happen if the component's update function
+                // is called after the component's position is replaced in the view.
+                componentIdentity = {};
+            }
             const update = (...args) => {
                 // build caller's queue is used to make sure the childAncestry
                 // has been modified and that the vdom stored in the view module
@@ -159,14 +178,18 @@ module.exports = ({send}) => {
                 // requires the component's complete address as well as a vdom
                 // tree which actually contains the parsed element.
                 queue.add(() => {
-                    send('sync', childAncestry.keys(), build(gen(...args), queue, childAncestry, parentIndex));
+                    send('sync',
+                        childAncestry.keys(),
+                        build(gen(...args), queue, childAncestry, parentIndex, false, componentIdentity),
+                        componentIdentity
+                    );
                     queue.done();
                 });
             };
             gen = component(Object.assign({}, props, {children}), update);
             assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
             // initial component is built with the fromComponent argument set to true.
-            return build(gen(), queue, childAncestry, parentIndex, true);
+            return build(gen(), queue, childAncestry, parentIndex, true, componentIdentity);
         }
 
         let [tagType, attributes = {}, childList = []] = element;
@@ -252,11 +275,13 @@ module.exports = ({send}) => {
             attributes,
             children,
             childOrder,
+            componentIdentity,
         };
     };
 
     send('blob.build', (element, queue) => {
+        // queue is blocked by a dummy function until the caller releases it.
         queue.add(Function);
-        return build(element, queue);
+        return build(element, queue, new Genealogist());
     });
 };

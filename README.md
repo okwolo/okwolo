@@ -56,7 +56,7 @@ app(() => () => (
 ));
 ```
 
-Visit [the website](https://okwolo.org) for more information.
+Visit the [website](https://okwolo.org) for more information.
 
 ## Documentation
 

@@ -74,33 +74,33 @@ const diff = (original, successor) => {
 };
 
 module.exports = ({send}, global) => {
-    // recursively travels vdom to create rendered elements. after being rendered,
+    // recursively travels vdom to create rendered nodes. after being rendered,
     // all vdom objects have a "DOM" key which references the created node. this
     // can be used in the update process to manipulate the real dom nodes.
-    const render = (velem) => {
-        // the text key will only be present for text elements.
-        if (isDefined(velem.text)) {
-            velem.DOM = global.document.createTextNode(velem.text);
-            return velem;
+    const render = (vnode) => {
+        // the text key will only be present for text nodes.
+        if (isDefined(vnode.text)) {
+            vnode.DOM = global.document.createTextNode(vnode.text);
+            return vnode;
         }
-        const element = global.document.createElement(velem.tagName);
+        const node = global.document.createElement(vnode.tagName);
         // attributes are added onto the node.
-        Object.assign(element, velem.attributes);
+        Object.assign(node, vnode.attributes);
         // all children are rendered and immediately appended into the parent node.
-        for (let i = 0; i < velem.childOrder.length; ++i) {
-            const key = velem.childOrder[i];
-            const {DOM} = render(velem.children[key]);
-            element.appendChild(DOM);
+        for (let i = 0; i < vnode.childOrder.length; ++i) {
+            const key = vnode.childOrder[i];
+            const {DOM} = render(vnode.children[key]);
+            node.appendChild(DOM);
         }
-        velem.DOM = element;
-        return velem;
+        vnode.DOM = node;
+        return vnode;
     };
 
     // initial draw to target will wipe the contents of the container node.
     const draw = (target, newVDOM) => {
         // the target's type is not enforced by the module and it needs to be
         // done at this point. this is done to decouple the dom module from
-        // the browser (but cannot be avoided in this blob).
+        // the browser (but cannot be avoided in this module).
         assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
         render(newVDOM);
         global.requestAnimationFrame(() => {
@@ -110,11 +110,11 @@ module.exports = ({send}, global) => {
         return newVDOM;
     };
 
-    // recursive function to update an element according to new state. the
-    // parent and the element's parent index must be passed in order to make
+    // recursive function to update an node according to new state. the
+    // parent and the node's parent index must be passed in order to make
     // modifications to the vdom object in place.
-    const updateElement = (DOMChanges, original, successor, parent, parentKey) => {
-        // lack of original element implies the successor is a new element.
+    const updateNode = (DOMChanges, original, successor, parent, parentKey) => {
+        // lack of original node implies the successor is a new node.
         if (!isDefined(original)) {
             parent.children[parentKey] = render(successor);
             const parentNode = parent.DOM;
@@ -125,7 +125,7 @@ module.exports = ({send}, global) => {
             return;
         }
 
-        // lack of successor element implies the original is being removed.
+        // lack of successor node implies the original is being removed.
         if (!isDefined(successor)) {
             const parentNode = parent.DOM;
             const node = original.DOM;
@@ -136,7 +136,9 @@ module.exports = ({send}, global) => {
             return;
         }
 
-        // if the element's tagName has changed, the whole element must be
+        original.componentIdentity = successor.componentIdentity;
+
+        // if the node's tagName has changed, the whole node must be
         // replaced. this will also capture the case where an html node is
         // being transformed into a text node since the text node's vdom
         // object will not contain a tagName.
@@ -149,8 +151,8 @@ module.exports = ({send}, global) => {
                 parentNode.replaceChild(node, oldDOM);
             });
             // this technique is used to modify the vdom object in place.
-            // both the text element and the tag element props are reset
-            // since the types are not recorded.
+            // both the text node and the tag node props are reset
+            // since the original's type is not explicit.
             Object.assign(original, {
                 DOM: undefined,
                 text: undefined,
@@ -162,9 +164,9 @@ module.exports = ({send}, global) => {
             return;
         }
 
-        // nodeType of three indicates that the HTML node is a textNode.
         // at this point in the function it has been estblished that the
-        // original and successor nodes are of the same type.
+        // original and successor nodes are of the same type. this block
+        // handles the case where two text nodes are compared.
         if (original.text !== undefined) {
             const text = successor.text;
             if (original.text !== text) {
@@ -177,6 +179,7 @@ module.exports = ({send}, global) => {
             return;
         }
 
+        // nodes' attributes are updated to the successor's values.
         const attributesDiff = diff(original.attributes, successor.attributes);
         for (let i = 0; i < attributesDiff.length; ++i) {
             const key = attributesDiff[i];
@@ -199,14 +202,14 @@ module.exports = ({send}, global) => {
         const childKeys = Object.keys(Object.assign({}, original.children, successor.children));
         for (let i = 0; i < childKeys.length; ++i) {
             const key = childKeys[i];
-            // new elements are moved to the end of the list.
+            // new nodes are moved to the end of the list.
             if (!original.children[key]) {
                 childOrder.push(key);
-            // deleted elements are removed from the list.
+            // deleted nodes are removed from the list.
             } else if (!successor.children[key]) {
                 childOrder.splice(childOrder.indexOf(key), 1);
             }
-            updateElement(DOMChanges, original.children[key], successor.children[key], original, key);
+            updateNode(DOMChanges, original.children[key], successor.children[key], original, key);
         }
 
         if (!childOrder.length) {
@@ -251,11 +254,12 @@ module.exports = ({send}, global) => {
 
     // updates the existing vdom object and its html nodes to be consistent with
     // the new vdom object.
-    const update = (target, successor, address = [], VDOM) => {
+    const update = (target, successor, address = [], VDOM, identity) => {
         // responsibility of checking the target's type is deferred to the blobs.
         assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
 
-        // element update function's arguments are scoped down the VDOM tree.
+        // node update function's arguments are scoped down the VDOM tree
+        // according to the supplied address.
         let parent = {DOM: target, children: {root: VDOM}, childOrder: ['root']};
         let parentKey = 'root';
         let original = VDOM;
@@ -265,11 +269,18 @@ module.exports = ({send}, global) => {
             original = original.children[parentKey];
         }
 
-        // the updateElement function adds all DOM changes to the array while
-        // it is updating the vdom. these changes can be executed later in an
+        // if a matching identity is requested, the vdom node at the specified
+        // address is checked for equality.
+        if (identity) {
+            const identityMatch = original.componentIdentity === identity;
+            assert(identityMatch, 'view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
+        }
+
+        // node update function adds all DOM changes to the array while it is
+        // updating the vdom. these changes are safe to be executed later in an
         // animation frame, as long as the order is respected.
         const DOMChanges = [];
-        updateElement(DOMChanges, original, successor, parent, parentKey);
+        updateNode(DOMChanges, original, successor, parent, parentKey);
 
         global.requestAnimationFrame(() => {
             try {
