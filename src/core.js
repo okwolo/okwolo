@@ -11,7 +11,7 @@ const {
 } = require('./utils');
 
 // version cannot be taken from package.json because environment is not guaranteed.
-const version = '3.2.0';
+const version = '3.3.0-rc.1';
 
 const makeBus = () => {
     // stores arrays of handlers for each event key.

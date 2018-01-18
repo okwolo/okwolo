@@ -227,7 +227,7 @@ var _require = __webpack_require__(0),
 // version cannot be taken from package.json because environment is not guaranteed.
 
 
-var version = '3.2.0';
+var version = '3.3.0-rc.1';
 
 var makeBus = function makeBus() {
     // stores arrays of handlers for each event key.
