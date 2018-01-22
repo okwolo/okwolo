@@ -7,7 +7,7 @@
     <a href="https://www.npmjs.com/package/okwolo"><img src="https://img.shields.io/npm/v/okwolo.svg" alt="NPM version" /></a>
     <a href="https://travis-ci.org/okwolo/okwolo"><img src="https://travis-ci.org/okwolo/okwolo.svg?branch=master" alt="Build Status" /></a>
     <a href="https://codecov.io/gh/okwolo/okwolo"><img src="https://img.shields.io/codecov/c/github/okwolo/okwolo.svg" alt="Codecov" /></a>
-    <a href="https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz"><img src="https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg" alt="gzipped size" /></a>
+    <a href="https://github.com/okwolo/okwolo/blob/master/dist/standard.min.js.gz"><img src="https://img.shields.io/github/size/okwolo/okwolo/dist/standard.min.js.gz.svg" alt="GZIP size" /></a>
 </p>
 
 ---
@@ -34,10 +34,13 @@ npm install okwolo
 const okwolo = require('okwolo/standard');
 ```
 
-Alternatively, the okwolo function can be loaded using a script tag. It will automatically attach itself to the global window object. All three kits are available transpiled to es5 and minified in the `dist` folder.
+Alternatively, the okwolo function can be loaded using a script tag. Transpiled versions of all kits are available from the website.
 
 ```html
-<script src="/dist/standard.min.js"></script>
+<!-- latest -->
+<script src="https://dl.okwolo.org/standard.js"></script>
+<!-- specific version -->
+<script src="https://dl.okwolo.org/3.0.0/lite.min.js"></script>
 ```
 
 Create your first app.

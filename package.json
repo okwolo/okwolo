@@ -12,7 +12,7 @@
     "license": "MIT",
     "scripts": {
         "prepack": "webpack && gulp prepublish",
-        "postpublish": "gulp clean",
+        "postpublish": "gulp clean && gulp publish",
         "test": "run-s test:*",
         "test:eslint": "eslint **/*.js",
         "test:jest": "jest",
@@ -38,6 +38,7 @@
         "path-to-regexp": "^2.1.0"
     },
     "devDependencies": {
+        "aws-sdk": "^2.185.0",
         "babel-core": "^6.26.0",
         "babel-loader": "^7.1.2",
         "babel-preset-env": "^1.6.1",
