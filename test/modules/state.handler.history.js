@@ -32,19 +32,6 @@ describe('state.handler.history', () => {
                 expect(test)
                     .toHaveBeenCalled();
             });
-
-            it('should add an RESET action', () => {
-                const test = jest.fn();
-                o(({on}) => {
-                    on('blob.action', ({type}) => {
-                        if (type === '__RESET__') {
-                            test();
-                        }
-                    });
-                }, shh);
-                expect(test)
-                    .toHaveBeenCalled();
-            });
         });
 
         describe('watcher', () => {
@@ -64,6 +51,9 @@ describe('state.handler.history', () => {
                     const test = jest.fn();
                     o(({on}) => {
                         on('blob.api', (api) => {
+                            if (api.resetHistory) {
+                                return;
+                            }
                             expect(api.undo)
                                 .toBeInstanceOf(Function);
                             test();
@@ -92,6 +82,9 @@ describe('state.handler.history', () => {
                     const test = jest.fn();
                     o(({on}) => {
                         on('blob.api', (api) => {
+                            if (api.resetHistory) {
+                                return;
+                            }
                             expect(api.redo)
                                 .toBeInstanceOf(Function);
                             test();
@@ -193,32 +186,17 @@ describe('state.handler.history', () => {
             .toBe(app.getState());
     });
 
-    it('should not store the state when the action type has the ignore prefix', () => {
-        const app = o(s, sh, shh);
-        app.setState('test');
-        app.use({action: {
-            type: '*IGNORE',
-            target: [],
-            handler: (params) => params,
-        }});
-        app.act('*IGNORE', 0);
-        app.setState(1);
-        app.undo();
-        expect(app.getState())
-            .toBe('test');
-    });
-
     it('should be able to reset the undo/redo stacks', () => {
         const app = o(s, sh, shh);
         app.setState('test');
         app.setState(0);
-        app.act('__RESET__');
+        app.resetHistory();
         app.undo();
         expect(app.getState())
             .toBe(0);
         app.setState(1);
         app.undo();
-        app.act('__RESET__');
+        app.resetHistory();
         app.redo();
         expect(app.getState())
             .toBe(0);

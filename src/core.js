@@ -10,11 +10,12 @@ const {
     isString,
 } = require('./utils');
 
-// version cannot be taken from package.json because environment is not guaranteed.
+// version not taken from package.json to avoid including the whole file
+// in the unminified bundle.
 const version = '3.3.0-rc.1';
 
 const makeBus = () => {
-    // stores arrays of handlers for each event key.
+    // stores handlers for each event key.
     const handlers = {};
     // stores names from named events to enforce uniqueness.
     const names = {};
@@ -32,7 +33,8 @@ const makeBus = () => {
     const send = (type, ...args) => {
         assert(isString(type), 'send : event type is not a string', type);
         const eventHandlers = handlers[type];
-        if (!isArray(eventHandlers)) {
+        // events that do not match any handlers are ignored silently.
+        if (!isDefined(eventHandlers)) {
             return;
         }
         for (let i = 0; i < eventHandlers.length; ++i) {
@@ -41,7 +43,7 @@ const makeBus = () => {
     };
 
     const use = (blob, ...args) => {
-        // scopes event type to being a blob.
+        // scopes event type to the blob namespace.
         if (isString(blob)) {
             send(`blob.${blob}`, ...args);
             return;
@@ -52,19 +54,17 @@ const makeBus = () => {
         const {name} = blob;
         if (isDefined(name)) {
             assert(isString(name), 'utils.bus : blob name is not a string', name);
-            // early return if the name has been used before.
+            // early return if the name has already been seen.
             if (isDefined(names[name])) {
                 return;
             }
             names[name] = true;
         }
 
-        // sending all blob keys.
-        const keys = Object.keys(blob);
-        for (let i = 0; i < keys.length; ++i) {
-            const key = keys[i];
+        // calling send for each blob key.
+        Object.keys(blob).forEach((key) => {
             send(`blob.${key}`, blob[key]);
-        }
+        });
     };
 
     return {on, send, use};
@@ -75,25 +75,24 @@ module.exports = (config = {}) => {
     assert(isArray(modules), 'core : passed modules must be an array');
     assert(isObject(options), 'core : passed options must be an object');
 
-    // if it is needed to define the window but not yet add a target, the first
-    // argument can be set to undefined.
+    // both arguments are optional or can be left undefined, except when the
+    // kit options require the browser, but the window global is not defined.
     const okwolo = (target, global) => {
-        // if the kit requires the browser api, there must be a window object in
-        // scope or a window object must be injected as argument.
         if (options.browser) {
+            // global defaults to browser env's window
             if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
                 global = window;
             }
         }
 
-        // primary function will be called when app is called, it is stored
-        // outside of the app function so that it can be replaced after the
-        // creation of the app object without breaking all references to app.
+        // primary function will be called when app is called. It is stored
+        // outside of the app function so that it can be replaced without
+        // re-creating the app instance.
         let primary = () => {};
 
-        // the api will be added to the app function, it is returned when a
-        // new app is created.
+        // the api will be added to this variable. It is also returned by the
+        // enclosing functionion.
         const app = (...args) => {
             return primary(...args);
         };
@@ -115,7 +114,7 @@ module.exports = (config = {}) => {
             primary = _primary;
         });
 
-        // each module is instantiated.
+        // each module is instantiated on the app.
         modules.forEach((_module) => {
             _module({
                 on: app.on,
@@ -134,7 +133,7 @@ module.exports = (config = {}) => {
 
     // okwolo attempts to define itself globally and includes information about
     // the version number and kit name. note that different kits can coexist,
-    // but not two kits with the same name and different versions.
+    // but not two versions of the same kit.
     if (isBrowser()) {
         okwolo.kit = options.kit;
         okwolo.version = version;

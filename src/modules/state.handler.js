@@ -27,7 +27,6 @@ module.exports = ({on, send}) => {
 
     let stateHasBeenOverwritten = false;
 
-    // actions is a map where actions are stored in an array at their type key.
     const actions = {};
     const middleware = [];
     const watchers = [];
@@ -35,12 +34,11 @@ module.exports = ({on, send}) => {
     // this queue is used to ensure that an action, the middleware and the
     // watchers all get called before a second action can be done. this is
     // relevant in the case where an action is called from within a watcher.
-    // it does not however support waiting for any async code.
     const queue = makeQueue();
 
-    // the real value is set after this module's handshake with the state
+    // the actual value is set after this module's handshake with the state
     // module when the state handler is registered.
-    let readState = () => undefined;
+    let readState = Function;
 
     const execute = (state, type, params) => {
         // this value will represent the state after executing the action(s).
@@ -49,11 +47,11 @@ module.exports = ({on, send}) => {
         let newState = deepCopy(state);
         assert(isDefined(actions[type]), `state.handler : action type '${type}' was not found`);
 
-        // action types with multiple actions are executed in the order they are added.
+        // action types with multiple handlers are executed in the order they are added.
         actions[type].forEach((currentAction) => {
             let targetAddress = currentAction.target;
 
-            // if the target is a function, it is executed with the current state.
+            // if the target is a function, it is called with the current state.
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
                 // since the typechecks cannot be ran when the action is added,

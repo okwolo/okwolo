@@ -126,8 +126,6 @@ module.exports.isRegExp = function (value) {
     return value instanceof RegExp;
 };
 
-// there cannot be any assumptions about the environment globals so
-// node's process should not be used.
 module.exports.isBrowser = function () {
     return typeof window !== 'undefined';
 };
@@ -161,9 +159,8 @@ module.exports.makeQueue = function () {
 
     // runs the first function in the queue if it exists. this specifically
     // does not call done or remove the function from the queue since there
-    // is no knowledge about whether or not the function has completed. this
-    // means that the queue will wait for a done signal before running any
-    // other element.
+    // is no knowledge about whether or not the function has completed. the
+    // queue will wait for a done signal before running any other item.
     var run = function run() {
         var func = queue[0];
         if (func) {
@@ -171,7 +168,8 @@ module.exports.makeQueue = function () {
         }
     };
 
-    // adds a function to the queue and calls run if the queue was empty.
+    // adds a function to the queue. it will be run instantly if the queue
+    // is not in a waiting state.
     var add = function add(func) {
         queue.push(func);
         if (queue.length === 1) {
@@ -224,13 +222,14 @@ var _require = __webpack_require__(0),
     isObject = _require.isObject,
     isString = _require.isString;
 
-// version cannot be taken from package.json because environment is not guaranteed.
+// version not taken from package.json to avoid including the whole file
+// in the unminified bundle.
 
 
 var version = '3.3.0-rc.1';
 
 var makeBus = function makeBus() {
-    // stores arrays of handlers for each event key.
+    // stores handlers for each event key.
     var handlers = {};
     // stores names from named events to enforce uniqueness.
     var names = {};
@@ -252,7 +251,8 @@ var makeBus = function makeBus() {
 
         assert(isString(type), 'send : event type is not a string', type);
         var eventHandlers = handlers[type];
-        if (!isArray(eventHandlers)) {
+        // events that do not match any handlers are ignored silently.
+        if (!isDefined(eventHandlers)) {
             return;
         }
         for (var i = 0; i < eventHandlers.length; ++i) {
@@ -265,7 +265,7 @@ var makeBus = function makeBus() {
             args[_key2 - 1] = arguments[_key2];
         }
 
-        // scopes event type to being a blob.
+        // scopes event type to the blob namespace.
         if (isString(blob)) {
             send.apply(undefined, ['blob.' + blob].concat(args));
             return;
@@ -277,19 +277,17 @@ var makeBus = function makeBus() {
 
         if (isDefined(name)) {
             assert(isString(name), 'utils.bus : blob name is not a string', name);
-            // early return if the name has been used before.
+            // early return if the name has already been seen.
             if (isDefined(names[name])) {
                 return;
             }
             names[name] = true;
         }
 
-        // sending all blob keys.
-        var keys = Object.keys(blob);
-        for (var i = 0; i < keys.length; ++i) {
-            var key = keys[i];
+        // calling send for each blob key.
+        Object.keys(blob).forEach(function (key) {
             send('blob.' + key, blob[key]);
-        }
+        });
     };
 
     return { on: on, send: send, use: use };
@@ -305,25 +303,24 @@ module.exports = function () {
     assert(isArray(modules), 'core : passed modules must be an array');
     assert(isObject(options), 'core : passed options must be an object');
 
-    // if it is needed to define the window but not yet add a target, the first
-    // argument can be set to undefined.
+    // both arguments are optional or can be left undefined, except when the
+    // kit options require the browser, but the window global is not defined.
     var okwolo = function okwolo(target, global) {
-        // if the kit requires the browser api, there must be a window object in
-        // scope or a window object must be injected as argument.
         if (options.browser) {
+            // global defaults to browser env's window
             if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
                 global = window;
             }
         }
 
-        // primary function will be called when app is called, it is stored
-        // outside of the app function so that it can be replaced after the
-        // creation of the app object without breaking all references to app.
+        // primary function will be called when app is called. It is stored
+        // outside of the app function so that it can be replaced without
+        // re-creating the app instance.
         var primary = function primary() {};
 
-        // the api will be added to the app function, it is returned when a
-        // new app is created.
+        // the api will be added to this variable. It is also returned by the
+        // enclosing functionion.
         var app = function app() {
             return primary.apply(undefined, arguments);
         };
@@ -345,7 +342,7 @@ module.exports = function () {
             primary = _primary;
         });
 
-        // each module is instantiated.
+        // each module is instantiated on the app.
         modules.forEach(function (_module) {
             _module({
                 on: app.on,
@@ -364,7 +361,7 @@ module.exports = function () {
 
     // okwolo attempts to define itself globally and includes information about
     // the version number and kit name. note that different kits can coexist,
-    // but not two kits with the same name and different versions.
+    // but not two versions of the same kit.
     if (isBrowser()) {
         okwolo.kit = options.kit;
         okwolo.version = version;

@@ -2,7 +2,7 @@
 
 // @fires blob.register [router]
 
-// this is the same library that is used in by express to match routes.
+// this is the same library that is used by express to match routes.
 const pathToRegexp = require('path-to-regexp');
 
 module.exports = ({send}) => {
@@ -11,6 +11,7 @@ module.exports = ({send}) => {
     const register = (store = [], path, handler) => {
         const keys = [];
         let pattern;
+        // exception for catch-all syntax
         if (path === '**') {
             pattern = /.*/g;
         } else {

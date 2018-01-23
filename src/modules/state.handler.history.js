@@ -6,9 +6,8 @@
 // @fires blob.watcher [state.handler]
 
 module.exports = ({on, send}) => {
-    const resetActionType = '__RESET__';
-    // reference to the initial value is kept in order to be able to check if the
-    // state has been changes using triple-equals comparison.
+    // reference to the initial value is kept to be able to check if the
+    // state has changed.
     const initial = {};
 
     let past = [];
@@ -17,10 +16,6 @@ module.exports = ({on, send}) => {
 
     // used to enforce the maximum number of past states that can be returned to.
     const historyLength = 20;
-
-    // action types which begin with * will not be registered in the history. this
-    // can be useful for trivial interactions which should not be replayed.
-    const ignorePrefix = '*';
 
     send('blob.action', {
         type: 'UNDO',
@@ -52,10 +47,8 @@ module.exports = ({on, send}) => {
 
     // reset action can be used to wipe history when, for example, an application
     // changes to a different page with a different state structure.
-    send('blob.action', {
-        type: resetActionType,
-        target: [],
-        handler: () => {
+    send('blob.api', {
+        resetHistory: () => {
             past = [];
             future = [];
             return current;
@@ -65,9 +58,6 @@ module.exports = ({on, send}) => {
     // this watcher will monitor state changes and update what is stored within
     // this function.
     send('blob.watcher', (state, type) => {
-        if (type === resetActionType || type[0] === ignorePrefix) {
-            return;
-        }
         if (type !== 'UNDO' && type !== 'REDO') {
             // adding an action to the stack invalidates anything in the "future".
             future = [];

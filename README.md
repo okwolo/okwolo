@@ -34,7 +34,7 @@ npm install okwolo
 const okwolo = require('okwolo/standard');
 ```
 
-Alternatively, the okwolo function can be loaded using a script tag. Transpiled versions of all kits are available from the website.
+Alternatively, the okwolo function can be loaded using a script tag. Transpiled (es5) versions of all kits are available from the website starting from v3.0.0.
 
 ```html
 <!-- latest -->

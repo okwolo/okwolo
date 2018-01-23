@@ -19,49 +19,44 @@ const {
 } = require('../utils');
 
 module.exports = ({on, send}, global) => {
-    // will check is the code is being ran from the filesystem or is hosted.
-    // this information is used to correctly displaying routes in the former case.
-    const isHosted = global.document.origin !== null && global.document.origin !== 'null';
-
-    let baseUrl = '';
-
     // keeps track of all the registered routes. the format/type of this variable
     // is not enforced by this module and it is left to the regisiter and fetch
-    // to validate the values.
+    // functions to validate the values.
     let store;
 
+    let baseUrl = '';
     let register;
     let fetch;
 
     // if the router has not yet found a match, every new path might be the
-    // the current location and needs to be called. however, after this initial
+    // the current location and needs to be checked. however, after this initial
     // match, any new routes do not need to be verified against the current url.
     let hasMatched = false;
 
-    const queue = makeQueue();
-
-    const safeFetch = (...args) => {
-        assert(isFunction(fetch), 'router : fetch is not a function', fetch);
-        fetch(store, ...args);
-    };
-
-    let removeBaseUrl = (path) => {
-        // escapes characters that may cause unintended behavior when converted
-        // from a string to a regular expression.
-        const escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
-        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
-    };
-
     let currentPath = global.location.pathname;
+
+    // will check if the code is being ran from the filesystem or is hosted.
+    // this information is used to correctly displaying routes in the former case.
+    const isHosted = global.document.origin !== null && global.document.origin !== 'null';
     if (!isHosted) {
         currentPath = '';
     }
 
-    // handle back/forward events
+    const queue = makeQueue();
+
+    let removeBaseUrl = (path) => {
+        // base url is only removed if it is at the start of the path string.
+        // characters that may cause unintended behavior are escaped when
+        // converting from a string to a regular expression.
+        const escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
+        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
+    };
+
+    // react to browser's back/forward events.
     global.onpopstate = () => {
         queue.add(() => {
             currentPath = removeBaseUrl(global.location.pathname);
-            safeFetch(currentPath);
+            fetch(store, currentPath);
             queue.done();
         });
     };
@@ -73,7 +68,7 @@ module.exports = ({on, send}, global) => {
         queue.add(() => {
             store = register(store, path, handler);
             if (!hasMatched) {
-                hasMatched = !!safeFetch(currentPath);
+                hasMatched = !!fetch(store, currentPath);
             }
             queue.done();
         });
@@ -84,7 +79,7 @@ module.exports = ({on, send}, global) => {
         queue.add(() => {
             baseUrl = base;
             currentPath = removeBaseUrl(currentPath);
-            safeFetch(currentPath);
+            fetch(store, currentPath);
             queue.done();
         });
     });
@@ -109,8 +104,8 @@ module.exports = ({on, send}, global) => {
     on('redirect', (path, params = {}) => {
         assert(isString(path), 'on.redirect : path is not a string', path);
         assert(isObject(params), 'on.redirect : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
+        // queue used so that route handlers that call other route handlers
+        // behave as expected. (sequentially)
         queue.add(() => {
             currentPath = path;
             if (isHosted) {
@@ -121,7 +116,7 @@ module.exports = ({on, send}, global) => {
             } else {
                 console.log(`@okwolo : path changed to\n>>> ${currentPath}`);
             }
-            safeFetch(currentPath, params);
+            fetch(store, currentPath, params);
             queue.done();
         });
     });
@@ -130,10 +125,10 @@ module.exports = ({on, send}, global) => {
     on('show', (path, params = {}) => {
         assert(isString(path), 'on.show : path is not a string', path);
         assert(isObject(params), 'on.show : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
+        // queue used so that route handlers that call other route handlers
+        // behave as expected. (sequentially)
         queue.add(() => {
-            safeFetch(path, params);
+            fetch(store, path, params);
             queue.done();
         });
     });

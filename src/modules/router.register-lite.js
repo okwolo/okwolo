@@ -16,7 +16,7 @@ const createPattern = (path) => {
 };
 
 module.exports = ({send}) => {
-    // the type of store is not enforced by the okwolo-router module. this means
+    // the type of store is not enforced by the router module. this means
     // that it needs to be created when the first path is registered.
     const register = (store = [], path, handler) => {
         // the keys are extracted from the path string and stored to properly
@@ -26,6 +26,7 @@ module.exports = ({send}) => {
                 name: key.replace(/^:/g, ''),
             }));
         let pattern;
+        // exception for catch-all syntax
         if (path === '**') {
             pattern = /.*/g;
         } else {

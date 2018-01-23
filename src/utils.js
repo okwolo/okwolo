@@ -58,8 +58,6 @@ module.exports.isRegExp = (value) => {
     return value instanceof RegExp;
 };
 
-// there cannot be any assumptions about the environment globals so
-// node's process should not be used.
 module.exports.isBrowser = () => {
     return typeof window !== 'undefined';
 };
@@ -89,9 +87,8 @@ module.exports.makeQueue = () => {
 
     // runs the first function in the queue if it exists. this specifically
     // does not call done or remove the function from the queue since there
-    // is no knowledge about whether or not the function has completed. this
-    // means that the queue will wait for a done signal before running any
-    // other element.
+    // is no knowledge about whether or not the function has completed. the
+    // queue will wait for a done signal before running any other item.
     const run = () => {
         const func = queue[0];
         if (func) {
@@ -99,7 +96,8 @@ module.exports.makeQueue = () => {
         }
     };
 
-    // adds a function to the queue and calls run if the queue was empty.
+    // adds a function to the queue. it will be run instantly if the queue
+    // is not in a waiting state.
     const add = (func) => {
         queue.push(func);
         if (queue.length === 1) {

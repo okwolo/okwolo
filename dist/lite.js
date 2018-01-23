@@ -126,8 +126,6 @@ module.exports.isRegExp = function (value) {
     return value instanceof RegExp;
 };
 
-// there cannot be any assumptions about the environment globals so
-// node's process should not be used.
 module.exports.isBrowser = function () {
     return typeof window !== 'undefined';
 };
@@ -161,9 +159,8 @@ module.exports.makeQueue = function () {
 
     // runs the first function in the queue if it exists. this specifically
     // does not call done or remove the function from the queue since there
-    // is no knowledge about whether or not the function has completed. this
-    // means that the queue will wait for a done signal before running any
-    // other element.
+    // is no knowledge about whether or not the function has completed. the
+    // queue will wait for a done signal before running any other item.
     var run = function run() {
         var func = queue[0];
         if (func) {
@@ -171,7 +168,8 @@ module.exports.makeQueue = function () {
         }
     };
 
-    // adds a function to the queue and calls run if the queue was empty.
+    // adds a function to the queue. it will be run instantly if the queue
+    // is not in a waiting state.
     var add = function add(func) {
         queue.push(func);
         if (queue.length === 1) {
@@ -201,9 +199,7 @@ module.exports.makeQueue = function () {
 var core = __webpack_require__(2);
 
 module.exports = core({
-    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6),
-    // router placed after view to override blob.primary.
-    __webpack_require__(7), __webpack_require__(8), __webpack_require__(9), __webpack_require__(10)],
+    modules: [__webpack_require__(3), __webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(8), __webpack_require__(9), __webpack_require__(10)],
     options: {
         kit: 'lite',
         browser: true
@@ -226,13 +222,14 @@ var _require = __webpack_require__(0),
     isObject = _require.isObject,
     isString = _require.isString;
 
-// version cannot be taken from package.json because environment is not guaranteed.
+// version not taken from package.json to avoid including the whole file
+// in the unminified bundle.
 
 
 var version = '3.3.0-rc.1';
 
 var makeBus = function makeBus() {
-    // stores arrays of handlers for each event key.
+    // stores handlers for each event key.
     var handlers = {};
     // stores names from named events to enforce uniqueness.
     var names = {};
@@ -254,7 +251,8 @@ var makeBus = function makeBus() {
 
         assert(isString(type), 'send : event type is not a string', type);
         var eventHandlers = handlers[type];
-        if (!isArray(eventHandlers)) {
+        // events that do not match any handlers are ignored silently.
+        if (!isDefined(eventHandlers)) {
             return;
         }
         for (var i = 0; i < eventHandlers.length; ++i) {
@@ -267,7 +265,7 @@ var makeBus = function makeBus() {
             args[_key2 - 1] = arguments[_key2];
         }
 
-        // scopes event type to being a blob.
+        // scopes event type to the blob namespace.
         if (isString(blob)) {
             send.apply(undefined, ['blob.' + blob].concat(args));
             return;
@@ -279,19 +277,17 @@ var makeBus = function makeBus() {
 
         if (isDefined(name)) {
             assert(isString(name), 'utils.bus : blob name is not a string', name);
-            // early return if the name has been used before.
+            // early return if the name has already been seen.
             if (isDefined(names[name])) {
                 return;
             }
             names[name] = true;
         }
 
-        // sending all blob keys.
-        var keys = Object.keys(blob);
-        for (var i = 0; i < keys.length; ++i) {
-            var key = keys[i];
+        // calling send for each blob key.
+        Object.keys(blob).forEach(function (key) {
             send('blob.' + key, blob[key]);
-        }
+        });
     };
 
     return { on: on, send: send, use: use };
@@ -307,25 +303,24 @@ module.exports = function () {
     assert(isArray(modules), 'core : passed modules must be an array');
     assert(isObject(options), 'core : passed options must be an object');
 
-    // if it is needed to define the window but not yet add a target, the first
-    // argument can be set to undefined.
+    // both arguments are optional or can be left undefined, except when the
+    // kit options require the browser, but the window global is not defined.
     var okwolo = function okwolo(target, global) {
-        // if the kit requires the browser api, there must be a window object in
-        // scope or a window object must be injected as argument.
         if (options.browser) {
+            // global defaults to browser env's window
             if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
                 global = window;
             }
         }
 
-        // primary function will be called when app is called, it is stored
-        // outside of the app function so that it can be replaced after the
-        // creation of the app object without breaking all references to app.
+        // primary function will be called when app is called. It is stored
+        // outside of the app function so that it can be replaced without
+        // re-creating the app instance.
         var primary = function primary() {};
 
-        // the api will be added to the app function, it is returned when a
-        // new app is created.
+        // the api will be added to this variable. It is also returned by the
+        // enclosing functionion.
         var app = function app() {
             return primary.apply(undefined, arguments);
         };
@@ -347,7 +342,7 @@ module.exports = function () {
             primary = _primary;
         });
 
-        // each module is instantiated.
+        // each module is instantiated on the app.
         modules.forEach(function (_module) {
             _module({
                 on: app.on,
@@ -366,7 +361,7 @@ module.exports = function () {
 
     // okwolo attempts to define itself globally and includes information about
     // the version number and kit name. note that different kits can coexist,
-    // but not two kits with the same name and different versions.
+    // but not two versions of the same kit.
     if (isBrowser()) {
         okwolo.kit = options.kit;
         okwolo.version = version;
@@ -1322,53 +1317,44 @@ module.exports = function (_ref, global) {
     var on = _ref.on,
         send = _ref.send;
 
-    // will check is the code is being ran from the filesystem or is hosted.
-    // this information is used to correctly displaying routes in the former case.
-    var isHosted = global.document.origin !== null && global.document.origin !== 'null';
-
-    var baseUrl = '';
-
     // keeps track of all the registered routes. the format/type of this variable
     // is not enforced by this module and it is left to the regisiter and fetch
-    // to validate the values.
+    // functions to validate the values.
     var store = void 0;
 
+    var baseUrl = '';
     var register = void 0;
     var fetch = void 0;
 
     // if the router has not yet found a match, every new path might be the
-    // the current location and needs to be called. however, after this initial
+    // the current location and needs to be checked. however, after this initial
     // match, any new routes do not need to be verified against the current url.
     var hasMatched = false;
 
-    var queue = makeQueue();
-
-    var safeFetch = function safeFetch() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        assert(isFunction(fetch), 'router : fetch is not a function', fetch);
-        fetch.apply(undefined, [store].concat(args));
-    };
-
-    var removeBaseUrl = function removeBaseUrl(path) {
-        // escapes characters that may cause unintended behavior when converted
-        // from a string to a regular expression.
-        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
-        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
-    };
-
     var currentPath = global.location.pathname;
+
+    // will check if the code is being ran from the filesystem or is hosted.
+    // this information is used to correctly displaying routes in the former case.
+    var isHosted = global.document.origin !== null && global.document.origin !== 'null';
     if (!isHosted) {
         currentPath = '';
     }
 
-    // handle back/forward events
+    var queue = makeQueue();
+
+    var removeBaseUrl = function removeBaseUrl(path) {
+        // base url is only removed if it is at the start of the path string.
+        // characters that may cause unintended behavior are escaped when
+        // converting from a string to a regular expression.
+        var escapedBaseUrl = baseUrl.replace(/([^\w])/g, '\\$1');
+        return path.replace(new RegExp('\^' + escapedBaseUrl), '') || '';
+    };
+
+    // react to browser's back/forward events.
     global.onpopstate = function () {
         queue.add(function () {
             currentPath = removeBaseUrl(global.location.pathname);
-            safeFetch(currentPath);
+            fetch(store, currentPath);
             queue.done();
         });
     };
@@ -1384,7 +1370,7 @@ module.exports = function (_ref, global) {
         queue.add(function () {
             store = register(store, path, handler);
             if (!hasMatched) {
-                hasMatched = !!safeFetch(currentPath);
+                hasMatched = !!fetch(store, currentPath);
             }
             queue.done();
         });
@@ -1395,7 +1381,7 @@ module.exports = function (_ref, global) {
         queue.add(function () {
             baseUrl = base;
             currentPath = removeBaseUrl(currentPath);
-            safeFetch(currentPath);
+            fetch(store, currentPath);
             queue.done();
         });
     });
@@ -1422,8 +1408,8 @@ module.exports = function (_ref, global) {
 
         assert(isString(path), 'on.redirect : path is not a string', path);
         assert(isObject(params), 'on.redirect : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
+        // queue used so that route handlers that call other route handlers
+        // behave as expected. (sequentially)
         queue.add(function () {
             currentPath = path;
             if (isHosted) {
@@ -1434,7 +1420,7 @@ module.exports = function (_ref, global) {
             } else {
                 console.log('@okwolo : path changed to\n>>> ' + currentPath);
             }
-            safeFetch(currentPath, params);
+            fetch(store, currentPath, params);
             queue.done();
         });
     });
@@ -1445,10 +1431,10 @@ module.exports = function (_ref, global) {
 
         assert(isString(path), 'on.show : path is not a string', path);
         assert(isObject(params), 'on.show : params is not an object', params);
-        // queue used so that route handlers that call route handlers behave
-        // as expected. (sequentially)
+        // queue used so that route handlers that call other route handlers
+        // behave as expected. (sequentially)
         queue.add(function () {
-            safeFetch(path, params);
+            fetch(store, path, params);
             queue.done();
         });
     });
@@ -1477,8 +1463,8 @@ module.exports = function (_ref) {
     var send = _ref.send;
 
     // the store's initial value is undefined so it needs to be defaulted
-    // to an empty array. this function should be the one doing the action
-    // defined in the route since it doesn't return it.
+    // to an empty array. this function should be the one calling the route
+    // handler since it doesn't return it.
     var fetch = function fetch() {
         var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
         var path = arguments[1];
@@ -1491,17 +1477,17 @@ module.exports = function (_ref) {
                 return;
             }
             // a non null value on the result of executing the query on the path
-            // is considered a successful hit.
+            // is considered a successful match.
             found = true;
             // the first element of the result array is the entire matched string.
             // this value is not useful and the following capture group results
             // are more relevant.
             test.shift();
             // the order of the keys and their values in the matched result is the
-            // same and their index is now shared. note that there is no protection
-            // against param values being overwritten or tags to share the same key.
-            registeredPath.keys.forEach(function (key, i) {
-                params[key.name] = test[i];
+            // same and they share the same index. note that there is no protection
+            // against tags that share the same key and that params can be overwritten.
+            registeredPath.keys.forEach(function (key, index) {
+                params[key.name] = test[index];
             });
             registeredPath.handler(params);
             return found;
@@ -1536,7 +1522,7 @@ var createPattern = function createPattern(path) {
 module.exports = function (_ref) {
     var send = _ref.send;
 
-    // the type of store is not enforced by the okwolo-router module. this means
+    // the type of store is not enforced by the router module. this means
     // that it needs to be created when the first path is registered.
     var register = function register() {
         var store = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
@@ -1551,6 +1537,7 @@ module.exports = function (_ref) {
             };
         });
         var pattern = void 0;
+        // exception for catch-all syntax
         if (path === '**') {
             pattern = /.*/g;
         } else {
