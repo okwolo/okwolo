@@ -12,7 +12,7 @@ const {
 
 // version not taken from package.json to avoid including the whole file
 // in the unminified bundle.
-const version = '3.3.0-rc.1';
+const version = '3.3.0';
 
 const makeBus = () => {
     // stores handlers for each event key.

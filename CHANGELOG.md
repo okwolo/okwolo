@@ -3,8 +3,8 @@
 * update function blob now receives an identity as 5th argument
 * view module's sync event now accepts an identity as 3rd argument
 * made component update functions expire after component is replaced in the view
-* removed special treatment of action types starting with "*" (undocumented behavior)
-* replaced "__RESET__" action with a "resetHistory" function on the api. (undocumented behavior)
+* removed undocumented special treatment of action types starting with "*"
+* replaced undocumented "__RESET__" action with a "resetHistory" function on the api.
 
 ## v3.2.0
 
