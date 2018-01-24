@@ -226,7 +226,7 @@ var _require = __webpack_require__(0),
 // in the unminified bundle.
 
 
-var version = '3.3.0-rc.1';
+var version = '3.3.0';
 
 var makeBus = function makeBus() {
     // stores handlers for each event key.
