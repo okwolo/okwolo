@@ -824,6 +824,15 @@ describe('view.dom', () => {
                 expect(wrapper.innerHTML)
                     .toBe('test');
             });
+
+            xit('should not break on recursive update', () => {
+                const app = o(v, vb, vd);
+                app.send('state', {});
+                app.use('builder', () => [(_, update) => () => {
+                    update();
+                    return 0;
+                }]);
+            });
         });
     });
 });
