@@ -5,3 +5,4 @@ _*.html
 coverage/
 package-lock.json
 secret.json
+dist/
