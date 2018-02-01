@@ -29,6 +29,7 @@ gulp.task('clean', () => {
 
     return del([
         ...kits,
+        './dist',
         './coverage',
         './npm-debug.log',
         './package-lock.json',

@@ -3,8 +3,8 @@
 * update function blob now receives an identity as 5th argument
 * view module's sync event now accepts an identity as 3rd argument
 * made component update functions expire after component is replaced in the view
-* removed undocumented special treatment of action types starting with "*"
-* replaced undocumented "__RESET__" action with a "resetHistory" function on the api.
+* removed undocumented special treatment of action types starting with `*`
+* replaced undocumented `__RESET__` action with a `resetHistory` function on the api.
 
 ## v3.2.0
 
@@ -25,7 +25,7 @@
 * merged use/emit into single bus
 * added protection against overriding api with blobs
 * fixed error when server kit received an element with undefined or null attributes
-* added a catch-all path (**) to the routers
+* added a catch-all path `**` to the routers
 * made action, middleware and watcher blob handlers accept multiple arguments
 * added html escaping for text elements in view.string
 
