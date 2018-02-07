@@ -17,6 +17,7 @@ const {
 const longestChain = (original, successor) => {
     const count = successor.length;
     const half = count / 2;
+
     // current longest chain reference is saved to compare against new
     // contenders. the chain's index in the second argument is also kept.
     let longest = 0;
@@ -24,9 +25,11 @@ const longestChain = (original, successor) => {
     for (let i = 0; i < count; ++i) {
         const startInc = original.indexOf(successor[i]);
         const maxInc = Math.min(count - startInc, count - i);
+
         // start looking after the current index since it is already
         // known to be equal.
         let currentLength = 1;
+
         // loop through all following values until either array is fully
         // read or the chain of identical values is broken.
         for (let inc = 1; inc < maxInc; ++inc) {
@@ -35,10 +38,12 @@ const longestChain = (original, successor) => {
             }
             currentLength += 1;
         }
+
         if (currentLength > longest) {
             longest = currentLength;
             chainStart = i;
         }
+
         // quick exit if a chain is found that is longer or equal to half
         // the length of the input arrays since it means there can be no
         // longer chains.
@@ -59,17 +64,21 @@ const longestChain = (original, successor) => {
 const diff = (original, successor) => {
     const keys = Object.keys(Object.assign({}, original, successor));
     const modifiedKeys = [];
+
     for (let i = 0; i < keys.length; ++i) {
         const key = keys[i];
         const valueOriginal = original[key];
         const valueSuccessor = successor[key];
+
         if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
             modifiedKeys.push(key);
         }
+
         if (valueOriginal !== valueSuccessor) {
             modifiedKeys.push(key);
         }
     }
+
     return modifiedKeys;
 };
 
@@ -83,16 +92,21 @@ module.exports = ({send}, global) => {
             vnode.DOM = global.document.createTextNode(vnode.text);
             return vnode;
         }
+
         const node = global.document.createElement(vnode.tagName);
+
         // attributes are added onto the node.
         Object.assign(node, vnode.attributes);
+
         // all children are rendered and immediately appended into the parent node.
         for (let i = 0; i < vnode.childOrder.length; ++i) {
             const key = vnode.childOrder[i];
             const {DOM} = render(vnode.children[key]);
             node.appendChild(DOM);
         }
+
         vnode.DOM = node;
+
         return vnode;
     };
 
@@ -102,11 +116,15 @@ module.exports = ({send}, global) => {
         // done at this point. this is done to decouple the dom module from
         // the browser (but cannot be avoided in this module).
         assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
+
+        // render modifies the vdom tree in place.
         render(newVDOM);
+
         global.requestAnimationFrame(() => {
             target.innerHTML = '';
             target.appendChild(newVDOM.DOM);
         });
+
         return newVDOM;
     };
 

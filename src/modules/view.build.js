@@ -118,7 +118,7 @@ module.exports = ({send}) => {
         }
         // in order to simplify type checking, numbers are stringified.
         if (isNumber(element)) {
-            element = '' + element;
+            element += '';
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
