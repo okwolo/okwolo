@@ -1,8 +1,10 @@
 'use strict';
 
+const fs = require('fs');
+const {spawn} = require('child_process');
+
 const AWS = require('aws-sdk');
 const del = require('del');
-const fs = require('fs');
 const globby = require('globby');
 const gulp = require('gulp');
 const replace = require('gulp-replace');
@@ -10,6 +12,26 @@ const replace = require('gulp-replace');
 const {version} = require('./package.json');
 
 const kitPattern = './src/kits/*.js';
+
+const shell = async (command, dir = './') => {
+    console.log(`\x1b[33m$\x1b[0m ${command}`);
+    const [, cmd, args] = (/^(\w+)\s*([^]*)/g).exec(command);
+    return new Promise((resolve, reject) => {
+        let child = spawn(cmd, args.split(' '), {
+            cwd: dir,
+        });
+        child.stdout.on('data', (data) => {
+            console.log(`${data} `.trim());
+        });
+        child.stderr.on('data', (data) => {
+            if (String(data).match(/error/g)) {
+                console.log(`\x1b[31m${data}\x1b[0m`);
+            }
+        });
+        child.on('error', reject);
+        child.on('exit', resolve);
+    });
+};
 
 // copy ./src/kits/ to ./
 gulp.task('prepublish', () => {
@@ -34,6 +56,25 @@ gulp.task('clean', () => {
         './npm-debug.log',
         './package-lock.json',
     ]);
+});
+
+// push new version to github.com/okwolo/dl
+gulp.task('push', async () => {
+    if (!fs.existsSync('./dist')) {
+        console.log('err: ./dist does not exist');
+    }
+    await shell('rm -rf ./dl');
+    await shell('git clone https://github.com/okwolo/dl');
+    await shell('cp ./dist/* ./dl');
+    const dir = `./dl/${version}`;
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+    }
+    await shell(`cp ./dist/*.js ./dl/${version}`);
+    await shell('git add *', './dl');
+    await shell(`git commit -m "v${version}"`, './dl');
+    await shell('git push origin master', './dl');
+    await shell('rm -rf ./dl');
 });
 
 // upload new published version to website

@@ -65,7 +65,7 @@ module.exports = ({on, send}) => {
     });
 
     on('state', (_state) => {
-        assert(isDefined(_state), 'on.blob.state : new state is not defined', _state);
+        assert(isDefined(_state), 'on.state : new state is not defined', _state);
         state = _state;
         send('update', false);
     });

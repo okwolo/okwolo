@@ -1,6 +1,6 @@
 {
     "name": "okwolo",
-    "version": "3.3.0",
+    "version": "3.3.1",
     "description": "light javascript framework to build web applications",
     "main": "src/index.js",
     "keywords": [
@@ -12,7 +12,7 @@
     "license": "MIT",
     "scripts": {
         "prepack": "webpack && gulp prepublish",
-        "postpublish": "gulp clean && gulp publish",
+        "postpublish": "gulp publish && gulp push && gulp clean",
         "test": "run-s test:*",
         "test:eslint": "eslint **/*.js",
         "test:jest": "jest",

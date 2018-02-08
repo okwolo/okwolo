@@ -1,3 +1,5 @@
+## v3.3.1
+
 ## v3.3.0
 
 * update function blob now receives an identity as 5th argument
