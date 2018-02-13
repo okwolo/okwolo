@@ -1,6 +1,6 @@
 ## v3.3.1
 
-* remove undocumented return value on resetHistory function
+* removed undocumented return value on `resetHistory` function
 
 ## v3.3.0
 
