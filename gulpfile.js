@@ -72,7 +72,7 @@ gulp.task('push', async () => {
     }
     await shell(`cp ./dist/*.js ./dl/${version}`);
     await shell('git add *', './dl');
-    await shell(`git commit -m "v${version}"`, './dl');
+    await shell(`git commit -m v${version}`, './dl');
     await shell('git push origin master', './dl');
     await shell('rm -rf ./dl');
 });
