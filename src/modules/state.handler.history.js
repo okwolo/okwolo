@@ -51,7 +51,6 @@ module.exports = ({on, send}) => {
         resetHistory: () => {
             past = [];
             future = [];
-            return current;
         },
     });
 
