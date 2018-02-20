@@ -18,7 +18,7 @@
         "test:jest": "jest",
         "test:build": "run-s build gulp:*",
         "codecov": "jest --coverage && codecov",
-        "build": "webpack",
+        "build": "webpack --display=minimal",
         "gulp:prepublish": "gulp prepublish",
         "gulp:clean": "gulp clean"
     },
@@ -38,7 +38,7 @@
         "path-to-regexp": "^2.1.0"
     },
     "devDependencies": {
-        "aws-sdk": "^2.186.0",
+        "aws-sdk": "^2.198.0",
         "babel-core": "^6.26.0",
         "babel-loader": "^7.1.2",
         "babel-preset-env": "^1.6.1",
@@ -47,7 +47,7 @@
         "del": "^3.0.0",
         "eslint": "^4.16.0",
         "eslint-config-google": "^0.9.1",
-        "globby": "^7.1.1",
+        "globby": "^8.0.1",
         "gulp": "^3.9.1",
         "gulp-replace": "^0.6.1",
         "jest": "^22.1.4",

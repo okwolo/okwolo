@@ -5,21 +5,37 @@
 // this is the same library that is used by express to match routes.
 const pathToRegexp = require('path-to-regexp');
 
+const {
+    isRegExp,
+} = require('util');
+
 module.exports = ({send}) => {
     // the type of store is not enforced by the okwolo-router module. this means
     // that it needs to be created when the first path is registered.
     const register = (store = [], path, handler) => {
-        const keys = [];
-        let pattern;
-        // exception for catch-all syntax
         if (path === '**') {
-            pattern = /.*/g;
-        } else {
-            pattern = pathToRegexp(path, keys, {strict: true});
+            store.push({
+                keys: [],
+                pattern: /.*/g,
+                handler,
+            });
+            return store;
         }
+
+        if (isRegExp(path)) {
+            let numGroups = new RegExp(path.toString() + '|').exec('').length - 1;
+            store.push({
+                keys: Array(numGroups).fill(0).map((_, i) => ({name: i})),
+                pattern: path,
+                handler,
+            });
+            return store;
+        }
+
+        const keys = [];
         store.push({
-            pattern,
             keys,
+            pattern: pathToRegexp(path, keys, {strict: true}),
             handler,
         });
         return store;

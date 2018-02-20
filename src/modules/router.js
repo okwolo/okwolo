@@ -15,6 +15,7 @@ const {
     isFunction,
     isObject,
     isString,
+    isRegExp,
     makeQueue,
 } = require('../utils');
 
@@ -62,7 +63,7 @@ module.exports = ({on, send}, global) => {
     };
 
     on('blob.route', ({path, handler} = {}) => {
-        assert(isString(path), 'on.blob.route : path is not a string', path);
+        assert(isString(path) || isRegExp(path), 'on.blob.route : path is not a string or a regular expression', path);
         assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
         assert(isFunction(register), 'on.blob.route : register is not a function', register);
         queue.add(() => {

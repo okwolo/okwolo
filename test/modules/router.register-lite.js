@@ -44,6 +44,27 @@ describe('router.register-lite', () => {
             .toBe(handler);
     });
 
+    it('should support raw regexp', () => {
+        const handler = () => 0;
+        const [path] = register([], /test/gi, handler);
+        expect(path.keys)
+            .toEqual([]);
+        expect(path.pattern.toString())
+            .toBe('/test/gi');
+        expect(path.handler)
+            .toBe(handler);
+    });
+
+    it('should support raw regexp capture groups', () => {
+        const handler = () => 0;
+        const [path] = register([], /\/(\w+-)?test(?:\/(id))?/g, handler);
+        expect(path.keys)
+            .toEqual([
+                {name: 0},
+                {name: 1},
+            ]);
+    });
+
     it('should correctly identify the path\'s keys', () => {
         let [{keys}] = register([], '/:test:key/:id::0:');
         expect(keys)
@@ -81,7 +102,7 @@ describe('router.register-lite', () => {
             .toBeFalsy();
     });
 
-    it('should generate a pattern with capturing groups for keys', () => {
+    it('should generate a pattern with capture groups for keys', () => {
         let [{pattern}] = register([], '/:test/:id-:0');
         const [, ...result] = pattern.exec('/abcd/abc-d');
         expect(result[0])

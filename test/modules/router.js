@@ -61,6 +61,18 @@ describe('router', () => {
                 expect(test)
                     .toHaveBeenCalledWith({id: '123', field: 'name'});
             });
+
+            it('should accumulate capture groups and pass them to the handler', () => {
+                const test = jest.fn();
+                const app = o(r, rr, rf);
+                app.use({route: {
+                    path: /\/user\/(\d+)\/fetch\/(\w+)/g,
+                    handler: test,
+                }});
+                app.send('redirect', '/user/123/fetch/name');
+                expect(test)
+                    .toHaveBeenCalledWith({'0': '123', '1': 'name'});
+            });
         });
 
         describe('show', () => {

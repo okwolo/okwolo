@@ -1,3 +1,7 @@
+## v3.4.0
+
+* added support for raw regexp in router modules
+
 ## v3.3.1
 
 * removed undocumented return value on `resetHistory` function
