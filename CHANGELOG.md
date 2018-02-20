@@ -1,6 +1,7 @@
 ## v3.4.0
 
 * added support for raw regexp in router modules
+* added support for hash navigation in lite-router
 
 ## v3.3.1
 

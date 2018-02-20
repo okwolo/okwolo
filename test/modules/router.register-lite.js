@@ -86,11 +86,31 @@ describe('router.register-lite', () => {
             .toBeTruthy();
     });
 
-    it('should generate a pattern that allows query strings', () => {
+    it('should generate a pattern that ignores query strings', () => {
         let [{pattern}] = register([], '/:test');
         expect(pattern.exec('/abcd'))
             .toBeTruthy();
-        expect(pattern.exec('/dcba?q=aasdas'))
+        expect(pattern.exec('/dcba?key=value'))
+            .toBeTruthy();
+
+        [{pattern}] = register([], '/test');
+        expect(pattern.exec('/test'))
+            .toBeTruthy();
+        expect(pattern.exec('/test?key=value'))
+            .toBeTruthy();
+    });
+
+    it('should generate a pattern that ignores hash changes', () => {
+        let [{pattern}] = register([], '/:test');
+        expect(pattern.exec('/abcd#'))
+            .toBeTruthy();
+        expect(pattern.exec('/dcba#anchor'))
+            .toBeTruthy();
+
+        [{pattern}] = register([], '/test');
+        expect(pattern.exec('/test#'))
+            .toBeTruthy();
+        expect(pattern.exec('/test#anchor'))
             .toBeTruthy();
     });
 

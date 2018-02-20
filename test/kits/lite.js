@@ -63,5 +63,28 @@ describe('lite', () => {
         await sleep();
         expect(wrapper.innerHTML)
             .toBe('xyz');
+        app('/:test', ({test}) => () => test);
+        app.redirect('/nav?test');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('nav');
+    });
+
+    it('should ignore hash navigation', async () => {
+        const app = lite(wrapper);
+        app.setState({});
+        app('/test', () => () => 'xyz');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('');
+        app.redirect('/test#test');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('xyz');
+        app('/:test', ({test}) => () => test);
+        app.redirect('/nav#test');
+        await sleep();
+        expect(wrapper.innerHTML)
+            .toBe('nav');
     });
 });

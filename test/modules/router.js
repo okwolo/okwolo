@@ -2,6 +2,7 @@
 
 const r = require('../../src/modules/router');
 const rr = require('../../src/modules/router.register');
+const rrl = require('../../src/modules/router.register-lite');
 const rf = require('../../src/modules/router.fetch');
 
 describe('router', () => {
@@ -96,7 +97,7 @@ describe('router', () => {
 
             it('should use a queue', () => {
                 const test = jest.fn();
-                const app = o(r, rr, rf);
+                const app = o(r, rrl, rf);
                 app.use({route: {
                     path: '/xxx',
                     handler: () => {
@@ -116,7 +117,7 @@ describe('router', () => {
 
             it('should accumulate params and pass them to the handler', () => {
                 const test = jest.fn();
-                const app = o(r, rr, rf);
+                const app = o(r, rrl, rf);
                 app.use({route: {
                     path: '/user/:id/fetch/:field',
                     handler: test,

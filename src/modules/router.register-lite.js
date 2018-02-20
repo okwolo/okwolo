@@ -14,10 +14,10 @@ const createPattern = (path) => {
     const pattern = path
         // the colon character is not escaped since it is used to denote tags.
         .replace(/([^\w:])/g, '\\$1')
-        .replace(keyPattern, '([^/]*)');
+        .replace(keyPattern, '([^/#?]*)');
 
     // adds a condition to ignore the contents of the query string.
-    return new RegExp(`^${pattern}(:?\\?.*)?$`);
+    return new RegExp(`^${pattern}(:?[?#][^]*)?$`);
 };
 
 module.exports = ({send}) => {
