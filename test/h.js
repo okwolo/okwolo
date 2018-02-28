@@ -23,7 +23,7 @@ describe('h', () => {
             .toThrow(/attribute/);
     });
 
-    it('should not fail when attributes or children are ommitted', () => {
+    it('should not fail when attributes or children are omitted', () => {
         expect(() => h('div'))
             .not.toThrow(Error);
     });

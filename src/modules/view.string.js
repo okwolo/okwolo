@@ -72,7 +72,7 @@ const renderToString = (target, _vdom) => {
         tagName = tagName.toLowerCase();
 
         // early return in the case the element is a recognized singleton.
-        // there it also checks that the element does not have descendents.
+        // there it also checks that the element does not have descendants.
         if (isDefined(singletons[tagName]) && childOrder.length < 1) {
             return [`<${`${tagName} ${formattedAttributes}`.trim()} />`];
         }

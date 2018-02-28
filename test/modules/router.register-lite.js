@@ -14,7 +14,7 @@ describe('router.register-lite', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should apped to and return the store', () => {
+    it('should append to and return the store', () => {
         const store = register([0, 0], '/test', null);
         expect(store)
             .toHaveLength(3);

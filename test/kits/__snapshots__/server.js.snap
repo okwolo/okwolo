@@ -17,7 +17,7 @@ exports[`server should correctly render complex structures 1`] = `
           <a href="https://example.com">Fran&#xE7;ais</a>
         </div>
       </div>
-      <div id="swimlanes"></div>
+      <div id="swim"></div>
     </div>
   </center>
 </span>

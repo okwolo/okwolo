@@ -219,7 +219,7 @@ describe('view.dom', () => {
                     .toThrow(/attribute/);
             });
 
-            it('should not fail when attributes or children are ommitted', () => {
+            it('should not fail when attributes or children are omitted', () => {
                 const app = o(v, vb, vd);
                 app.send('state', {});
                 expect(() => app.send('blob.builder', () => ['div']))
@@ -228,7 +228,7 @@ describe('view.dom', () => {
         });
 
         describe('update', () => {
-            it('should rerender the new dom', async () => {
+            it('should re-render the new dom', async () => {
                 const app = o(v, vb, vd);
                 app.send('blob.builder', (s) => [s, {}, [s]]);
                 app.send('state', 'a');

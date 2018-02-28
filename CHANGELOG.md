@@ -2,6 +2,7 @@
 
 * added support for raw regexp in router modules
 * added support for hash navigation in lite-router
+* added cache for parsed tagNames
 
 ## v3.3.1
 
@@ -18,7 +19,7 @@
 ## v3.2.0
 
 * build function blob now receives a queue as second argument
-* seperated the vdom diff/update from the resulting DOM changes
+* separated the vdom diff/update from the resulting DOM changes
 * made it safer to use the component's update function inside builder
 * small performance improvements
 * removed dist directory from npm file list
@@ -42,11 +43,11 @@
 
 * added an alert when `view` is waiting to render
 * forced direct kit requires
-* removed pre/postbuild blobs from `view`
+* removed pre/post-build blobs from `view`
 
 ## v2.0.0
 
-* implemented keyed diffs in `view.dom`'s udpate function
+* implemented keyed diffs in `view.dom`'s update function
 * eliminated multiple packages in favor of internal modules
 * added kits at the top level of the package
 * moved api responsibilities into modules (from core)

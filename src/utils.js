@@ -17,7 +17,7 @@ const prettyPrint = (obj) => {
     return `\n>>> ${indented}`;
 };
 
-// all typechecks should only return bools.
+// all type-checks should only return boolean values.
 module.exports.isDefined = (value) => {
     return value !== undefined;
 };

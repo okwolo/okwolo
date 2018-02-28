@@ -21,7 +21,7 @@ const {
 
 module.exports = ({on, send}, global) => {
     // keeps track of all the registered routes. the format/type of this variable
-    // is not enforced by this module and it is left to the regisiter and fetch
+    // is not enforced by this module and it is left to the register and fetch
     // functions to validate the values.
     let store;
 

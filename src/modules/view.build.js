@@ -19,7 +19,7 @@ const {
 // ancestry helper which handles immutability and common logic. this code is
 // implemented as a class contrarily to the patterns in the rest of this
 // project. the decision was made as an optimization to prevent new functions
-// from being created on each instanciation.
+// from being created on each instantiation.
 class Genealogist {
     constructor(list = []) {
         this.list = list;
@@ -49,7 +49,7 @@ class Genealogist {
     }
 
     // adding a level returns a new instance of genealogist and does not
-    // mutate the undelying list.
+    // mutate the underlying list.
     add(tag, key) {
         return new Genealogist(this.list.concat([{tag, key}]));
     }
@@ -105,8 +105,8 @@ const classnames = (...args) => {
 module.exports = ({send}, global) => {
     let tagCache = cache(1000);
 
-    // will build a vdom structure from the output of the app's builder funtions. this
-    // output must be valid element syntax, or an expception will be thrown.
+    // will build a vdom structure from the output of the app's builder functions. this
+    // output must be valid element syntax, or an exception will be thrown.
     const build = (element, queue, ancestry, parentIndex, fromComponent, componentIdentity) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
@@ -152,13 +152,13 @@ module.exports = ({send}, global) => {
             assert(isArray(children), 'view.build : component\'s children is not an array', addr, element, children);
 
             // component generator is given to update function and used to create
-            // the inital version of the component.
+            // the initial version of the component.
             let gen;
             // the child ancestry will be modified after the component is built
             // for the first time by setting the fromComponent argument to true.
             let childAncestry = ancestry;
             // if this iteration of component is the direct child of another
-            // component, it should share it's ancestry and identity. this is
+            // component, it should share its ancestry and identity. this is
             // caused by the design choice of having components produce no extra
             // level in the vdom structure. instead, the element that represents
             // a component will have a populated componentIdentity key and be
@@ -168,8 +168,8 @@ module.exports = ({send}, global) => {
                 // when a component is updated, the update blob in the view.dom
                 // module compares the provided identity with the vdom element's
                 // identity. if both values are strictly equal, a component update
-                // is allowed to happen. the mecahnism is used to prevent update
-                // events from ocurring on vdom elements that are not the expected
+                // is allowed to happen. the mechanism is used to prevent update
+                // events from occurring on vdom elements that are not the expected
                 // component. this can happen if the component's update function
                 // is called after the component's position is replaced in the view.
                 componentIdentity = {};
@@ -177,7 +177,7 @@ module.exports = ({send}, global) => {
             const update = (...args) => {
                 // build caller's queue is used to make sure the childAncestry
                 // has been modified and that the vdom stored in the view module
-                // has beeen updated. this is necessary because the sync event
+                // has been updated. this is necessary because the sync event
                 // requires the component's complete address as well as a vdom
                 // tree which actually contains the parsed element.
                 queue.add(() => {
@@ -203,7 +203,7 @@ module.exports = ({send}, global) => {
         let match = tagCache.get(tagType);
         if (!isDefined(match)) {
             // regular expression to capture values from the shorthand element tag syntax.
-            // it allows each section to be seperated by any amount of spaces, but enforces
+            // it allows each section to be separated by any amount of spaces, but enforces
             // the order of the capture groups (tagName #id .className | style)
             match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
             assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);

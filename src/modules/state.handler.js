@@ -54,7 +54,7 @@ module.exports = ({on, send}) => {
             // if the target is a function, it is called with the current state.
             if (isFunction(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
-                // since the typechecks cannot be ran when the action is added,
+                // since the type checks cannot be ran when the action is added,
                 // they need to be done during the action.
                 assert(isArray(targetAddress), `state.handler : dynamic target of action ${type} is not an array`, targetAddress);
                 targetAddress.forEach((address) => {
@@ -112,7 +112,7 @@ module.exports = ({on, send}) => {
             execute(_state, _type, _params);
         }];
 
-        // this code will create an array where all elements are funtions which
+        // this code will create an array where all elements are functions which
         // call the closest function with a lower index. the returned values for
         // the state, action type and params are also passed down to the next
         // function in the chain.
@@ -172,7 +172,7 @@ module.exports = ({on, send}) => {
     on('action', ({type, params = {}} = {}) => {
         // the only action that does not need the state to have already
         // been changed is the override action.
-        assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overrwritten');
+        assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overwritten');
         stateHasBeenOverwritten = true;
         assert(isString(type), 'state.act : action type is not a string', type);
         // the queue will make all actions wait to be ran sequentially.

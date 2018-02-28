@@ -245,7 +245,7 @@ describe('standard', () => {
     });
 
     describe('update', () => {
-        it('should trigger a rerender', () => {
+        it('should trigger a re-render', () => {
             const app = standard(wrapper);
             const test = jest.fn();
             app.setState({});

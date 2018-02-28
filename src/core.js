@@ -11,7 +11,7 @@ const {
 } = require('./utils');
 
 // version not taken from package.json to avoid including the whole file
-// in the unminified bundle.
+// in the un-minified bundle.
 const version = '3.3.1';
 
 const makeBus = () => {
@@ -79,7 +79,7 @@ module.exports = (config = {}) => {
     // kit options require the browser, but the window global is not defined.
     const okwolo = (target, global) => {
         if (options.browser) {
-            // global defaults to browser env's window
+            // global defaults to browser environment's window
             if (!isDefined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
                 global = window;
@@ -92,7 +92,7 @@ module.exports = (config = {}) => {
         let primary = () => {};
 
         // the api will be added to this variable. It is also returned by the
-        // enclosing functionion.
+        // enclosing function.
         const app = (...args) => {
             return primary(...args);
         };

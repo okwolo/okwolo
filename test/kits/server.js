@@ -194,7 +194,7 @@ describe('server', () => {
                                 ]],
                             ]],
                         ]],
-                        ['div#swimlanes', {}],
+                        ['div#swim', {}],
                     ]],
                 ]],
             ]]

@@ -1,6 +1,6 @@
 'use strict';
 
-// the path-to-regexp dependency is used to match paths. since it's behavior is
+// the path-to-regexp dependency is used to match paths. since its behavior is
 // very complex, there are no test cases for that part of the router.register
 // module. the tests in this suite focus mostly on the output format.
 
@@ -18,7 +18,7 @@ describe('router.register', () => {
             .toBeInstanceOf(Function);
     });
 
-    it('should apped to and return the store', () => {
+    it('should append to and return the store', () => {
         const store = register([0, 0], '/test', null);
         expect(store)
             .toHaveLength(3);

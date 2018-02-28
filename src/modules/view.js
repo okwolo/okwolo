@@ -71,11 +71,11 @@ module.exports = ({on, send}) => {
     });
 
     // tracks whether the app has been drawn. this information is used to
-    // determing if the update or draw function should be called.
+    // determining if the update or draw function should be called.
     let hasDrawn = false;
 
     // tracks whether there are enough pieces of the rendering pipeline to
-    // succesfully create and render.
+    // successfully create and render.
     let canDraw = false;
 
     // logs an error if the view has not been drawn after the delay since
@@ -89,13 +89,13 @@ module.exports = ({on, send}) => {
         }
         waitTimer = setTimeout(() => {
             // formatting all blocking variables into an error message.
-            const vals = {builder, state, target};
-            Object.keys(vals)
+            const values = {builder, state, target};
+            Object.keys(values)
                 .forEach((key) => {
-                    vals[key] = vals[key] ? 'ok' : 'waiting';
+                    values[key] = values[key] ? 'ok' : 'waiting';
                 });
             // assertion error in the timeout will not interrupt execution.
-            assert(canDraw, `view : still waiting to draw after ${Math.round(delay/1000)}s`, vals);
+            assert(canDraw, `view : still waiting to draw after ${Math.round(delay/1000)}s`, values);
         }, delay);
     };
 
@@ -131,7 +131,7 @@ module.exports = ({on, send}) => {
     });
 
     // message which allows for scoped updates. since the successor argument is
-    // not passed through the build/builder pipeline, it's use is loosely
+    // not passed through the build/builder pipeline, its use is loosely
     // restricted to the build module (which should have a reference to itself).
     on('sync', (address, successor, identity) => {
         assert(hasDrawn, 'view.sync : cannot sync component before app has drawn');
@@ -147,7 +147,7 @@ module.exports = ({on, send}) => {
         },
     });
 
-    // primary functionality will be to replace buider. this is overwritten
+    // primary functionality will be to replace builder. this is overwritten
     // by router modules to more easily associate routes to builders.
     send('blob.primary', (init) => {
         // calling init for consistency with the router primary which passes

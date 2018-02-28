@@ -22,7 +22,7 @@ module.exports = ({on, send}) => {
         target: [],
         handler: () => {
             // can only undo if there is at least one previous state which
-            // isin't the initial one.
+            // isn't the initial one.
             if (past.length > 0 && past[past.length-1] !== initial) {
                 future.push(current);
                 return past.pop();
@@ -69,7 +69,7 @@ module.exports = ({on, send}) => {
 
         // objects stored into current will be moved to the past/future stacks.
         // it is assumed that the value given to this watcher is a copy of the
-        // current state who's reference is not exposed enywhere else.
+        // current state who's reference is not exposed anywhere else.
         current = state;
     });
 

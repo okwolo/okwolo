@@ -10,7 +10,7 @@ const {
     isNode,
 } = require('../utils');
 
-// finds the longest commmon of equal items between two input arrays.
+// finds the longest common of equal items between two input arrays.
 // this function can make some optimizations by assuming that both
 // arrays are of equal length, that all keys are unique and that all
 // keys are found in both arrays.
@@ -182,7 +182,7 @@ module.exports = ({send}, global) => {
             return;
         }
 
-        // at this point in the function it has been estblished that the
+        // at this point in the function it has been established that the
         // original and successor nodes are of the same type. this block
         // handles the case where two text nodes are compared.
         if (original.text !== undefined) {
@@ -235,7 +235,7 @@ module.exports = ({send}, global) => {
         }
 
         // the remainder of this function handles the reordering of the
-        // node's children. current order in the dom is diffed agains the
+        // node's children. current order in the dom is diffed against the
         // correct order. as an optimization, only the longest common chain
         // of keys is kept in place and the nodes that are supposed to be
         // before and after are moved into position. this solution was

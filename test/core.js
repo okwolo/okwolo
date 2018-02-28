@@ -139,7 +139,7 @@ describe('core', () => {
                     .toBe('test');
             });
 
-            it('should reject malformed additionnal api', () => {
+            it('should reject malformed additional api', () => {
                 const app = core()();
                 expect(() => app.send('blob.api', 'test'))
                     .toThrow(/api.*object[^]*test/);
@@ -204,7 +204,7 @@ describe('core', () => {
         });
 
         describe('browser', () => {
-            it('should check for a browser environemnt', () => {
+            it('should check for a browser environment', () => {
                 const _window = global.window;
                 delete global.window;
                 expect(() => core({options: {
