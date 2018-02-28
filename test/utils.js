@@ -391,4 +391,50 @@ describe('utils', () => {
             });
         });
     });
+
+    describe('cache', () => {
+        const {cache} = utils;
+
+        it('should cache values', () => {
+            const c = cache();
+            c.set('a', '1');
+            expect(c.get('a'))
+                .toBe('1');
+            c.set('ab', '2');
+            c.set('abc', '3');
+            expect(c.get('a'))
+                .toBe('1');
+            expect(c.get('ab'))
+                .toBe('2');
+            expect(c.get('abc'))
+                .toBe('3');
+        });
+
+        it('should return undefined on miss', () => {
+            const c = cache();
+            expect(c.get('a'))
+                .toBe(undefined);
+        });
+
+        it('should allow size limit', () => {
+            const c = cache(2);
+            const test = {};
+            c.set('1', test);
+            c.set('2', test);
+            c.set('3', test);
+            expect(c.get('3'))
+                .toBe(test);
+            expect(c.get('2'))
+                .toBe(test);
+            expect(c.get('1'))
+                .not.toBe(test);
+        });
+
+        it('erased cache items should be undefined', () => {
+            const c = cache(0);
+            c.set('test', null);
+            expect(c.get('test'))
+                .toBe(undefined);
+        });
+    });
 });

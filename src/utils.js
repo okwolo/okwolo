@@ -116,3 +116,32 @@ module.exports.makeQueue = () => {
 
     return {add, done};
 };
+
+// creates a cache with a bounded number of elements. getting values from
+// the cache has almost the same performance as using a naked object. setting
+// keys will only become slower after the max size is reached. returns
+// undefined when key is not in cache.
+module.exports.cache = (size = 500) => {
+    const map = {};
+    const order = [];
+
+    // set does not check that the key is already in the cache or in the
+    // delete order. it is assumed the user of the cache will be calling
+    // get before set and will therefore know if the key was already defined.
+    const set = (key, value) => {
+        map[key] = value;
+        order.push(key);
+        if (order.length > size) {
+            map[order.shift()] = undefined;
+        }
+    };
+
+    // querying a key will not update its position in the delete order. this
+    // option was not implemented because it would be a significant performance
+    // hit with limited benefits for the current use case.
+    const get = (key) => {
+        return map[key];
+    };
+
+    return {set, get};
+};

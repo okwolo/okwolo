@@ -5,6 +5,7 @@
 
 const {
     assert,
+    cache,
     isArray,
     isBoolean,
     isDefined,
@@ -101,7 +102,9 @@ const classnames = (...args) => {
         .join(' ');
 };
 
-module.exports = ({send}) => {
+module.exports = ({send}, global) => {
+    let tagCache = cache(1000);
+
     // will build a vdom structure from the output of the app's builder funtions. this
     // output must be valid element syntax, or an expception will be thrown.
     const build = (element, queue, ancestry, parentIndex, fromComponent, componentIdentity) => {
@@ -197,14 +200,18 @@ module.exports = ({send}) => {
         assert(isObject(attributes), 'view.build : attributes is not an object', addr, element, attributes);
         assert(isArray(childList), 'view.build : children of vdom object is not an array', addr, element, childList);
 
-        // regular expression to capture values from the shorthand element tag syntax.
-        // it allows each section to be seperated by any amount of spaces, but enforces
-        // the order of the capture groups (tagName #id .className | style)
-        const match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
-        assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);
-        // first element is not needed since it is the entire matched string. default
-        // values are not used to avoid adding blank attributes to the nodes.
-        let [, tagName, id, className, style] = match;
+        let match = tagCache.get(tagType);
+        if (!isDefined(match)) {
+            // regular expression to capture values from the shorthand element tag syntax.
+            // it allows each section to be seperated by any amount of spaces, but enforces
+            // the order of the capture groups (tagName #id .className | style)
+            match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
+            assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);
+            // first element is not needed since it is the entire matched string. default
+            // values are not used to avoid adding blank attributes to the nodes.
+            tagCache.set(tagType, match);
+        }
+        const [, tagName, id, className, style] = match;
 
         // priority is given to the id defined in the attributes.
         if (isDefined(id) && !isDefined(attributes.id)) {
@@ -224,10 +231,9 @@ module.exports = ({send}) => {
                 attributes.style = style;
             } else {
                 // extra semicolon is added if not present to prevent conflicts.
-                style = (style + ';').replace(/;;$/g, ';');
                 // styles defined in the attributes are given priority by being
                 // placed after the ones from the tag.
-                attributes.style = style + attributes.style;
+                attributes.style = (style + ';').replace(/;;$/g, ';') + attributes.style;
             }
         }
 
