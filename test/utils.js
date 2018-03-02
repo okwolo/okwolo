@@ -437,4 +437,100 @@ describe('utils', () => {
                 .toBe(undefined);
         });
     });
+
+    describe('classnames', () => {
+        const {classnames} = utils;
+
+        it('should concat string arguments', () => {
+            expect(classnames())
+                .toBe('');
+            expect(classnames('a', 'b', 'c'))
+                .toBe('a b c');
+        });
+
+        it('should spread array arguments', () => {
+            expect(classnames(['a', 'b', 'c']))
+                .toBe('a b c');
+            expect(classnames(['a', 'b'], ['c']))
+                .toBe('a b c');
+        });
+
+        it('should spread nested array arguments', () => {
+            expect(classnames([['a', ['b']], 'c']))
+                .toBe('a b c');
+        });
+
+        it('should extract truthy object keys', () => {
+            expect(classnames({
+                a: true,
+                1: false,
+                b: new Date(),
+                2: null,
+                c: {},
+            }))
+                .toBe('a b c');
+            expect(classnames({a: 1, b: 1}, {c: 1, d: 0}))
+                .toBe('a b c');
+        });
+
+        it('should extract truthy keys from arrays of objects', () => {
+            expect(classnames([{a: 1, b: 2}, [[{c: 1}]]]))
+                .toBe('a b c');
+        });
+
+        it('should ignore falsy values', () => {
+            expect(classnames(null, [undefined], [[false]]))
+                .toBe('');
+        });
+    });
+
+    describe('Genealogist', () => {
+        // TODO
+    });
+
+    // NOTE: longestChain function requires both arrays to be of the same
+    //       length, that all the keys are unique and that both arrays have
+    //       all the keys. (same values but randomized order)
+    describe('longestChain', () => {
+        const {longestChain} = utils;
+
+        it('should return the start/end index in first array', () => {
+            expect(longestChain(
+                ['a', 'b', 'c', 'd', 'e'],
+                ['a', 'b', 'c', 'e', 'd'],
+            ))
+                .toEqual({
+                    start: 0,
+                    end: 2,
+                });
+        });
+
+        it('should find the longestChain', () => {
+            const cases = 128;
+            const scale = 256;
+
+            for (let i = 0; i < cases; i++) {
+                const total = 2 + scale * Math.random() >> 0;
+                const chain = 1 + (total - 1) * Math.random() >> 0;
+
+                const start = (total - chain) * Math.random() >> 0;
+                const end = start + chain;
+
+                const orderedList = Array(total).fill(0).map((a, i) => i);
+                const mixedList = orderedList.map((i) => {
+                    if (i < start || i > end) {
+                        return Math.random();
+                    }
+                    return i;
+                });
+
+                expect(longestChain(orderedList, mixedList))
+                    .toEqual({start, end});
+            }
+        });
+    });
+
+    describe('diff', () => {
+        // TODO
+    });
 });

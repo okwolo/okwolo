@@ -6,6 +6,8 @@
 const {
     assert,
     cache,
+    classnames,
+    Genealogist,
     isArray,
     isBoolean,
     isDefined,
@@ -15,92 +17,6 @@ const {
     isObject,
     isString,
 } = require('../utils');
-
-// ancestry helper which handles immutability and common logic. this code is
-// implemented as a class contrarily to the patterns in the rest of this
-// project. the decision was made as an optimization to prevent new functions
-// from being created on each instantiation.
-class Genealogist {
-    constructor(list = []) {
-        this.list = list;
-
-        // precalculating the formatted address for use in error assertions.
-        let formatted = 'root';
-        for (let i = 0; i < this.list.length; ++i) {
-            formatted += ' -> ';
-            const {tag} = this.list[i];
-            // tag's length is capped to reduce clutter.
-            formatted += tag.substr(0, 16);
-            if (tag.length > 16) {
-                formatted += '...';
-            }
-        }
-        this.formatted = formatted;
-    }
-
-    // formats the address with the parent index appended to the end.
-    // this is useful for errors that happen before an element's tagName
-    // is parsed and only the parentIndex is known.
-    f(parentIndex) {
-        if (parentIndex === undefined) {
-            return this.formatted;
-        }
-        return `${this.formatted} -> {{${parentIndex}}}`;
-    }
-
-    // adding a level returns a new instance of genealogist and does not
-    // mutate the underlying list.
-    add(tag, key) {
-        return new Genealogist(this.list.concat([{tag, key}]));
-    }
-
-    // adds a level to the current instance. this method should be used
-    // with caution since it modifies the list directly. should be used
-    // in conjunction with copy method to ensure no list made invalid.
-    addUnsafe(tag, key) {
-        this.list.push({tag, key});
-        return this;
-    }
-
-    // returns a new instance of genealogist with a copy of the underlying list.
-    copy() {
-        return new Genealogist(this.list.slice());
-    }
-
-    // returns the list of keys in the ancestry. this value is represents
-    // the element's "address".
-    keys() {
-        const temp = [];
-        if (this.list.length < 2) {
-            return [];
-        }
-        // skip the first array element (root element has no parent key)
-        for (let i = 1; i < this.list.length; ++i) {
-            temp.push(this.list[i].key);
-        }
-        return temp;
-    };
-}
-
-// simulates the behavior of the classnames npm package. strings are concatenated,
-// arrays are spread and objects keys are included if their value is truthy.
-const classnames = (...args) => {
-    return args
-        .map((arg) => {
-            if (isString(arg)) {
-                return arg;
-            } else if (isArray(arg)) {
-                return classnames(...arg);
-            } else if (isObject(arg)) {
-                return classnames(
-                    Object.keys(arg)
-                        .map((key) => arg[key] && key)
-                );
-            }
-        })
-        .filter(Boolean)
-        .join(' ');
-};
 
 module.exports = ({send}, global) => {
     let tagCache = cache(1000);

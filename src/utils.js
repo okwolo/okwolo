@@ -18,71 +18,84 @@ const prettyPrint = (obj) => {
 };
 
 // all type-checks should only return boolean values.
-module.exports.isDefined = (value) => {
+const isDefined = (value) => {
     return value !== undefined;
 };
+module.exports.isDefined = isDefined;
 
-module.exports.isNull = (value) => {
+const isNull = (value) => {
     return value === null;
 };
+module.exports.isNull = isNull;
 
-module.exports.isArray = (value) => {
+const isArray = (value) => {
     return Array.isArray(value);
 };
+module.exports.isArray = isArray;
 
-module.exports.isFunction = (value) => {
+const isFunction = (value) => {
     return typeof value === 'function';
 };
+module.exports.isFunction = isFunction;
 
-module.exports.isString = (value) => {
+const isString = (value) => {
     return typeof value === 'string';
 };
+module.exports.isString = isString;
 
-module.exports.isNumber = (value) => {
+const isNumber = (value) => {
     return typeof value === 'number';
 };
+module.exports.isNumber = isNumber;
 
-module.exports.isBoolean = (value) => {
+const isBoolean = (value) => {
     return typeof value === 'boolean';
 };
+module.exports.isBoolean = isBoolean;
 
-module.exports.isObject = (value) => {
+const isObject = (value) => {
     return (!!value) && (value.constructor === Object);
 };
+module.exports.isObject = isObject;
 
-module.exports.isNode = (value) => {
+const isNode = (value) => {
     return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
 };
+module.exports.isNode = isNode;
 
-module.exports.isRegExp = (value) => {
+const isRegExp = (value) => {
     return value instanceof RegExp;
 };
+module.exports.isRegExp = isRegExp;
 
-module.exports.isBrowser = () => {
+const isBrowser = () => {
     return typeof window !== 'undefined';
 };
+module.exports.isBrowser = isBrowser;
 
-module.exports.deepCopy = (obj) => {
+const deepCopy = (obj) => {
     // undefined value would otherwise throw an error at parsing time.
     if (obj === undefined) {
         return undefined;
     }
     return JSON.parse(JSON.stringify(obj));
 };
+module.exports.deepCopy = deepCopy;
 
 // will throw an error containing the message and the culprits if the
 // assertion is falsy. the message is expected to contain information
 // about the location of the error followed by a meaningful error message.
 // (ex. "router.redirect : url is not a string")
-module.exports.assert = (assertion, message, ...culprits) => {
+const assert = (assertion, message, ...culprits) => {
     if (!assertion) {
         throw new Error(`@okwolo.${message}${culprits.map(prettyPrint).join('')}`);
     }
 };
+module.exports.assert = assert;
 
 // this function will create a queue object which can be used to defer
 // the execution of functions.
-module.exports.makeQueue = () => {
+const makeQueue = () => {
     const queue = [];
 
     // runs the first function in the queue if it exists. this specifically
@@ -116,12 +129,13 @@ module.exports.makeQueue = () => {
 
     return {add, done};
 };
+module.exports.makeQueue = makeQueue;
 
 // creates a cache with a bounded number of elements. getting values from
 // the cache has almost the same performance as using a naked object. setting
 // keys will only become slower after the max size is reached. returns
 // undefined when key is not in cache.
-module.exports.cache = (size = 500) => {
+const cache = (size = 500) => {
     const map = {};
     const order = [];
 
@@ -145,3 +159,167 @@ module.exports.cache = (size = 500) => {
 
     return {set, get};
 };
+module.exports.cache = cache;
+
+// simulates the behavior of the classnames npm package. strings are concatenated,
+// arrays are spread and objects keys are included if their value is truthy.
+const classnames = (...args) => {
+    return args
+        .map((arg) => {
+            if (isString(arg)) {
+                return arg;
+            } else if (isArray(arg)) {
+                return classnames(...arg);
+            } else if (isObject(arg)) {
+                return classnames(
+                    Object.keys(arg)
+                        .map((key) => arg[key] && key)
+                );
+            }
+        })
+        .filter(Boolean)
+        .join(' ');
+};
+module.exports.classnames = classnames;
+
+// ancestry helper which handles immutability and common logic. this code is
+// implemented as a class contrarily to the patterns in the rest of this
+// project. the decision was made as an optimization to prevent new functions
+// from being created on each instantiation.
+class Genealogist {
+    constructor(list = []) {
+        this.list = list;
+
+        // precalculating the formatted address for use in error assertions.
+        let formatted = 'root';
+        for (let i = 0; i < this.list.length; ++i) {
+            formatted += ' -> ';
+            const {tag} = this.list[i];
+            // tag's length is capped to reduce clutter.
+            formatted += tag.substr(0, 16);
+            if (tag.length > 16) {
+                formatted += '...';
+            }
+        }
+        this.formatted = formatted;
+    }
+
+    // formats the address with the parent index appended to the end.
+    // this is useful for errors that happen before an element's tagName
+    // is parsed and only the parentIndex is known.
+    f(parentIndex) {
+        if (parentIndex === undefined) {
+            return this.formatted;
+        }
+        return `${this.formatted} -> {{${parentIndex}}}`;
+    }
+
+    // adding a level returns a new instance of genealogist and does not
+    // mutate the underlying list.
+    add(tag, key) {
+        return new Genealogist(this.list.concat([{tag, key}]));
+    }
+
+    // adds a level to the current instance. this method should be used
+    // with caution since it modifies the list directly. should be used
+    // in conjunction with copy method to ensure no list made invalid.
+    addUnsafe(tag, key) {
+        this.list.push({tag, key});
+        return this;
+    }
+
+    // returns a new instance of genealogist with a copy of the underlying list.
+    copy() {
+        return new Genealogist(this.list.slice());
+    }
+
+    // returns the list of keys in the ancestry. this value is represents
+    // the element's "address".
+    keys() {
+        const temp = [];
+        if (this.list.length < 2) {
+            return [];
+        }
+        // skip the first array element (root element has no parent key)
+        for (let i = 1; i < this.list.length; ++i) {
+            temp.push(this.list[i].key);
+        }
+        return temp;
+    };
+}
+module.exports.Genealogist = Genealogist;
+
+// finds the longest common of equal items between two input arrays.
+// this function can make some optimizations by assuming that both
+// arrays are of equal length, that all keys are unique and that all
+// keys are found in both arrays. start and end indices of the chain
+// in the second argument are returned.
+const longestChain = (original, successor) => {
+    const count = successor.length;
+    const half = count / 2;
+
+    // current longest chain reference is saved to compare against new
+    // contenders. the chain's index in the second argument is also kept.
+    let longest = 0;
+    let chainStart = 0;
+    for (let i = 0; i < count; ++i) {
+        const startInc = original.indexOf(successor[i]);
+        const maxInc = Math.min(count - startInc, count - i);
+
+        // start looking after the current index since it is already
+        // known to be equal.
+        let currentLength = 1;
+
+        // loop through all following values until either array is fully
+        // read or the chain of identical values is broken.
+        for (let inc = 1; inc < maxInc; ++inc) {
+            if (successor[i + inc] !== original[startInc + inc]) {
+                break;
+            }
+            currentLength += 1;
+        }
+
+        if (currentLength > longest) {
+            longest = currentLength;
+            chainStart = i;
+        }
+
+        // quick exit if a chain is found that is longer or equal to half
+        // the length of the input arrays since it means there can be no
+        // longer chains.
+        if (longest >= half) {
+            break;
+        }
+    }
+    return {
+        start: chainStart,
+        end: chainStart + longest - 1,
+    };
+};
+module.exports.longestChain = longestChain;
+
+// shallow diff of two objects which returns an array of keys where the value is
+// different. differences include keys who's values have been deleted or added.
+// because there is no reliable way to compare function equality, they are always
+// considered to be different.
+const diff = (original, successor) => {
+    const keys = Object.keys(Object.assign({}, original, successor));
+    const modifiedKeys = [];
+
+    for (let i = 0; i < keys.length; ++i) {
+        const key = keys[i];
+        const valueOriginal = original[key];
+        const valueSuccessor = successor[key];
+
+        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
+            modifiedKeys.push(key);
+        }
+
+        if (valueOriginal !== valueSuccessor) {
+            modifiedKeys.push(key);
+        }
+    }
+
+    return modifiedKeys;
+};
+module.exports.diff = diff;

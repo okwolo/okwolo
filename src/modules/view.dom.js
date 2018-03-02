@@ -5,82 +5,11 @@
 
 const {
     assert,
+    diff,
+    longestChain,
     isDefined,
-    isFunction,
     isNode,
 } = require('../utils');
-
-// finds the longest common of equal items between two input arrays.
-// this function can make some optimizations by assuming that both
-// arrays are of equal length, that all keys are unique and that all
-// keys are found in both arrays.
-const longestChain = (original, successor) => {
-    const count = successor.length;
-    const half = count / 2;
-
-    // current longest chain reference is saved to compare against new
-    // contenders. the chain's index in the second argument is also kept.
-    let longest = 0;
-    let chainStart = 0;
-    for (let i = 0; i < count; ++i) {
-        const startInc = original.indexOf(successor[i]);
-        const maxInc = Math.min(count - startInc, count - i);
-
-        // start looking after the current index since it is already
-        // known to be equal.
-        let currentLength = 1;
-
-        // loop through all following values until either array is fully
-        // read or the chain of identical values is broken.
-        for (let inc = 1; inc < maxInc; ++inc) {
-            if (successor[i + inc] !== original[startInc + inc]) {
-                break;
-            }
-            currentLength += 1;
-        }
-
-        if (currentLength > longest) {
-            longest = currentLength;
-            chainStart = i;
-        }
-
-        // quick exit if a chain is found that is longer or equal to half
-        // the length of the input arrays since it means there can be no
-        // longer chains.
-        if (longest >= half) {
-            break;
-        }
-    }
-    return {
-        start: chainStart,
-        end: chainStart + longest - 1,
-    };
-};
-
-// shallow diff of two objects which returns an array of keys where the value is
-// different. differences include keys who's values have been deleted or added.
-// because there is no reliable way to compare function equality, they are always
-// considered to be different.
-const diff = (original, successor) => {
-    const keys = Object.keys(Object.assign({}, original, successor));
-    const modifiedKeys = [];
-
-    for (let i = 0; i < keys.length; ++i) {
-        const key = keys[i];
-        const valueOriginal = original[key];
-        const valueSuccessor = successor[key];
-
-        if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
-            modifiedKeys.push(key);
-        }
-
-        if (valueOriginal !== valueSuccessor) {
-            modifiedKeys.push(key);
-        }
-    }
-
-    return modifiedKeys;
-};
 
 module.exports = ({send}, global) => {
     // recursively travels vdom to create rendered nodes. after being rendered,
