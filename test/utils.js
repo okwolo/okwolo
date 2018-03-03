@@ -531,6 +531,67 @@ describe('utils', () => {
     });
 
     describe('diff', () => {
-        // TODO
+        const {diff} = utils;
+
+        it('should report modified keys', () => {
+            expect(diff({
+                a: 0,
+                b: 2,
+            }, {
+                b: 2,
+                a: 1,
+            }))
+                .toEqual(['a']);
+        });
+
+        it('should report deleted keys', () => {
+            expect(diff({
+                a: 0,
+                b: 2,
+            }, {
+                a: 1,
+            }))
+                .toEqual(['a', 'b']);
+        });
+
+        it('should report added keys', () => {
+            expect(diff({
+                a: 0,
+            }, {
+                a: 1,
+                b: 2,
+            }))
+                .toEqual(['a', 'b']);
+        });
+
+        it('should correctly compare key types', () => {
+            const obj = {};
+            expect(diff({
+                a: 0,
+                b: 'b',
+                c: null,
+                d: undefined,
+                e: obj,
+            }, {
+                a: 0,
+                b: 'b',
+                c: null,
+                d: undefined,
+                e: obj,
+            }))
+                .toEqual([]);
+        });
+
+        it('should always report functions', () => {
+            const fn = () => 0;
+            expect(diff({
+                a: fn,
+                b: () => 1,
+            }, {
+                a: fn,
+                b: () => 1,
+            }))
+                .toEqual(['a', 'b']);
+        });
     });
 });

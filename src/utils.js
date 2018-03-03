@@ -313,6 +313,7 @@ const diff = (original, successor) => {
 
         if (isFunction(valueOriginal) || isFunction(valueSuccessor)) {
             modifiedKeys.push(key);
+            continue;
         }
 
         if (valueOriginal !== valueSuccessor) {
