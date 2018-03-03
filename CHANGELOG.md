@@ -3,6 +3,7 @@
 * added support for raw regexp in router modules
 * added support for hash navigation in lite-router
 * added cache for parsed tagNames
+* shortened vdom path syntax in build errors
 
 ## v3.3.1
 

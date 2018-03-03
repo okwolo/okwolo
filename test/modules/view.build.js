@@ -121,9 +121,9 @@ describe('view.build', () => {
             ['span#test | height: 2px;', {}, [[]]],
         ]];
         expect(() => build(element1))
-            .toThrow(/root/g);
+            .toThrow(/#/g);
         expect(() => build(element2))
-            .toThrow(/root -> div\.test -> span#test \| heig\.\.\. -> \{\{0\}\}/g);
+            .toThrow(/#. div\.test. span#test \| heig\.\.\.. \{\{0\}\}/g);
     });
 
     it('should pass props and children to components', () => {

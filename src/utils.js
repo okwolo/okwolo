@@ -191,9 +191,9 @@ class Genealogist {
         this.list = list;
 
         // precalculating the formatted address for use in error assertions.
-        let formatted = 'root';
+        let formatted = '#';
         for (let i = 0; i < this.list.length; ++i) {
-            formatted += ' -> ';
+            formatted += '→ ';
             const {tag} = this.list[i];
             // tag's length is capped to reduce clutter.
             formatted += tag.substr(0, 16);
@@ -211,7 +211,7 @@ class Genealogist {
         if (parentIndex === undefined) {
             return this.formatted;
         }
-        return `${this.formatted} -> {{${parentIndex}}}`;
+        return `${this.formatted}→ {{${parentIndex}}}`;
     }
 
     // adding a level returns a new instance of genealogist and does not
@@ -233,16 +233,16 @@ class Genealogist {
         return new Genealogist(this.list.slice());
     }
 
-    // returns the list of keys in the ancestry. this value is represents
-    // the element's "address".
+    // returns the list of keys in the ancestry. this value represents the
+    // element's "address".
     keys() {
-        const temp = [];
         if (this.list.length < 2) {
             return [];
         }
-        // skip the first array element (root element has no parent key)
-        for (let i = 1; i < this.list.length; ++i) {
-            temp.push(this.list[i].key);
+        // skip the first array element (root vnode has no parent)
+        const temp = Array(this.list.length - 1);
+        for (let i = 0; i < temp.length; ++i) {
+            temp[i] = this.list[i + 1].key;
         }
         return temp;
     };

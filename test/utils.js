@@ -485,7 +485,139 @@ describe('utils', () => {
     });
 
     describe('Genealogist', () => {
-        // TODO
+        const {Genealogist} = utils;
+
+        describe('add', () => {
+            it('should add an ancestor to the list', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                expect(g.list.length)
+                    .toBe(1);
+                g = g.add('tag2', 'key2');
+                expect(g.list.length)
+                    .toBe(2);
+            });
+
+            it('should not mutate the list', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                expect(g.list.length)
+                    .toBe(1);
+                g.add('tag2', 'key2');
+                expect(g.list.length)
+                    .toBe(1);
+            });
+        });
+
+        describe('addUnsafe', () => {
+            it('should add an ancestor to the list', () => {
+                let g = new Genealogist();
+                g = g.addUnsafe('tag1', 'key1');
+                expect(g.list.length)
+                    .toBe(1);
+                g = g.addUnsafe('tag2', 'key2');
+                expect(g.list.length)
+                    .toBe(2);
+            });
+
+            it('should mutate the list', () => {
+                const g = new Genealogist();
+                g.addUnsafe('tag1', 'key1');
+                expect(g.list.length)
+                    .toBe(1);
+                g.addUnsafe('tag2', 'key2');
+                expect(g.list.length)
+                    .toBe(2);
+            });
+        });
+
+        describe('f', () => {
+            it('should print a formatted view of all tags', () => {
+                let g = new Genealogist();
+                expect(g.f())
+                    .toBe('#');
+                g = g.add('tag1', 'key1');
+                g = g.add('tag2', 'key2');
+                expect(g.f())
+                    .toBe('#→ tag1→ tag2');
+            });
+
+            it('should include the final key if passed as arg', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                g = g.add('tag2', 'key2');
+                expect(g.f(0))
+                    .toBe('#→ tag1→ tag2→ {{0}}');
+                expect(g.f('test'))
+                    .toBe('#→ tag1→ tag2→ {{test}}');
+            });
+
+            it('should pre-compute formatted view on creation', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                expect(g.f())
+                    .toBe('#→ tag1');
+                g.addUnsafe('tag2', 'key2');
+                expect(g.f())
+                    .toBe('#→ tag1');
+            });
+        });
+
+        describe('copy', () => {
+            it('should copy the ancestry', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                const g1 = g.add('tag2', 'key2');
+                const g2 = g1.copy();
+                expect(g1.list.length)
+                    .toBe(g2.list.length);
+                expect(g1.f())
+                    .toBe(g2.f());
+                expect(g1.keys())
+                    .toEqual(g2.keys());
+            });
+
+            it('should have independent ancestry', () => {
+                const g = new Genealogist();
+                const g1 = g.add('tag1', 'key1');
+                const g2 = g1.copy();
+                g2.addUnsafe('tag2', 'key2');
+                expect(g1.list.length)
+                    .not.toBe(g2.list.length);
+                expect(g1.keys())
+                    .not.toEqual(g2.keys());
+            });
+        });
+
+        describe('keys', () => {
+            it('should return all keys except the first', () => {
+                let g = new Genealogist();
+                expect(g.keys())
+                    .toEqual([]);
+                g = g.add('tag1', 'key1');
+                expect(g.keys())
+                    .toEqual([]);
+                g = g.add('tag2', 'key2');
+                expect(g.keys())
+                    .toEqual(['key2']);
+                g = g.add('tag3', 'key3');
+                expect(g.keys())
+                    .toEqual(['key2', 'key3']);
+            });
+
+            it('should compute compute keys at call time', () => {
+                let g = new Genealogist();
+                g = g.add('tag1', 'key1');
+                expect(g.keys())
+                    .toEqual([]);
+                g = g.add('tag2', 'key2');
+                expect(g.keys())
+                    .toEqual(['key2']);
+                g.addUnsafe('tag3', 'key3');
+                expect(g.keys())
+                    .toEqual(['key2', 'key3']);
+            });
+        });
     });
 
     // NOTE: longestChain function requires both arrays to be of the same
