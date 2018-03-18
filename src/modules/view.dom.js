@@ -219,8 +219,10 @@ module.exports = ({send}, global) => {
         // if a matching identity is requested, the vdom node at the specified
         // address is checked for equality.
         if (identity) {
-            const identityMatch = original.componentIdentity === identity;
-            assert(identityMatch, 'view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
+            if (original.componentIdentity !== identity) {
+                global.console.warn('view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
+                return;
+            }
         }
 
         // node update function adds all DOM changes to the array while it is

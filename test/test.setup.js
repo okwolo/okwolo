@@ -15,8 +15,7 @@ window.sleep = async (t = 1) => {
 };
 
 // overriding console.warn to filter out deprecation warnings
-// while running tests.
-const _cw = console.warn;
+// while running tests. other warnings are thrown.
 console.warn = (...args) => {
     let isDeprecationWarning = false;
     args.forEach((arg) => {
@@ -25,6 +24,6 @@ console.warn = (...args) => {
         }
     });
     if (!isDeprecationWarning) {
-        _cw(...args);
+        throw new Error(args.join('\n'));
     }
 };

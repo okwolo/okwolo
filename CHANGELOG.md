@@ -4,6 +4,7 @@
 * added support for hash navigation in lite-router
 * added cache for parsed tagNames
 * shortened vdom path syntax in build errors
+* demoted orphaned component update to warning
 
 ## v3.3.1
 
