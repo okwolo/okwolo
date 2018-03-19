@@ -142,7 +142,7 @@ module.exports = ({on, send}) => {
     // is the update event.
     send('blob.api', {
         update: () => {
-            console.warn('@okwolo.update : function will be deprecated in next major version (4.x)');
+            global.console.warn('@okwolo.update : function will be deprecated in next major version (4.x)');
             send('update', false);
         },
     });

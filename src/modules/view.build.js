@@ -23,7 +23,7 @@ module.exports = ({send}, global) => {
 
     // will build a vdom structure from the output of the app's builder functions. this
     // output must be valid element syntax, or an exception will be thrown.
-    const build = (element, queue, ancestry, parentIndex, fromComponent, componentIdentity) => {
+    const build = (element, queue, ancestry, parentIndex, updateAncestry, componentIdentity, fromUpdate) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
@@ -41,11 +41,11 @@ module.exports = ({send}, global) => {
         }
         // strings will produce textNodes when rendered to the browser.
         if (isString(element)) {
-            // the fromComponentIdentity argument is set to truthy when the
+            // the updateAncestry argument is set to truthy when the
             // direct parent of the current element is a component. a value
             // implies the child is responsible for adding its key to the
             // ancestry, even if the resulting element is a text node.
-            if (fromComponent) {
+            if (updateAncestry) {
                 ancestry.addUnsafe('textNode', parentIndex);
             }
             return {
@@ -79,7 +79,7 @@ module.exports = ({send}, global) => {
             // level in the vdom structure. instead, the element that represents
             // a component will have a populated componentIdentity key and be
             // otherwise exactly the same as any other element.
-            if (!fromComponent) {
+            if (!updateAncestry) {
                 childAncestry = ancestry.copy();
                 // when a component is updated, the update blob in the view.dom
                 // module compares the provided identity with the vdom element's
@@ -99,7 +99,7 @@ module.exports = ({send}, global) => {
                 queue.add(() => {
                     send('sync',
                         childAncestry.keys(),
-                        build(gen(...args), queue, childAncestry, parentIndex, false, componentIdentity),
+                        build(gen(...args), queue, childAncestry, parentIndex, false, componentIdentity, true),
                         componentIdentity
                     );
                     queue.done();
@@ -167,10 +167,14 @@ module.exports = ({send}, global) => {
         // ancestry is recorded to give more context to error messages. being a
         // direct descendant from a component makes this iteration of build
         // responsible for adding its ancestry entry.
-        if (fromComponent) {
+        if (updateAncestry) {
             ancestry.addUnsafe(tagType, key);
         } else {
-            ancestry = ancestry.add(tagType, key);
+            // if a build is issued from an update event, the provided ancestry
+            // has already been edited and does not need to be updated.
+            if (!fromUpdate) {
+                ancestry = ancestry.add(tagType, key);
+            }
         }
 
         // childList is converted to a children object with each child having its

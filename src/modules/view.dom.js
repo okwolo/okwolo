@@ -221,7 +221,7 @@ module.exports = ({send}, global) => {
         if (identity) {
             if (original.componentIdentity !== identity) {
                 global.console.warn('view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
-                return;
+                return VDOM;
             }
         }
 

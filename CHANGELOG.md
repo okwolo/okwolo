@@ -5,6 +5,7 @@
 * added cache for parsed tagNames
 * shortened vdom path syntax in build errors
 * demoted orphaned component update to warning
+* bug fixes
 
 ## v3.3.1
 

@@ -412,5 +412,43 @@ describe('standard', () => {
             expect(wrapper.innerHTML)
                 .toMatchSnapshot();
         });
+
+        it('should not allow overwritten components to be updated', async () => {
+            const app = standard(wrapper);
+            app.setState({});
+
+            let update1;
+            let update2;
+
+            const component2 = (props, update) => {
+                if (!update2) {
+                    update2 = update;
+                }
+                return (content = 'test') => (
+                    ['div2', {}, [
+                        content,
+                    ]]
+                );
+            };
+
+            const component1 = (props, update) => {
+                if (!update1) {
+                    update1 = update;
+                }
+                return () => (
+                    ['div1', {}, [
+                        [component2],
+                    ]]
+                );
+            };
+
+            app(() => () => (
+                [component1]
+            ));
+
+            update1();
+            expect(() => update2('updated'))
+                .toThrow(/target.*identity/g);
+        });
     });
 });
