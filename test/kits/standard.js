@@ -436,8 +436,10 @@ describe('standard', () => {
                     update1 = update;
                 }
                 return () => (
-                    ['div1', {}, [
-                        [component2],
+                    ['div', {}, [
+                        ['div1', {key: String(Math.random()).substr(2)}, [
+                            [component2],
+                        ]],
                     ]]
                 );
             };

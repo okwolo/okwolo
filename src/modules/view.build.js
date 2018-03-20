@@ -3,6 +3,8 @@
 // @fires sync       [view]
 // @fires blob.build [view]
 
+const other = require('./view.build2');
+
 const {
     assert,
     cache,
@@ -205,9 +207,9 @@ module.exports = ({send}, global) => {
         };
     };
 
-    send('blob.build', (element, queue) => {
+    send('blob.build', other || ((element, queue) => {
         // queue is blocked by a dummy function until the caller releases it.
         queue.add(Function);
         return build(element, queue, new Genealogist());
-    });
+    }));
 };
