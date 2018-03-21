@@ -3,8 +3,6 @@
 // @fires sync       [view]
 // @fires blob.build [view]
 
-const other = require('./view.build2');
-
 const {
     assert,
     cache,
@@ -25,7 +23,7 @@ module.exports = ({send}, global) => {
 
     // will build a vdom structure from the output of the app's builder functions. this
     // output must be valid element syntax, or an exception will be thrown.
-    const build = (element, queue, ancestry, parentIndex, updateAncestry, componentIdentity, fromUpdate) => {
+    const build = (element, queue, ancestry, parentIndex, updateAncestry, componentIdentity) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
         if (isBoolean(element)) {
@@ -101,7 +99,7 @@ module.exports = ({send}, global) => {
                 queue.add(() => {
                     send('sync',
                         childAncestry.keys(),
-                        build(gen(...args), queue, childAncestry, parentIndex, false, componentIdentity, true),
+                        build(gen(...args), queue, childAncestry, parentIndex, false, componentIdentity),
                         componentIdentity
                     );
                     queue.done();
@@ -172,11 +170,7 @@ module.exports = ({send}, global) => {
         if (updateAncestry) {
             ancestry.addUnsafe(tagType, key);
         } else {
-            // if a build is issued from an update event, the provided ancestry
-            // has already been edited and does not need to be updated.
-            if (!fromUpdate) {
-                ancestry = ancestry.add(tagType, key);
-            }
+            ancestry = ancestry.add(tagType, key);
         }
 
         // childList is converted to a children object with each child having its
@@ -207,9 +201,9 @@ module.exports = ({send}, global) => {
         };
     };
 
-    send('blob.build', other || ((element, queue) => {
+    send('blob.build', (element, queue) => {
         // queue is blocked by a dummy function until the caller releases it.
         queue.add(Function);
         return build(element, queue, new Genealogist());
-    }));
+    });
 };

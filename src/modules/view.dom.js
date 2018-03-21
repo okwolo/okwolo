@@ -214,13 +214,17 @@ module.exports = ({send}, global) => {
             parentKey = address[i];
             parent = original;
             original = original.children[parentKey];
+            if (!isDefined(original)) {
+                global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a componenent that no longer exists.');
+                return VDOM;
+            }
         }
 
         // if a matching identity is requested, the vdom node at the specified
         // address is checked for equality.
         if (identity) {
             if (original.componentIdentity !== identity) {
-                global.console.warn('view.dom.update : target of update has incorrect identity (this is generally caused by a component update being called on a component that no longer exists)');
+                global.console.warn('view.dom.update : target of update has incorrect identity (this is generally caused by a component update function being called on a component that no longer exists)');
                 return VDOM;
             }
         }

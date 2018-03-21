@@ -413,7 +413,7 @@ describe('standard', () => {
                 .toMatchSnapshot();
         });
 
-        it('should not allow overwritten components to be updated', async () => {
+        it('should provide helpful feedback when the component address no longer exists', async () => {
             const app = standard(wrapper);
             app.setState({});
 
@@ -450,7 +450,7 @@ describe('standard', () => {
 
             update1();
             expect(() => update2('updated'))
-                .toThrow(/target.*identity/g);
+                .toThrow(/target.*exist/g);
         });
     });
 });
