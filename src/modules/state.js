@@ -6,11 +6,7 @@
 // @listens state
 // @listens blob.handler
 
-const {
-    assert,
-    deepCopy,
-    isFunction,
-} = require('../utils');
+const {assert, deepCopy, is} = require('../utils');
 
 module.exports = ({on, send}) => {
     // reference to initial state is kept to be able to track whether it
@@ -26,10 +22,10 @@ module.exports = ({on, send}) => {
     });
 
     on('blob.handler', (handlerGen) => {
-        assert(isFunction(handlerGen), 'on.blob.handler : handler generator is not a function', handlerGen);
+        assert(is.function(handlerGen), 'on.blob.handler : handler generator is not a function', handlerGen);
         // handler generator is given direct access to the state.
         const _handler = handlerGen(() => state);
-        assert(isFunction(_handler), 'on.blob.handler : handler from generator is not a function', _handler);
+        assert(is.function(_handler), 'on.blob.handler : handler from generator is not a function', _handler);
         handler = _handler;
     });
 
@@ -38,7 +34,7 @@ module.exports = ({on, send}) => {
     });
 
     const setState = (replacement) => {
-        const newState = isFunction(replacement)
+        const newState = is.function(replacement)
             ? replacement(deepCopy(state))
             : replacement;
         handler(newState);

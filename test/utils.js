@@ -67,7 +67,7 @@ describe('utils', () => {
     });
 
     describe('isDefined', () => {
-        const {isDefined} = utils;
+        const isDefined = utils.is.defined;
 
         it('should return false when undefined', () => {
             expect(isDefined(undefined))
@@ -91,7 +91,7 @@ describe('utils', () => {
     });
 
     describe('isNull', () => {
-        const {isNull} = utils;
+        const isNull = utils.is.null;
 
         it('should return true when null', () => {
             expect(isNull(null))
@@ -115,7 +115,7 @@ describe('utils', () => {
     });
 
     describe('isArray', () => {
-        const {isArray} = utils;
+        const isArray = utils.is.array;
 
         it('should return true when array', () => {
             expect(isArray([]))
@@ -139,7 +139,7 @@ describe('utils', () => {
     });
 
     describe('isString', () => {
-        const {isString} = utils;
+        const isString = utils.is.string;
 
         it('should return true when string', () => {
             expect(isString('a'))
@@ -163,7 +163,7 @@ describe('utils', () => {
     });
 
     describe('isFunction', () => {
-        const {isFunction} = utils;
+        const isFunction = utils.is.function;
 
         it('should return true when function', () => {
             expect(isFunction(() => {}))
@@ -187,7 +187,7 @@ describe('utils', () => {
     });
 
     describe('isNumber', () => {
-        const {isNumber} = utils;
+        const isNumber = utils.is.number;
 
         it('should return true when number', () => {
             expect(isNumber(0))
@@ -217,7 +217,7 @@ describe('utils', () => {
     });
 
     describe('isBoolean', () => {
-        const {isBoolean} = utils;
+        const isBoolean = utils.is.boolean;
 
         it('should return true when boolean', () => {
             expect(isBoolean(true))
@@ -247,7 +247,7 @@ describe('utils', () => {
     });
 
     describe('isObject', () => {
-        const {isObject} = utils;
+        const isObject = utils.is.object;
 
         it('should return true when object', () => {
             expect(isObject({}))
@@ -273,7 +273,7 @@ describe('utils', () => {
     });
 
     describe('isNode', () => {
-        const {isNode} = utils;
+        const isNode = utils.is.node;
 
         it('should return false for all other values', () => {
             expect(isNode(undefined))
@@ -294,7 +294,7 @@ describe('utils', () => {
     });
 
     describe('isRegExp', () => {
-        const {isRegExp} = utils;
+        const isRegExp = utils.is.regExp;
 
         it('should return true when RegExp', () => {
             expect(isRegExp(/.*/g))

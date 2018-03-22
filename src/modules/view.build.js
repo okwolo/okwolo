@@ -3,20 +3,7 @@
 // @fires sync       [view]
 // @fires blob.build [view]
 
-const {
-    assert,
-    cache,
-    classnames,
-    Genealogist,
-    isArray,
-    isBoolean,
-    isDefined,
-    isFunction,
-    isNull,
-    isNumber,
-    isObject,
-    isString,
-} = require('../utils');
+const {assert, cache, classnames, Genealogist, is} = require('../utils');
 
 module.exports = ({send}, global) => {
     let tagCache = cache(1000);
@@ -26,21 +13,21 @@ module.exports = ({send}, global) => {
     const build = (element, queue, ancestry, parentIndex, updateAncestry, componentIdentity) => {
         // boolean values will produce no visible output to make it easier to use inline
         // logical expressions without worrying about unexpected strings on the page.
-        if (isBoolean(element)) {
+        if (is.boolean(element)) {
             element = '';
         }
         // null elements will produce no visible output. undefined is intentionally not
         // handled since it is often produced as a result of an unexpected builder output
         // and it should be made clear that something went wrong.
-        if (isNull(element)) {
+        if (is.null(element)) {
             element = '';
         }
         // in order to simplify type checking, numbers are stringified.
-        if (isNumber(element)) {
+        if (is.number(element)) {
             element += '';
         }
         // strings will produce textNodes when rendered to the browser.
-        if (isString(element)) {
+        if (is.string(element)) {
             // the updateAncestry argument is set to truthy when the
             // direct parent of the current element is a component. a value
             // implies the child is responsible for adding its key to the
@@ -58,14 +45,14 @@ module.exports = ({send}, global) => {
         const addr = ancestry.f(parentIndex);
 
         // the only remaining element types are formatted as arrays.
-        assert(isArray(element), 'view.build : vdom object is not a recognized type', addr, element);
+        assert(is.array(element), 'view.build : vdom object is not a recognized type', addr, element);
 
         // early recursive return when the element is seen to be have the component syntax.
-        if (isFunction(element[0])) {
+        if (is.function(element[0])) {
             // leaving the props or children items undefined should not throw an error.
             let [component, props = {}, children = []] = element;
-            assert(isObject(props), 'view.build : component\'s props is not an object', addr, element, props);
-            assert(isArray(children), 'view.build : component\'s children is not an array', addr, element, children);
+            assert(is.object(props), 'view.build : component\'s props is not an object', addr, element, props);
+            assert(is.array(children), 'view.build : component\'s children is not an array', addr, element, children);
 
             // component generator is given to update function and used to create
             // the initial version of the component.
@@ -106,23 +93,23 @@ module.exports = ({send}, global) => {
                 });
             };
             gen = component(Object.assign({}, props, {children}), update);
-            assert(isFunction(gen), 'view.build : component should return a function', addr, gen);
+            assert(is.function(gen), 'view.build : component should return a function', addr, gen);
             // initial component is built with the fromComponent argument set to true.
             return build(gen(), queue, childAncestry, parentIndex, true, componentIdentity);
         }
 
         let [tagType, attributes = {}, childList = []] = element;
-        assert(isString(tagType), 'view.build : tag property is not a string', addr, element, tagType);
-        assert(isObject(attributes), 'view.build : attributes is not an object', addr, element, attributes);
-        assert(isArray(childList), 'view.build : children of vdom object is not an array', addr, element, childList);
+        assert(is.string(tagType), 'view.build : tag property is not a string', addr, element, tagType);
+        assert(is.object(attributes), 'view.build : attributes is not an object', addr, element, attributes);
+        assert(is.array(childList), 'view.build : children of vdom object is not an array', addr, element, childList);
 
         let match = tagCache.get(tagType);
-        if (!isDefined(match)) {
+        if (!is.defined(match)) {
             // regular expression to capture values from the shorthand element tag syntax.
             // it allows each section to be separated by any amount of spaces, but enforces
             // the order of the capture groups (tagName #id .className | style)
             match = /^ *?(\w+?) *?(?:#([-\w\d]+?))? *?((?:\.[-\w\d]+?)*?)? *?(?:\|\s*?([^\s][^]*?))? *?$/.exec(tagType);
-            assert(isArray(match), 'view.build : tag property cannot be parsed', addr, tagType);
+            assert(is.array(match), 'view.build : tag property cannot be parsed', addr, tagType);
             // first element is not needed since it is the entire matched string. default
             // values are not used to avoid adding blank attributes to the nodes.
             tagCache.set(tagType, match);
@@ -130,20 +117,20 @@ module.exports = ({send}, global) => {
         const [, tagName, id, className, style] = match;
 
         // priority is given to the id defined in the attributes.
-        if (isDefined(id) && !isDefined(attributes.id)) {
+        if (is.defined(id) && !is.defined(attributes.id)) {
             attributes.id = id.trim();
         }
 
         // class names from both the tag and the attributes are used.
-        if (isDefined(attributes.className) || isDefined(className)) {
+        if (is.defined(attributes.className) || is.defined(className)) {
             attributes.className = classnames(attributes.className, className)
                 .replace(/\./g, ' ')
                 .replace(/  +/g, ' ')
                 .trim();
         }
 
-        if (isDefined(style)) {
-            if (!isDefined(attributes.style)) {
+        if (is.defined(style)) {
+            if (!is.defined(attributes.style)) {
                 attributes.style = style;
             } else {
                 // extra semicolon is added if not present to prevent conflicts.
@@ -158,7 +145,7 @@ module.exports = ({send}, global) => {
         let key = parentIndex;
         if ('key' in attributes) {
             key = attributes.key;
-            assert(isNumber(key) || isString(key), 'view.build : invalid element key type', addr, key);
+            assert(is.number(key) || is.string(key), 'view.build : invalid element key type', addr, key);
             key = '' + key;
             assert(key.match(/^[\w\d-_]+$/g), 'view.build : invalid character in element key', addr, key);
             attributes.key = key;

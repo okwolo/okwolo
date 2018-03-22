@@ -5,11 +5,7 @@
 
 const he = require('he');
 
-const {
-    assert,
-    isDefined,
-    isFunction,
-} = require('../utils');
+const {assert, is} = require('../utils');
 
 // the tags appearing in this map will be represented as singletons.
 const singletons = {
@@ -35,13 +31,13 @@ const singletons = {
 const renderToString = (target, _vdom) => {
     // string used to indent each level of the rendered dom.
     const indentString = '  ';
-    assert(isFunction(target), 'view.string.draw : target is not a function', target);
+    assert(is.function(target), 'view.string.draw : target is not a function', target);
     // the return value of this function is an array of lines. the reason for
     // this is that nested tags need extra indentation and this function is
     // recursive. extra spaces can easily be appended to each line appearing
     // in the result of the render of a child.
     const render = (vdom = {text: ''})=> {
-        if (isDefined(vdom.text)) {
+        if (is.defined(vdom.text)) {
             return [he.encode(vdom.text)];
         }
 
@@ -73,7 +69,7 @@ const renderToString = (target, _vdom) => {
 
         // early return in the case the element is a recognized singleton.
         // there it also checks that the element does not have descendants.
-        if (isDefined(singletons[tagName]) && childOrder.length < 1) {
+        if (is.defined(singletons[tagName]) && childOrder.length < 1) {
             return [`<${`${tagName} ${formattedAttributes}`.trim()} />`];
         }
         const contents = childOrder

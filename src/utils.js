@@ -21,66 +21,54 @@ const prettyPrint = (obj) => {
 const isDefined = (value) => {
     return value !== undefined;
 };
-module.exports.isDefined = isDefined;
 
 const isNull = (value) => {
     return value === null;
 };
-module.exports.isNull = isNull;
 
 const isArray = (value) => {
     return Array.isArray(value);
 };
-module.exports.isArray = isArray;
 
 const isFunction = (value) => {
     return typeof value === 'function';
 };
-module.exports.isFunction = isFunction;
 
 const isString = (value) => {
     return typeof value === 'string';
 };
-module.exports.isString = isString;
 
 const isNumber = (value) => {
     return typeof value === 'number';
 };
-module.exports.isNumber = isNumber;
 
 const isBoolean = (value) => {
     return typeof value === 'boolean';
 };
-module.exports.isBoolean = isBoolean;
 
 const isObject = (value) => {
     return (!!value) && (value.constructor === Object);
 };
-module.exports.isObject = isObject;
 
 const isNode = (value) => {
     return !!(value && value.tagName && value.nodeName && value.ownerDocument && value.removeAttribute);
 };
-module.exports.isNode = isNode;
 
 const isRegExp = (value) => {
     return value instanceof RegExp;
 };
-module.exports.isRegExp = isRegExp;
 
 const isBrowser = () => {
     return typeof window !== 'undefined';
 };
-module.exports.isBrowser = isBrowser;
 
 const deepCopy = (obj) => {
-    // undefined value would otherwise throw an error at parsing time.
+    // undefined value would otherwise throw an error.
     if (obj === undefined) {
         return undefined;
     }
     return JSON.parse(JSON.stringify(obj));
 };
-module.exports.deepCopy = deepCopy;
 
 // will throw an error containing the message and the culprits if the
 // assertion is falsy. the message is expected to contain information
@@ -91,7 +79,6 @@ const assert = (assertion, message, ...culprits) => {
         throw new Error(`@okwolo.${message}${culprits.map(prettyPrint).join('')}`);
     }
 };
-module.exports.assert = assert;
 
 // this function will create a queue object which can be used to defer
 // the execution of functions.
@@ -129,7 +116,6 @@ const makeQueue = () => {
 
     return {add, done};
 };
-module.exports.makeQueue = makeQueue;
 
 // creates a cache with a bounded number of elements. getting values from
 // the cache has almost the same performance as using a naked object. setting
@@ -159,7 +145,6 @@ const cache = (size = 500) => {
 
     return {set, get};
 };
-module.exports.cache = cache;
 
 // simulates the behavior of the classnames npm package. strings are concatenated,
 // arrays are spread and objects keys are included if their value is truthy.
@@ -180,7 +165,6 @@ const classnames = (...args) => {
         .filter(Boolean)
         .join(' ');
 };
-module.exports.classnames = classnames;
 
 // ancestry helper which handles immutability and common logic. this code is
 // implemented as a class contrarily to the patterns in the rest of this
@@ -247,7 +231,6 @@ class Genealogist {
         return temp;
     };
 }
-module.exports.Genealogist = Genealogist;
 
 // finds the longest common of equal items between two input arrays.
 // this function can make some optimizations by assuming that both
@@ -296,7 +279,6 @@ const longestChain = (original, successor) => {
         end: chainStart + longest - 1,
     };
 };
-module.exports.longestChain = longestChain;
 
 // shallow diff of two objects which returns an array of keys where the value is
 // different. differences include keys who's values have been deleted or added.
@@ -323,4 +305,25 @@ const diff = (original, successor) => {
 
     return modifiedKeys;
 };
+
+module.exports.is = {
+    array: isArray,
+    boolean: isBoolean,
+    defined: isDefined,
+    function: isFunction,
+    node: isNode,
+    null: isNull,
+    number: isNumber,
+    object: isObject,
+    regExp: isRegExp,
+    string: isString,
+};
+module.exports.assert = assert;
+module.exports.cache = cache;
+module.exports.classnames = classnames;
+module.exports.deepCopy = deepCopy;
 module.exports.diff = diff;
+module.exports.Genealogist = Genealogist;
+module.exports.isBrowser = isBrowser;
+module.exports.longestChain = longestChain;
+module.exports.makeQueue = makeQueue;

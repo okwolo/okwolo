@@ -5,9 +5,7 @@
 // this is the same library that is used by express to match routes.
 const pathToRegexp = require('path-to-regexp');
 
-const {
-    isRegExp,
-} = require('util');
+const {is} = require('../utils');
 
 module.exports = ({send}) => {
     // the type of store is not enforced by the okwolo-router module. this means
@@ -22,7 +20,7 @@ module.exports = ({send}) => {
             return store;
         }
 
-        if (isRegExp(path)) {
+        if (is.regExp(path)) {
             let numGroups = new RegExp(path.toString() + '|').exec('').length - 1;
             store.push({
                 keys: Array(numGroups).fill(0).map((_, i) => ({name: i})),

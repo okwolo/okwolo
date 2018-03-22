@@ -12,12 +12,7 @@
 // @listens blob.target
 // @listens blob.update
 
-const {
-    assert,
-    isDefined,
-    isFunction,
-    makeQueue,
-} = require('../utils');
+const {assert, is, makeQueue} = require('../utils');
 
 module.exports = ({on, send}) => {
     let target;
@@ -41,31 +36,31 @@ module.exports = ({on, send}) => {
     });
 
     on('blob.builder', (_builder) => {
-        assert(isFunction(_builder), 'on.blob.builder : builder is not a function', _builder);
+        assert(is.function(_builder), 'on.blob.builder : builder is not a function', _builder);
         builder = _builder;
         send('update', false);
     });
 
     on('blob.draw', (_draw) => {
-        assert(isFunction(_draw), 'on.blob.draw : new draw is not a function', _draw);
+        assert(is.function(_draw), 'on.blob.draw : new draw is not a function', _draw);
         draw = _draw;
         send('update', true);
     });
 
     on('blob.update', (_update) => {
-        assert(isFunction(_update), 'on.blob.update : new target updater is not a function', _update);
+        assert(is.function(_update), 'on.blob.update : new target updater is not a function', _update);
         update = _update;
         send('update', false);
     });
 
     on('blob.build', (_build) => {
-        assert(isFunction(_build), 'on.blob.build : new build is not a function', _build);
+        assert(is.function(_build), 'on.blob.build : new build is not a function', _build);
         build = _build;
         send('update', false);
     });
 
     on('state', (_state) => {
-        assert(isDefined(_state), 'on.state : new state is not defined', _state);
+        assert(is.defined(_state), 'on.state : new state is not defined', _state);
         state = _state;
         send('update', false);
     });
@@ -107,7 +102,7 @@ module.exports = ({on, send}) => {
         // it is assumed that once all four variables are set the first time, they
         // will never again be invalid. this should be enforced by the bus listeners.
         if (!canDraw) {
-            if (isDefined(target) && isDefined(builder) && isDefined(state)) {
+            if (is.defined(target) && is.defined(builder) && is.defined(state)) {
                 canDraw = true;
             } else {
                 return waiting();

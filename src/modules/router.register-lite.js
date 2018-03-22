@@ -2,9 +2,7 @@
 
 // @fires blob.register [router]
 
-const {
-    isRegExp,
-} = require('util');
+const {is} = require('../utils');
 
 const keyPattern = /:\w+/g;
 
@@ -33,7 +31,7 @@ module.exports = ({send}) => {
             return store;
         }
 
-        if (isRegExp(path)) {
+        if (is.regExp(path)) {
             let numGroups = new RegExp(path.toString() + '|').exec('').length - 1;
             store.push({
                 keys: Array(numGroups).fill(0).map((_, i) => ({name: i})),

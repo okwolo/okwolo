@@ -10,14 +10,7 @@
 // @listens blob.register
 // @listens blob.route
 
-const {
-    assert,
-    isFunction,
-    isObject,
-    isString,
-    isRegExp,
-    makeQueue,
-} = require('../utils');
+const {assert, is, makeQueue} = require('../utils');
 
 module.exports = ({on, send}, global) => {
     // keeps track of all the registered routes. the format/type of this variable
@@ -63,9 +56,9 @@ module.exports = ({on, send}, global) => {
     };
 
     on('blob.route', ({path, handler} = {}) => {
-        assert(isString(path) || isRegExp(path), 'on.blob.route : path is not a string or a regular expression', path);
-        assert(isFunction(handler), 'on.blob.route : handler is not a function', path, handler);
-        assert(isFunction(register), 'on.blob.route : register is not a function', register);
+        assert(is.string(path) || is.regExp(path), 'on.blob.route : path is not a string or a regular expression', path);
+        assert(is.function(handler), 'on.blob.route : handler is not a function', path, handler);
+        assert(is.function(register), 'on.blob.route : register is not a function', register);
         queue.add(() => {
             store = register(store, path, handler);
             if (!hasMatched) {
@@ -76,7 +69,7 @@ module.exports = ({on, send}, global) => {
     });
 
     on('blob.base', (base) => {
-        assert(isString(base), 'on.blob.base : base url is not a string', base);
+        assert(is.string(base), 'on.blob.base : base url is not a string', base);
         queue.add(() => {
             baseUrl = base;
             currentPath = removeBaseUrl(currentPath);
@@ -86,7 +79,7 @@ module.exports = ({on, send}, global) => {
     });
 
     on('blob.register', (_register) => {
-        assert(isFunction(_register), 'on.blob.register : register is not a function', register);
+        assert(is.function(_register), 'on.blob.register : register is not a function', register);
         queue.add(() => {
             register = _register;
             queue.done();
@@ -94,7 +87,7 @@ module.exports = ({on, send}, global) => {
     });
 
     on('blob.fetch', (_fetch) => {
-        assert(isFunction(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
+        assert(is.function(_fetch), 'on.blob.fetch : fetch is not a function', fetch);
         queue.add(() => {
             fetch = _fetch;
             queue.done();
@@ -103,8 +96,8 @@ module.exports = ({on, send}, global) => {
 
     // fetch wrapper that makes the browser aware of the url change
     on('redirect', (path, params = {}) => {
-        assert(isString(path), 'on.redirect : path is not a string', path);
-        assert(isObject(params), 'on.redirect : params is not an object', params);
+        assert(is.string(path), 'on.redirect : path is not a string', path);
+        assert(is.object(params), 'on.redirect : params is not an object', params);
         // queue used so that route handlers that call other route handlers
         // behave as expected. (sequentially)
         queue.add(() => {
@@ -124,8 +117,8 @@ module.exports = ({on, send}, global) => {
 
     // show acts like a redirect, but will not change the browser's url.
     on('show', (path, params = {}) => {
-        assert(isString(path), 'on.show : path is not a string', path);
-        assert(isObject(params), 'on.show : params is not an object', params);
+        assert(is.string(path), 'on.show : path is not a string', path);
+        assert(is.object(params), 'on.show : params is not an object', params);
         // queue used so that route handlers that call other route handlers
         // behave as expected. (sequentially)
         queue.add(() => {

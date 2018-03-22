@@ -10,15 +10,7 @@
 // @listens blob.middleware
 // @listens blob.watcher
 
-const {
-    assert,
-    deepCopy,
-    isArray,
-    isDefined,
-    isFunction,
-    isString,
-    makeQueue,
-} = require('../utils');
+const {assert, deepCopy, is, makeQueue} = require('../utils');
 
 module.exports = ({on, send}) => {
     // this module defines an action which overrides the whole state while
@@ -45,20 +37,20 @@ module.exports = ({on, send}) => {
         // it must be copied since all the middleware functions can still
         // potentially have access to it.
         let newState = deepCopy(state);
-        assert(isDefined(actions[type]), `state.handler : action type '${type}' was not found`);
+        assert(is.defined(actions[type]), `state.handler : action type '${type}' was not found`);
 
         // action types with multiple handlers are executed in the order they are added.
         actions[type].forEach((currentAction) => {
             let targetAddress = currentAction.target;
 
             // if the target is a function, it is called with the current state.
-            if (isFunction(targetAddress)) {
+            if (is.function(targetAddress)) {
                 targetAddress = targetAddress(deepCopy(state), params);
                 // since the type checks cannot be ran when the action is added,
                 // they need to be done during the action.
-                assert(isArray(targetAddress), `state.handler : dynamic target of action ${type} is not an array`, targetAddress);
+                assert(is.array(targetAddress), `state.handler : dynamic target of action ${type} is not an array`, targetAddress);
                 targetAddress.forEach((address) => {
-                    assert(isString(address), `state.handler : dynamic target of action ${type} is not an array of strings`, targetAddress);
+                    assert(is.string(address), `state.handler : dynamic target of action ${type} is not an array of strings`, targetAddress);
                 });
             }
 
@@ -69,7 +61,7 @@ module.exports = ({on, send}) => {
             // an empty array means the entire state object is the target.
             if (targetAddress.length === 0) {
                 newState = currentAction.handler(target, params);
-                assert(isDefined(newState), `state.handler : result of action ${type} on target @state is undefined`);
+                assert(is.defined(newState), `state.handler : result of action ${type} on target @state is undefined`);
             }
 
             // reference will be the variable which keeps track of the current
@@ -77,7 +69,7 @@ module.exports = ({on, send}) => {
             // state since that is the value that needs to be modified.
             let reference = newState;
             targetAddress.forEach((key, i) => {
-                assert(isDefined(target[key]), `state.handler : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
+                assert(is.defined(target[key]), `state.handler : target of action ${type} does not exist: @state.${targetAddress.slice(0, i+1).join('.')}`);
                 if (i < targetAddress.length - 1) {
                     // both the reference to the "actual" state and the target
                     // dummy copy are traversed at the same time.
@@ -89,7 +81,7 @@ module.exports = ({on, send}) => {
                 // when the end of the address array is reached, the target
                 // has been found and can be used by the handler.
                 let newValue = currentAction.handler(target[key], params);
-                assert(isDefined(newValue), `state.handler : result of action ${type} on target @state.${targetAddress.join('.')} is undefined`);
+                assert(is.defined(newValue), `state.handler : result of action ${type} on target @state.${targetAddress.join('.')} is undefined`);
                 reference[key] = newValue;
             });
         });
@@ -136,14 +128,14 @@ module.exports = ({on, send}) => {
     on('blob.action', (...action) => {
         action.reduce((a, b) => a.concat(b), []).forEach((item = {}) => {
             const {type, handler, target} = item;
-            assert(isString(type), 'on.blob.action : action\'s type is not a string', item, type);
-            assert(isFunction(handler), `on.blob.action : handler for action ${type} is not a function`, item, handler);
-            if (isArray(target)) {
+            assert(is.string(type), 'on.blob.action : action\'s type is not a string', item, type);
+            assert(is.function(handler), `on.blob.action : handler for action ${type} is not a function`, item, handler);
+            if (is.array(target)) {
                 target.forEach((address) => {
-                    assert(isString(address), `on.blob.action : target of action ${type} is not an array of strings`, item, target);
+                    assert(is.string(address), `on.blob.action : target of action ${type} is not an array of strings`, item, target);
                 });
             } else {
-                assert(isFunction(target), `on.blob.action : target of action ${type} is not valid`, target);
+                assert(is.function(target), `on.blob.action : target of action ${type} is not valid`, target);
             }
             if (actions[type] === undefined) {
                 actions[type] = [item];
@@ -156,7 +148,7 @@ module.exports = ({on, send}) => {
     // middleware can be added in batches by using an array.
     on('blob.middleware', (..._middleware) => {
         _middleware.reduce((a, b) => a.concat(b), []).forEach((item) => {
-            assert(isFunction(item), 'on.blob.middleware : middleware is not a function', item);
+            assert(is.function(item), 'on.blob.middleware : middleware is not a function', item);
             middleware.push(item);
         });
     });
@@ -164,7 +156,7 @@ module.exports = ({on, send}) => {
     // watchers can be added in batches by using an array.
     on('blob.watcher', (...watcher) => {
         watcher.reduce((a, b) => a.concat(b), []).forEach((item) => {
-            assert(isFunction(item), 'on.blob.watcher : watcher is not a function', item);
+            assert(is.function(item), 'on.blob.watcher : watcher is not a function', item);
             watchers.push(item);
         });
     });
@@ -174,7 +166,7 @@ module.exports = ({on, send}) => {
         // been changed is the override action.
         assert(stateHasBeenOverwritten || type === overrideActionType, 'state.act : cannot act on state before it has been overwritten');
         stateHasBeenOverwritten = true;
-        assert(isString(type), 'state.act : action type is not a string', type);
+        assert(is.string(type), 'state.act : action type is not a string', type);
         // the queue will make all actions wait to be ran sequentially.
         queue.add(() => {
             apply(readState(), type, params);

@@ -1,13 +1,12 @@
 'use strict';
 
+// @listens blob.api
+// @listens blob.primary
+
 const {
     assert,
-    isArray,
+    is,
     isBrowser,
-    isDefined,
-    isFunction,
-    isObject,
-    isString,
 } = require('./utils');
 
 // version not taken from package.json to avoid including the whole file
@@ -22,19 +21,19 @@ const makeBus = () => {
 
     // attaches a handler to a specific event key.
     const on = (type, handler) => {
-        assert(isString(type), 'on : handler type is not a string', type);
-        assert(isFunction(handler), 'on : handler is not a function', handler);
-        if (!isDefined(handlers[type])) {
+        assert(is.string(type), 'on : handler type is not a string', type);
+        assert(is.function(handler), 'on : handler is not a function', handler);
+        if (!is.defined(handlers[type])) {
             handlers[type] = [];
         }
         handlers[type].push(handler);
     };
 
     const send = (type, ...args) => {
-        assert(isString(type), 'send : event type is not a string', type);
+        assert(is.string(type), 'send : event type is not a string', type);
         const eventHandlers = handlers[type];
         // events that do not match any handlers are ignored silently.
-        if (!isDefined(eventHandlers)) {
+        if (!is.defined(eventHandlers)) {
             return;
         }
         for (let i = 0; i < eventHandlers.length; ++i) {
@@ -44,18 +43,18 @@ const makeBus = () => {
 
     const use = (blob, ...args) => {
         // scopes event type to the blob namespace.
-        if (isString(blob)) {
+        if (is.string(blob)) {
             send(`blob.${blob}`, ...args);
             return;
         }
 
-        assert(isObject(blob), 'use : blob is not an object', blob);
+        assert(is.object(blob), 'use : blob is not an object', blob);
 
         const {name} = blob;
-        if (isDefined(name)) {
-            assert(isString(name), 'utils.bus : blob name is not a string', name);
+        if (is.defined(name)) {
+            assert(is.string(name), 'utils.bus : blob name is not a string', name);
             // early return if the name has already been seen.
-            if (isDefined(names[name])) {
+            if (is.defined(names[name])) {
                 return;
             }
             names[name] = true;
@@ -72,15 +71,15 @@ const makeBus = () => {
 
 module.exports = (config = {}) => {
     const {modules = [], options = {}} = config;
-    assert(isArray(modules), 'core : passed modules must be an array');
-    assert(isObject(options), 'core : passed options must be an object');
+    assert(is.array(modules), 'core : passed modules must be an array');
+    assert(is.object(options), 'core : passed options must be an object');
 
     // both arguments are optional or can be left undefined, except when the
     // kit options require the browser, but the window global is not defined.
     const okwolo = (target, global) => {
         if (options.browser) {
             // global defaults to browser environment's window
-            if (!isDefined(global)) {
+            if (!is.defined(global)) {
                 assert(isBrowser(), 'app : must be run in a browser environment');
                 global = window;
             }
@@ -100,7 +99,7 @@ module.exports = (config = {}) => {
         Object.assign(app, makeBus());
 
         app.on('blob.api', (api, override) => {
-            assert(isObject(api), 'on.blob.api : additional api is not an object', api);
+            assert(is.object(api), 'on.blob.api : additional api is not an object', api);
             Object.keys(api).forEach((key) => {
                 if (!override) {
                     assert(!app[key], `on.blob.api : cannot add key "${key}" because it is already defined`);
@@ -110,7 +109,7 @@ module.exports = (config = {}) => {
         });
 
         app.on('blob.primary', (_primary) => {
-            assert(isFunction(_primary), 'on.blob.primary : primary is not a function', _primary);
+            assert(is.function(_primary), 'on.blob.primary : primary is not a function', _primary);
             primary = _primary;
         });
 
@@ -124,8 +123,8 @@ module.exports = (config = {}) => {
 
         // target is used if it is defined, but this step can be deferred
         // if it is not convenient to pass the target on app creation.
-        if (isDefined(target)) {
-            app.use('target', target);
+        if (is.defined(target)) {
+            app.send('blob.target', target);
         }
 
         return app;
@@ -137,7 +136,7 @@ module.exports = (config = {}) => {
     if (isBrowser()) {
         okwolo.kit = options.kit;
         okwolo.version = version;
-        if (!isDefined(window.okwolo)) {
+        if (!is.defined(window.okwolo)) {
             window.okwolo = okwolo;
         }
         window.okwolo[options.kit] = okwolo;

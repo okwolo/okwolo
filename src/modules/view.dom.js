@@ -3,13 +3,7 @@
 // @fires blob.draw   [view]
 // @fires blob.update [view]
 
-const {
-    assert,
-    diff,
-    longestChain,
-    isDefined,
-    isNode,
-} = require('../utils');
+const {assert, diff, is, longestChain} = require('../utils');
 
 module.exports = ({send}, global) => {
     // recursively travels vdom to create rendered nodes. after being rendered,
@@ -17,7 +11,7 @@ module.exports = ({send}, global) => {
     // can be used in the update process to manipulate the real dom nodes.
     const render = (vnode) => {
         // the text key will only be present for text nodes.
-        if (isDefined(vnode.text)) {
+        if (is.defined(vnode.text)) {
             vnode.DOM = global.document.createTextNode(vnode.text);
             return vnode;
         }
@@ -44,7 +38,7 @@ module.exports = ({send}, global) => {
         // the target's type is not enforced by the module and it needs to be
         // done at this point. this is done to decouple the dom module from
         // the browser (but cannot be avoided in this module).
-        assert(isNode(target), 'view.dom.draw : target is not a DOM node', target);
+        assert(is.node(target), 'view.dom.draw : target is not a DOM node', target);
 
         // render modifies the vdom tree in place.
         render(newVDOM);
@@ -62,7 +56,7 @@ module.exports = ({send}, global) => {
     // modifications to the vdom object in place.
     const updateNode = (DOMChanges, original, successor, parent, parentKey) => {
         // lack of original node implies the successor is a new node.
-        if (!isDefined(original)) {
+        if (!is.defined(original)) {
             parent.children[parentKey] = render(successor);
             const parentNode = parent.DOM;
             const node = parent.children[parentKey].DOM;
@@ -73,7 +67,7 @@ module.exports = ({send}, global) => {
         }
 
         // lack of successor node implies the original is being removed.
-        if (!isDefined(successor)) {
+        if (!is.defined(successor)) {
             const parentNode = parent.DOM;
             const node = original.DOM;
             DOMChanges.push(() => {
@@ -203,7 +197,7 @@ module.exports = ({send}, global) => {
     // the new vdom object.
     const update = (target, successor, address = [], VDOM, identity) => {
         // responsibility of checking the target's type is deferred to the blobs.
-        assert(isNode(target), 'view.dom.update : target is not a DOM node', target);
+        assert(is.node(target), 'view.dom.update : target is not a DOM node', target);
 
         // node update function's arguments are scoped down the VDOM tree
         // according to the supplied address.
@@ -214,7 +208,7 @@ module.exports = ({send}, global) => {
             parentKey = address[i];
             parent = original;
             original = original.children[parentKey];
-            if (!isDefined(original)) {
+            if (!is.defined(original)) {
                 global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a componenent that no longer exists.');
                 return VDOM;
             }

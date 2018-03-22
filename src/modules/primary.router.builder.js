@@ -4,15 +4,13 @@
 // @fires   blob.route   [router]
 // @fires   blob.builder [view]
 
-const {
-    isFunction,
-} = require('../utils');
+const {is} = require('../utils');
 
 module.exports = ({on, send}) => {
     // first argument can be a path string to register a route handler
     // or a function to directly use a builder.
     send('blob.primary', (path, builder) => {
-        if (isFunction(path)) {
+        if (is.function(path)) {
             send('blob.builder', path());
             return;
         }
