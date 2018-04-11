@@ -7,67 +7,13 @@ const {
     assert,
     is,
     isBrowser,
+    makeBus,
+    makeUse,
 } = require('./utils');
 
 // version not taken from package.json to avoid including the whole file
 // in the un-minified bundle.
 const version = '3.3.1';
-
-const makeBus = () => {
-    // stores handlers for each event key.
-    const handlers = {};
-    // stores names from named events to enforce uniqueness.
-    const names = {};
-
-    // attaches a handler to a specific event key.
-    const on = (type, handler) => {
-        assert(is.string(type), 'on : handler type is not a string', type);
-        assert(is.function(handler), 'on : handler is not a function', handler);
-        if (!is.defined(handlers[type])) {
-            handlers[type] = [];
-        }
-        handlers[type].push(handler);
-    };
-
-    const send = (type, ...args) => {
-        assert(is.string(type), 'send : event type is not a string', type);
-        const eventHandlers = handlers[type];
-        // events that do not match any handlers are ignored silently.
-        if (!is.defined(eventHandlers)) {
-            return;
-        }
-        for (let i = 0; i < eventHandlers.length; ++i) {
-            eventHandlers[i](...args);
-        }
-    };
-
-    const use = (blob, ...args) => {
-        // scopes event type to the blob namespace.
-        if (is.string(blob)) {
-            send(`blob.${blob}`, ...args);
-            return;
-        }
-
-        assert(is.object(blob), 'use : blob is not an object', blob);
-
-        const {name} = blob;
-        if (is.defined(name)) {
-            assert(is.string(name), 'utils.bus : blob name is not a string', name);
-            // early return if the name has already been seen.
-            if (is.defined(names[name])) {
-                return;
-            }
-            names[name] = true;
-        }
-
-        // calling send for each blob key.
-        Object.keys(blob).forEach((key) => {
-            send(`blob.${key}`, blob[key]);
-        });
-    };
-
-    return {on, send, use};
-};
 
 module.exports = (config = {}) => {
     const {modules = [], options = {}} = config;
@@ -96,7 +42,10 @@ module.exports = (config = {}) => {
             return primary(...args);
         };
 
-        Object.assign(app, makeBus());
+        const {on, send} = makeBus();
+        const use = makeUse(send, {});
+
+        Object.assign(app, {on, send, use});
 
         app.on('blob.api', (api, override) => {
             assert(is.object(api), 'on.blob.api : additional api is not an object', api);

@@ -306,6 +306,60 @@ const diff = (original, successor) => {
     return modifiedKeys;
 };
 
+const makeBus = () => {
+    // stores handlers for each event key.
+    const handlers = {};
+
+    // attaches a handler to a specific event key.
+    const on = (type, handler) => {
+        assert(isString(type), 'on : handler type is not a string', type);
+        assert(isFunction(handler), 'on : handler is not a function', handler);
+        if (!isDefined(handlers[type])) {
+            handlers[type] = [];
+        }
+        handlers[type].push(handler);
+    };
+
+    const send = (type, ...args) => {
+        assert(isString(type), 'send : event type is not a string', type);
+        const eventHandlers = handlers[type];
+        // events that do not match any handlers are ignored silently.
+        if (!isDefined(eventHandlers)) {
+            return;
+        }
+        for (let i = 0; i < eventHandlers.length; ++i) {
+            eventHandlers[i](...args);
+        }
+    };
+
+    return {on, send};
+};
+
+const makeUse = (send, names = {}) => (blob, ...args) => {
+    // scopes event type to the blob namespace.
+    if (isString(blob)) {
+        send(`blob.${blob}`, ...args);
+        return;
+    }
+
+    assert(isObject(blob), 'use : blob is not an object', blob);
+
+    const {name} = blob;
+    if (isDefined(name)) {
+        assert(isString(name), 'utils.bus : blob name is not a string', name);
+        // early return if the name has already been seen.
+        if (isDefined(names[name])) {
+            return;
+        }
+        names[name] = true;
+    }
+
+    // calling send for each blob key.
+    Object.keys(blob).forEach((key) => {
+        send(`blob.${key}`, blob[key]);
+    });
+};
+
 module.exports.is = {
     array: isArray,
     boolean: isBoolean,
@@ -326,4 +380,6 @@ module.exports.diff = diff;
 module.exports.Genealogist = Genealogist;
 module.exports.isBrowser = isBrowser;
 module.exports.longestChain = longestChain;
+module.exports.makeBus = makeBus;
 module.exports.makeQueue = makeQueue;
+module.exports.makeUse = makeUse;

@@ -392,6 +392,140 @@ describe('utils', () => {
         });
     });
 
+    describe('makeBus', () => {
+        const {makeBus} = utils;
+
+        it('should accept receivers', () => {
+            const test = jest.fn();
+            const bus = makeBus();
+            bus.on('test', test);
+        });
+
+        it('should reject malformed types', () => {
+            const bus = makeBus();
+            expect(() => bus.on({}))
+                .toThrow(/type.*string/g);
+        });
+
+        it('should reject malformed handlers', () => {
+            const bus = makeBus();
+            expect(() => bus.on('test', {}))
+                .toThrow(/handler.*function/g);
+        });
+
+        it('should accept messages and message args', () => {
+            const bus = makeBus();
+            bus.send('test');
+            bus.send('test', {});
+            bus.send('test', {}, {});
+            bus.send('test', {}, {}, {});
+        });
+
+        it('should reject malformed messages', () => {
+            const bus = makeBus();
+            expect(() => bus.send({}))
+                .toThrow(/type.*string/g);
+        });
+
+        it('should broadcast messages to handlers', () => {
+            const test = jest.fn();
+            const bus = makeBus();
+            bus.on('test', test);
+            expect(test)
+                .toHaveBeenCalledTimes(0);
+            bus.send('test');
+            expect(test)
+                .toHaveBeenCalledTimes(1);
+        });
+
+        it('should broadcast messages to all handlers of the same type', () => {
+            const test1 = jest.fn();
+            const test2 = jest.fn();
+            const bus = makeBus();
+            bus.on('test', test1);
+            bus.on('test', test2);
+            expect(test1)
+                .toHaveBeenCalledTimes(0);
+            expect(test2)
+                .toHaveBeenCalledTimes(0);
+            bus.send('test');
+            expect(test1)
+                .toHaveBeenCalledTimes(1);
+            expect(test2)
+                .toHaveBeenCalledTimes(1);
+        });
+
+        it('should pass message arguments to handlers', () => {
+            const test = jest.fn();
+            const bus = makeBus();
+            bus.on('test', test);
+            bus.send('test', null, 101, 'test');
+            expect(test)
+                .toHaveBeenCalledWith(null, 101, 'test');
+        });
+    });
+
+    describe('makeUse', () => {
+        const {makeUse} = utils;
+
+        it('should return a function', () => {
+            expect(makeUse())
+                .toBeInstanceOf(Function);
+        });
+
+        it('should directly call send when flat blob is send', () => {
+            const test = jest.fn();
+            const use = makeUse(test);
+            use('test', {}, 12);
+            expect(test)
+                .toHaveBeenCalledWith('blob.test', {}, 12);
+        });
+
+        it('should reject malformed blobs', () => {
+            const use = makeUse(test);
+            expect(() => use([]))
+                .toThrow(/blob.*object/g);
+        });
+
+        it('should call send for each key in the blob', () => {
+            const test = jest.fn();
+            const use = makeUse(test);
+            use({
+                '0': 0,
+                '1': 1,
+            });
+            expect(test)
+                .toHaveBeenCalledWith('blob.0', 0);
+            expect(test)
+                .toHaveBeenCalledWith('blob.1', 1);
+        });
+
+        it('should call send with the name key', () => {
+            const test = jest.fn();
+            const use = makeUse(test);
+            use({name: 'test'});
+            expect(test)
+                .toHaveBeenCalledWith('blob.name', 'test');
+        });
+
+        it('should only send named blob keys once', () => {
+            const test = jest.fn();
+            const use = makeUse(test);
+            const blob = {
+                name: 'test',
+                test: 'test',
+            };
+            use(blob);
+            expect(test)
+                .toHaveBeenCalledTimes(2);
+            expect(test)
+                .toHaveBeenCalledWith('blob.test', 'test');
+            use(blob);
+            expect(test)
+                .toHaveBeenCalledTimes(2);
+        });
+    });
+
     describe('cache', () => {
         const {cache} = utils;
 
