@@ -102,3 +102,14 @@ exports[`standard examples should correctly render the router example 3`] = `
   <span>title3</span>
 </div>
 `;
+
+exports[`standard examples should correctly use the innerHTML attribute 1`] = `
+<div>
+  <div class="innerHTML">
+    <script>
+      alert('test');
+    </script>
+  </div>
+  <div class="inline">&lt;script&gt;alert('test');&lt;/script&gt;</div>
+</div>
+`;

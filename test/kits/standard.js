@@ -452,5 +452,40 @@ describe('standard', () => {
             expect(() => update2('updated'))
                 .toThrow(/target.*exist/g);
         });
+
+        it('should correctly use the innerHTML attribute', async () => {
+            const app = standard(wrapper);
+            app.setState({});
+            app(() => () => (
+                ['div', {}, [
+                    ['div.innerHTML', {innerHTML: `
+                        <script>alert('test');</script>
+                    `}],
+                    ['div.inline', {}, [`
+                        <script>alert('test');</script>
+                    `]],
+                ]]
+            ));
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toMatchSnapshot();
+        });
+
+        it('should correctly ignore the class attribute', async () => {
+            const app = standard(wrapper);
+            app.setState({});
+            app(() => () => (
+                ['div', {class: 'test'}]
+            ));
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div></div>');
+            app(() => () => (
+                ['div', {className: 'className', class: 'class'}]
+            ));
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div class="className"></div>');
+        });
     });
 });

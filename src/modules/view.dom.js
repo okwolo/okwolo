@@ -209,7 +209,7 @@ module.exports = ({send}, global) => {
             parent = original;
             original = original.children[parentKey];
             if (!is.defined(original)) {
-                global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a componenent that no longer exists.');
+                global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a componenent that no longer exists)');
                 return VDOM;
             }
         }
@@ -235,7 +235,7 @@ module.exports = ({send}, global) => {
                     DOMChanges[i]();
                 }
             } catch (e) {
-                console.error('view.dom.update : ' + e);
+                global.console.error('view.dom.update : error when applying computed changes' + e);
             }
         });
 
