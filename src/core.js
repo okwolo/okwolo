@@ -12,8 +12,9 @@ const {
 } = require('./utils');
 
 // version not taken from package.json to avoid including the whole file
-// in the un-minified bundle.
-const version = '3.3.1';
+// in the un-minified bundle. value is checked to be consistent in a
+// unit test.
+const version = '3.4.0';
 
 module.exports = (config = {}) => {
     const {modules = [], options = {}} = config;
@@ -70,8 +71,8 @@ module.exports = (config = {}) => {
             }, global);
         });
 
-        // target is used if it is defined, but this step can be deferred
-        // if it is not convenient to pass the target on app creation.
+        // target is used if it is defined, can be done later if
+        // it is not convenient to pass the target on app creation.
         if (is.defined(target)) {
             app.send('blob.target', target);
         }
