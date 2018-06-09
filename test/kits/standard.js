@@ -487,5 +487,24 @@ describe('standard', () => {
             expect(wrapper.innerHTML)
                 .toBe('<div class="className"></div>');
         });
+
+        it('should update children', async () => {
+            const app = standard(wrapper);
+            app.setState({});
+            const Child = (p, update) => () => (
+                ['div', {a: setTimeout(update, 20)}, [
+                    'test',
+                ]]
+            );
+            const Parent = (p, update) => () => (
+                ['div', {a: setTimeout(update, 10)}, [
+                    [Child],
+                ]]
+            );
+            app(() => () => [Parent]);
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div><div>test</div></div>');
+        });
     });
 });
