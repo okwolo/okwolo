@@ -151,12 +151,14 @@ module.exports = ({send}, global) => {
             attributes.key = key;
         }
 
-        // ancestry is recorded to give more context to error messages. being a
-        // direct descendant from a component makes this iteration of build
-        // responsible for adding its ancestry entry.
-        if (updateAncestry) {
-            ancestry.addUnsafe(tagType, key);
+        if (componentIdentity) {
+            // component descendents might be responsible for adding ancestry.
+            if (updateAncestry) {
+                ancestry.addUnsafe(tagType, key);
+            }
         } else {
+            // not being a component's direct descendent means its address entry
+            // needs to be added to the ancestry.
             ancestry = ancestry.add(tagType, key);
         }
 

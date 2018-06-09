@@ -15,7 +15,9 @@ window.sleep = async (t = 1) => {
 };
 
 // overriding console.warn to filter out deprecation warnings
-// while running tests. other warnings are thrown.
+// while running tests. other warnings are thrown. WARNING: this
+// behavior should not be changed, some tests rely on catching
+// warnings to correctly fulfill their purpose.
 console.warn = (...args) => {
     let isDeprecationWarning = false;
     args.forEach((arg) => {

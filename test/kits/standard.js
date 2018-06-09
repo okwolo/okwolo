@@ -488,23 +488,30 @@ describe('standard', () => {
                 .toBe('<div class="className"></div>');
         });
 
-        it('should update children', async () => {
+        it('#143 should not fail when updating child after parent', async () => {
             const app = standard(wrapper);
             app.setState({});
-            const Child = (p, update) => () => (
-                ['div', {a: setTimeout(update, 20)}, [
-                    'test',
-                ]]
-            );
-            const Parent = (p, update) => () => (
-                ['div', {a: setTimeout(update, 10)}, [
-                    [Child],
-                ]]
-            );
+            let updateChild;
+            const Child = (p, update) => {
+                updateChild = update;
+                return () => 'child';
+            };
+            let updateParent;
+            const Parent = (p, update) => {
+                updateParent = update;
+                return () => (
+                    ['div', {}, [
+                        'parent',
+                        [Child],
+                    ]]
+                );
+            };
             app(() => () => [Parent]);
             await sleep();
             expect(wrapper.innerHTML)
-                .toBe('<div><div>test</div></div>');
+                .toBe('<div>parentchild</div>');
+            updateParent();
+            updateChild();
         });
     });
 });
