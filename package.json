@@ -1,6 +1,6 @@
 {
     "name": "okwolo",
-    "version": "3.4.0",
+    "version": "3.4.1",
     "description": "light javascript framework to build web applications",
     "main": "src/index.js",
     "keywords": [

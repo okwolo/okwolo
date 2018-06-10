@@ -1,3 +1,7 @@
+## v3.4.1
+
+* fixed edge case behavior with nested component updates
+
 ## v3.4.0
 
 * added support for raw regexp in router modules
