@@ -1,9 +1,11 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const {spawn} = require('child_process');
 
 const AWS = require('aws-sdk');
+const copyDir = require('copy-dir');
 const del = require('del');
 const globby = require('globby');
 const gulp = require('gulp');
@@ -14,7 +16,8 @@ const {version} = require('./package.json');
 const kitPattern = './src/kits/*.js';
 
 const shell = async (command, dir = './') => {
-    console.log(`\x1b[33m$\x1b[0m ${command}`);
+    const p = path.join('/', dir);
+    console.log(`\x1b[33m${p}\x1b[0m$ ${command}`);
     const [, cmd, args] = (/^(\w+)\s*([^]*)/g).exec(command);
     return new Promise((resolve, reject) => {
         let child = spawn(cmd, args.split(' '), {
@@ -65,13 +68,17 @@ gulp.task('push', async () => {
     }
     await shell('rm -rf ./dl');
     await shell('git clone https://github.com/okwolo/dl');
-    await shell('cp ./dist/* ./dl');
+    // also copies gzipped versions to root to have access to size
+    copyDir.sync('./dist', './dl');
     const dir = `./dl/${version}`;
     if (!fs.existsSync(dir)) {
+        console.log('creating', dir);
         fs.mkdirSync(dir);
     }
-    await shell(`cp ./dist/*.js ./dl/${version}`);
-    await shell('git add *', './dl');
+    copyDir.sync('./dist', `./dl/${version}`, (stat, p) => {
+        return path.extname(p) === '.js';
+    });
+    await shell('git add --all', './dl');
     await shell(`git commit -m v${version}`, './dl');
     await shell('git push origin master', './dl');
     await shell('rm -rf ./dl');
