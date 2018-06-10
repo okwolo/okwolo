@@ -512,6 +512,36 @@ describe('standard', () => {
                 .toBe('<div>parentchild</div>');
             updateParent();
             updateChild();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div>parentchild</div>');
+        });
+
+        xit('#147 should not fail when updating child text component after parent', async () => {
+            const app = standard(wrapper);
+            app.setState({});
+            let updateChild;
+            const Child = (p, update) => {
+                updateChild = update;
+                return () => 'child';
+            };
+            let updateParent;
+            const Parent = (p, update) => {
+                updateParent = update;
+                return () => [Child];
+            };
+            app(() => () => ['div', {}, [
+                'text',
+                [Parent],
+            ]]);
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div>textchild</div>');
+            updateParent();
+            updateChild();
+            await sleep();
+            expect(wrapper.innerHTML)
+                .toBe('<div>textchild</div>');
         });
     });
 });
