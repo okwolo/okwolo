@@ -1,3 +1,7 @@
+## v3.4.2
+
+* added support in `h` for mapped children in transpiled jsx
+
 ## v3.4.1
 
 * fixed edge case behavior with nested component updates
