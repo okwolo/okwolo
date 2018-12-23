@@ -37,4 +37,26 @@ describe('h', () => {
         expect(h('div', null, h('span', null, 'test')))
             .toEqual(['div', {}, [['span', {}, ['test']]]]);
     });
+
+    it('should support object spread output', () => {
+        expect(
+            h('div', null,
+                h('div'),
+                {
+                    0: h('div', null, 'a'),
+                    1: h('div', null, 'b'),
+                },
+                h('div', null,
+                    {},
+                )
+            )
+        ).toEqual(
+            ['div', {}, [
+                ['div', {}, []],
+                ['div', {}, ['a']],
+                ['div', {}, ['b']],
+                ['div', {}, []],
+            ]]
+        );
+    });
 });
