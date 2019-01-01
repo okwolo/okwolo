@@ -31,7 +31,7 @@ module.exports = ({on, send}, global) => {
 
     // will check if the code is being ran from the filesystem or is hosted.
     // this information is used to correctly displaying routes in the former case.
-    const isHosted = global.document.origin !== null && global.document.origin !== 'null';
+    const isHosted = global.window.origin !== null && global.window.origin !== 'null';
     if (!isHosted) {
         currentPath = '';
     }
