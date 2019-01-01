@@ -14,7 +14,7 @@ const {
 // version not taken from package.json to avoid including the whole file
 // in the un-minified bundle. value is checked to be consistent in a
 // unit test.
-const version = '3.4.2';
+const version = '3.4.3';
 
 module.exports = (config = {}) => {
     const {modules = [], options = {}} = config;

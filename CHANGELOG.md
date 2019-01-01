@@ -1,3 +1,7 @@
+## v3.4.3
+
+* replace deprecated `document.origin` with `window.origin`
+
 ## v3.4.2
 
 * added support in `h` for mapped children in transpiled jsx
