@@ -1,3 +1,7 @@
+## v3.4.4
+
+* replace all instances of `Function` with `() => {}` to comply with [Chrome extensions' default content security policy](https://developer.chrome.com/extensions/contentSecurityPolicy)
+
 ## v3.4.3
 
 * replace deprecated `document.origin` with `window.origin`
