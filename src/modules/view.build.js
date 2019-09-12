@@ -192,7 +192,7 @@ module.exports = ({send}, global) => {
 
     send('blob.build', (element, queue) => {
         // queue is blocked by a dummy function until the caller releases it.
-        queue.add(Function);
+        queue.add(() => {});
         return build(element, queue, new Genealogist());
     });
 };

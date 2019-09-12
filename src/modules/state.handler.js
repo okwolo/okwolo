@@ -30,7 +30,7 @@ module.exports = ({on, send}) => {
 
     // the actual value is set after this module's handshake with the state
     // module when the state handler is registered.
-    let readState = Function;
+    let readState = () => {};
 
     const execute = (state, type, params) => {
         // this value will represent the state after executing the action(s).
