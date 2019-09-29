@@ -209,7 +209,15 @@ module.exports = ({send}, global) => {
             parent = original;
             original = original.children[parentKey];
             if (!is.defined(original)) {
-                global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a componenent that no longer exists)');
+                // attempt to recover update when given incorrect address by
+                // chopping off the first address item. because the component
+                // identity is compared, this should not cause an invalid
+                // update. fixes an edge case in the build output when the
+                // builder output's root is a component.
+                if (address.length > 1) {
+                    return update(target, successor, address.slice(1), VDOM, identity);
+                }
+                global.console.warn('view.dom.update : target of update does not exist (this could be caused by a component update function being called on a component that no longer exists)');
                 return VDOM;
             }
         }
@@ -218,6 +226,13 @@ module.exports = ({send}, global) => {
         // address is checked for equality.
         if (identity) {
             if (original.componentIdentity !== identity) {
+                // attempt to recover update when given incorrect address by
+                // chopping off the first address item. because the component
+                // identity is compared, this should not cause an invalid
+                // update. fixes an edge case in the build output.
+                if (address.length > 1) {
+                    return update(target, successor, address.slice(1), VDOM, identity);
+                }
                 global.console.warn('view.dom.update : target of update has incorrect identity (this is generally caused by a component update function being called on a component that no longer exists)');
                 return VDOM;
             }

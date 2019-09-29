@@ -152,7 +152,7 @@ module.exports = ({send}, global) => {
         }
 
         if (componentIdentity) {
-            // component descendents might be responsible for adding ancestry.
+            // component descendants might be responsible for adding ancestry.
             if (updateAncestry) {
                 ancestry.addUnsafe(tagType, key);
             }
