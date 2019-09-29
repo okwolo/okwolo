@@ -1,3 +1,7 @@
+## v3.4.5
+
+* fix edge cases causing scoped update failures
+
 ## v3.4.4
 
 * replace all instances of `Function` with `() => {}` to comply with [Chrome extensions' default content security policy](https://developer.chrome.com/extensions/contentSecurityPolicy)
